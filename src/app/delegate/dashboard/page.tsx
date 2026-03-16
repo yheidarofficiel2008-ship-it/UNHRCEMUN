@@ -347,13 +347,16 @@ export default function DelegateDashboard() {
               </div>
             )}
             
-            {activeOverlay.type === 'message' && (
-              <div className="text-3xl font-black uppercase tracking-[0.3em] text-white/80 animate-pulse">Annonce de la Présidence</div>
-            )}
-
-            {activeOverlay.type === 'crisis' && (
-              <div className="text-2xl font-bold uppercase tracking-widest animate-pulse border-2 border-white p-6 rounded-xl">
-                La parole est à la présidence. Toutes les interactions sont suspendues.
+            {(activeOverlay.type === 'message' || activeOverlay.type === 'crisis') && (
+              <div className="space-y-4">
+                <div className="text-3xl font-black uppercase tracking-[0.3em] text-white/80 animate-pulse">
+                  {activeOverlay.type === 'crisis' ? "APPEL À L'ACTION" : "Annonce de la Présidence"}
+                </div>
+                {activeOverlay.type === 'crisis' && (
+                  <div className="text-2xl font-bold uppercase tracking-widest animate-pulse border-4 border-white p-6 rounded-xl bg-black/20">
+                    La parole est à la présidence. Toutes les interactions sont suspendues.
+                  </div>
+                )}
               </div>
             )}
           </div>

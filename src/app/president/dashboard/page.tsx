@@ -137,13 +137,14 @@ export default function PresidentDashboard() {
   const toggleSuspension = () => {
     if (!db) return;
     const sessionRef = doc(db, 'sessionState', 'current');
-    updateDocumentNonBlocking(sessionRef, { isSuspended: !isSuspended, lastUpdated: new Date().toISOString() });
+    // Utiliser setDocument avec merge pour garantir l'existence du document
+    setDocumentNonBlocking(sessionRef, { isSuspended: !isSuspended, lastUpdated: new Date().toISOString() }, { merge: true });
   };
 
   const toggleResolutions = (val: boolean) => {
     if (!db) return;
     const sessionRef = doc(db, 'sessionState', 'current');
-    updateDocumentNonBlocking(sessionRef, { allowResolutions: val, lastUpdated: new Date().toISOString() });
+    setDocumentNonBlocking(sessionRef, { allowResolutions: val, lastUpdated: new Date().toISOString() }, { merge: true });
     toast({ title: val ? "Résolutions autorisées" : "Résolutions bloquées" });
   };
 
@@ -157,7 +158,7 @@ export default function PresidentDashboard() {
       voteId: overlayForm.type === 'vote' ? Date.now().toString() : null,
       results: overlayForm.type === 'vote' ? { pour: 0, contre: 0, abstention: 0 } : null
     };
-    updateDocumentNonBlocking(sessionRef, { activeOverlay: overlayData });
+    setDocumentNonBlocking(sessionRef, { activeOverlay: overlayData }, { merge: true });
     setIsOverlayDialogOpen(false);
     toast({ 
       title: overlayForm.type === 'vote' ? "Vote lancé" : overlayForm.type === 'crisis' ? "CRISE DÉCLENCHÉE" : "Message affiché",
@@ -168,7 +169,7 @@ export default function PresidentDashboard() {
   const stopOverlay = () => {
     if (!db) return;
     const sessionRef = doc(db, 'sessionState', 'current');
-    updateDocumentNonBlocking(sessionRef, { activeOverlay: { type: 'none' } });
+    setDocumentNonBlocking(sessionRef, { activeOverlay: { type: 'none' } }, { merge: true });
     toast({ title: "Affichage arrêté" });
   };
 
