@@ -13,7 +13,7 @@ service cloud.firestore {
 
     // --- RÈGLES DES COLLECTIONS ---
 
-    // Lecture publique pour tout ce qui concerne l'état de la séance (MUN est transparent)
+    // Lecture publique pour tout ce qui concerne l'état de la séance
     // Écriture réservée au président
     match /sessionState/{document} {
       allow read: if true;
@@ -50,7 +50,7 @@ service cloud.firestore {
       allow write: if isSignedIn() && request.auth.uid == presidentUid;
     }
 
-    // Règle de repli
+    // Règle de repli sécurisée
     match /{document=**} {
       allow read: if isSignedIn();
       allow write: if isPresident();
