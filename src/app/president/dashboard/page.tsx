@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useFirebase } from '@/firebase';
 import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -774,7 +774,13 @@ export default function PresidentDashboard() {
                           className="text-sm leading-relaxed whitespace-pre-wrap prose prose-sm max-w-none"
                           dangerouslySetInnerHTML={{ __html: res.content }}
                         />
-                        <div className="flex gap-2 justify-end pt-2 border-t">
+                        {res.sponsors && (
+                          <div className="mt-4 p-3 border rounded-lg bg-muted/20">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Pays Sponsors</p>
+                            <p className="text-sm font-medium">{res.sponsors}</p>
+                          </div>
+                        )}
+                        <div className="flex gap-2 justify-end pt-4 border-t">
                           <Button 
                             variant={res.is_displayed ? "default" : "outline"} 
                             size="sm" 

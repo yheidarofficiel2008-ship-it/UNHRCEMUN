@@ -32,6 +32,7 @@
       "properties": {
         "id": { "type": "string" },
         "proposing_country": { "type": "string" },
+        "sponsors": { "type": "string", "description": "Liste des pays soutenant la résolution." },
         "content": { "type": "string" },
         "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
         "is_displayed": { "type": "boolean" }
