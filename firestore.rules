@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -21,7 +22,6 @@ service cloud.firestore {
     // --- COLLECTION RULES ---
 
     match /delegates/{delegateId} {
-      // Les délégués doivent pouvoir se trouver pour la connexion
       allow get: if isSignedIn();
       allow list: if isSignedIn(); 
       allow create, update, delete: if isPresident();
@@ -29,41 +29,42 @@ service cloud.firestore {
 
     match /roles_president/{presidentUid} {
       allow get: if isOwner(presidentUid);
-      // Permettre la création par l'utilisateur lui-même lors de l'inscription (Initialisation)
       allow create: if isOwner(presidentUid);
       allow list, update, delete: if false;
     }
 
     match /actions/{actionId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isPresident();
+      // Tout utilisateur connecté peut voir les actions
+      allow read: if isSignedIn();
+      // Seul le président peut gérer les actions
+      allow write: if isPresident();
 
       match /participations/{participationId} {
         allow get: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
         allow list: if isPresident() || (isSignedIn() && request.query.limit <= 100);
-        allow create: if isSignedIn() && request.resource.data.delegateId == request.auth.uid && request.resource.data.actionId == actionId;
+        allow create: if isSignedIn() && request.resource.data.delegateId == request.auth.uid;
         allow update: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
         allow delete: if isPresident();
       }
     }
 
     match /resolutions/{resolutionId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.delegateId == request.auth.uid;
       allow update: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
       allow delete: if isPresident();
     }
 
     match /sessionState/current {
-      allow get: if isSignedIn();
+      allow read: if isSignedIn();
       allow create, update: if isPresident();
-      allow list, delete: if false;
+      allow delete: if false;
     }
 
-    // Règle de repli
+    // Règle de repli sécurisée
     match /{document=**} {
-      allow read, write: if isPresident();
+      allow read: if isSignedIn();
+      allow write: if isPresident();
     }
   }
 }

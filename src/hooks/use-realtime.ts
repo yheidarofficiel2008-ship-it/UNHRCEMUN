@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -7,12 +8,13 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useRealtime() {
-  const { firestore: db } = useFirebase();
+  const { firestore: db, user, isUserLoading } = useFirebase();
   const [isSuspended, setIsSuspended] = useState(false);
   const [currentAction, setCurrentAction] = useState<any>(null);
 
   useEffect(() => {
-    if (!db) return;
+    // On attend que l'utilisateur soit connecté et que le SDK soit prêt
+    if (!db || isUserLoading || !user) return;
 
     // Écouter l'état global de la session (singleton)
     const sessionStateRef = doc(db, 'sessionState', 'current');
@@ -24,11 +26,14 @@ export function useRealtime() {
         setIsSuspended(false);
       }
     }, (error) => {
-      const permissionError = new FirestorePermissionError({
-        path: 'sessionState/current',
-        operation: 'get'
-      });
-      errorEmitter.emit('permission-error', permissionError);
+      // On ne crée l'erreur que si l'utilisateur est authentifié pour éviter les faux positifs au chargement
+      if (user) {
+        const permissionError = new FirestorePermissionError({
+          path: 'sessionState/current',
+          operation: 'get'
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      }
     });
 
     // Écouter l'action actuelle
@@ -48,18 +53,20 @@ export function useRealtime() {
         setCurrentAction(null);
       }
     }, (error) => {
-      const permissionError = new FirestorePermissionError({
-        path: 'actions',
-        operation: 'list'
-      });
-      errorEmitter.emit('permission-error', permissionError);
+      if (user) {
+        const permissionError = new FirestorePermissionError({
+          path: 'actions',
+          operation: 'list'
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      }
     });
 
     return () => {
       unsubSettings();
       unsubActions();
     };
-  }, [db]);
+  }, [db, user, isUserLoading]);
 
   return { isSuspended, currentAction };
 }
