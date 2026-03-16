@@ -3,9 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Plus, Trash2, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare } from 'lucide-react';
+import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,6 +28,7 @@ export default function PresidentDashboard() {
   const { firestore: db, auth, user, isUserLoading } = useFirebase();
   const { isSuspended, allowResolutions, currentAction } = useRealtime();
   
+  const [customMinutes, setCustomMinutes] = useState('1');
   const [newAction, setNewAction] = useState({
     title: '',
     duration: 15,
@@ -138,7 +139,7 @@ export default function PresidentDashboard() {
   };
 
   const extendTime = (mins: number) => {
-    if (!db || !currentAction) return;
+    if (!db || !currentAction || isNaN(mins)) return;
     const actionRef = doc(db, 'actions', currentAction.id);
     updateDocumentNonBlocking(actionRef, { 
       duration_minutes: increment(mins)
@@ -220,7 +221,6 @@ export default function PresidentDashboard() {
 
   const orateursInscrits = participants.filter(p => p.status === 'participating');
 
-  // Parse time_per_delegate (format "M:SS") to seconds
   const parseTimePerDelegate = (timeStr: string) => {
     if (!timeStr) return 60;
     const [mins, secs] = timeStr.split(':').map(Number);
@@ -268,7 +268,7 @@ export default function PresidentDashboard() {
             
             <TabsContent value="actions" className="space-y-6 mt-4">
               <Card>
-                <CardHeader><CardTitle className="text-lg">Nouvelle Action</CardTitle></CardHeader>
+                <CardHeader className="pb-4"><CardTitle className="text-lg">Nouvelle Action</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>Titre</Label>
@@ -300,13 +300,20 @@ export default function PresidentDashboard() {
                 <Card className="border-primary/20 shadow-lg">
                   <CardHeader className="bg-primary/5 pb-2">
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="flex-1">
                         <Badge className="mb-1">{currentAction.status.toUpperCase()}</Badge>
                         <CardTitle className="text-xl">{currentAction.title}</CardTitle>
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="h-8" onClick={() => extendTime(1)}>+1m</Button>
-                        <Button size="sm" variant="outline" className="h-8" onClick={() => extendTime(5)}>+5m</Button>
+                      <div className="flex items-center gap-1 bg-white/50 p-1 rounded-lg border">
+                        <Input 
+                          type="number" 
+                          className="w-12 h-8 p-1 text-center" 
+                          value={customMinutes} 
+                          onChange={(e) => setCustomMinutes(e.target.value)}
+                        />
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => extendTime(parseInt(customMinutes))}>
+                          <Plus size={16} />
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
@@ -322,24 +329,24 @@ export default function PresidentDashboard() {
                     <div className="grid grid-cols-2 gap-3">
                       {(currentAction.status === 'launched' || currentAction.status === 'paused') ? (
                         <Button className="bg-green-600 hover:bg-green-700 h-12 gap-2" onClick={startTimer}>
-                          <Play size={18} fill="currentColor" /> Démarrer Débat
+                          <Play size={18} fill="currentColor" /> Démarrer
                         </Button>
                       ) : (
                         <Button variant="outline" className="border-amber-500 text-amber-600 h-12 gap-2" onClick={pauseTimer}>
-                          <Pause size={18} fill="currentColor" /> Pause Débat
+                          <Pause size={18} fill="currentColor" /> Pause
                         </Button>
                       )}
                       <Button variant="destructive" className="h-12 gap-2" onClick={stopAction}>
-                        <Square size={18} fill="currentColor" /> Arrêter Débat
+                        <Square size={18} fill="currentColor" /> Arrêter
                       </Button>
                     </div>
 
                     <div className="pt-4 border-t space-y-4">
                       <div className="flex justify-between items-center">
-                        <h3 className="font-bold text-xs text-muted-foreground uppercase flex items-center gap-2">
-                          <Timer size={14} /> Chronomètre Orateur
+                        <h3 className="font-bold text-[10px] text-muted-foreground uppercase flex items-center gap-2">
+                          <Timer size={14} /> Chrono Orateur (À reculons)
                         </h3>
-                        <Badge variant="outline">{currentAction.time_per_delegate}</Badge>
+                        <Badge variant="outline" className="text-[10px]">{currentAction.time_per_delegate}</Badge>
                       </div>
                       
                       <div className="flex justify-center py-2">
@@ -359,7 +366,7 @@ export default function PresidentDashboard() {
                           onClick={startSpeakingTimer}
                           disabled={currentAction.speaking_timer_status === 'started'}
                         >
-                          Lancer Orateur
+                          Lancer
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -367,7 +374,7 @@ export default function PresidentDashboard() {
                           className="border"
                           onClick={resetSpeakingTimer}
                         >
-                          Réinitialiser
+                          Reset
                         </Button>
                       </div>
                     </div>

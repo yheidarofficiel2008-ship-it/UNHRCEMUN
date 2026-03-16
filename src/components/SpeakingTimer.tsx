@@ -2,7 +2,6 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -43,19 +42,19 @@ export function SpeakingTimer({ status, startedAt, totalElapsedSeconds, limitSec
   const isOverTime = timeLeft === 0 && status === 'started';
 
   const sizeClasses = {
-    sm: 'text-lg font-bold px-3 py-1',
-    md: 'text-2xl font-black px-4 py-2',
-    lg: 'text-4xl font-black px-6 py-3'
+    sm: 'text-xs font-bold px-2 py-0.5 gap-1',
+    md: 'text-xl font-black px-4 py-1.5 gap-2',
+    lg: 'text-3xl font-black px-6 py-3 gap-3'
   };
 
   return (
     <div className={cn(
-      "inline-flex items-center gap-2 rounded-full border shadow-sm transition-all duration-300",
-      status === 'started' ? (isOverTime ? "bg-destructive text-white border-destructive animate-pulse" : "bg-primary/10 text-primary border-primary/20") : "bg-muted text-muted-foreground opacity-50",
+      "inline-flex items-center rounded-full border shadow-sm transition-all duration-300 tabular-nums",
+      status === 'started' ? (isOverTime ? "bg-destructive text-white border-destructive animate-pulse" : "bg-primary/5 text-primary border-primary/20") : "bg-muted/50 text-muted-foreground opacity-40",
       sizeClasses[size]
     )}>
-      <Timer className={cn("h-4 w-4", status === 'started' && "animate-spin-slow")} />
-      <span className="font-code tabular-nums tracking-tighter">
+      <Timer className={cn(size === 'sm' ? "h-3 w-3" : "h-4 w-4", status === 'started' && !isOverTime && "animate-pulse")} />
+      <span className="font-code tracking-tighter">
         {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
       </span>
     </div>
