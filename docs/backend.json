@@ -31,7 +31,9 @@
       "description": "Un projet de résolution soumis par un pays.",
       "properties": {
         "id": { "type": "string" },
+        "title": { "type": "string", "description": "Le titre de la résolution." },
         "proposing_country": { "type": "string" },
+        "spokesperson": { "type": "string", "description": "Le porte-parole de la délégation." },
         "sponsors": { "type": "string", "description": "Liste des pays soutenant la résolution." },
         "content": { "type": "string" },
         "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert, Lock, AlertTriangle } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert, Lock, AlertTriangle, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,8 @@ export default function DelegateDashboard() {
   const lastOverlayType = useRef<string | null>(null);
   
   const [resolutionForm, setResolutionForm] = useState({
+    title: '',
+    spokesperson: '',
     sponsors: '',
     content: ''
   });
@@ -101,7 +103,6 @@ export default function DelegateDashboard() {
     return () => unsub();
   }, [currentAction, delegate]);
 
-  // Alarme de crise
   useEffect(() => {
     if (activeOverlay?.type === 'crisis' && lastOverlayType.current !== 'crisis') {
       playCrisisAlarm();
@@ -223,14 +224,16 @@ export default function DelegateDashboard() {
     if (!delegate || !allowResolutions || isCountrySuspended) return;
     try {
       await addDoc(collection(db, 'resolutions'), {
+        title: resolutionForm.title,
         proposing_country: delegate.country_name,
+        spokesperson: resolutionForm.spokesperson,
         sponsors: resolutionForm.sponsors,
         content: resolutionForm.content,
         status: 'pending',
         is_displayed: false,
         created_at: serverTimestamp()
       });
-      setResolutionForm({ sponsors: '', content: '' });
+      setResolutionForm({ title: '', spokesperson: '', sponsors: '', content: '' });
       toast({ title: "Soumis avec succès" });
     } catch (e) {
       toast({ title: "Erreur lors de l'envoi.", variant: "destructive" });
@@ -298,11 +301,11 @@ export default function DelegateDashboard() {
             {activeOverlay.type === 'crisis' && (
               <div className="flex flex-col items-center gap-4 mb-4 animate-pulse">
                 <AlertTriangle size={60} className="text-white" />
-                <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-6 py-2">URGENCE : CRISE</h2>
+                <h2 className="text-xl md:text-2xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-6 py-2">URGENCE : CRISE</h2>
               </div>
             )}
             
-            <h1 className={`text-3xl md:text-4xl font-black uppercase tracking-tighter leading-tight border-b-4 md:border-b-8 border-white pb-6 ${activeOverlay.type === 'crisis' ? 'text-white' : ''}`}>
+            <h1 className={`text-xl md:text-2xl font-black uppercase tracking-tighter leading-tight border-b-4 md:border-b-8 border-white pb-6 ${activeOverlay.type === 'crisis' ? 'text-white' : ''}`}>
               {activeOverlay.title}
             </h1>
             
@@ -429,6 +432,9 @@ export default function DelegateDashboard() {
                           </Badge>
                         )}
                       </div>
+                      {item._type === 'resolution' && (
+                        <div className="mb-2 font-black uppercase text-secondary">{item.title}</div>
+                      )}
                       <div 
                         className="text-foreground whitespace-pre-wrap break-words prose prose-sm max-w-none"
                         dangerouslySetInnerHTML={{ __html: item.content }}
@@ -526,13 +532,21 @@ export default function DelegateDashboard() {
                   <CardHeader className="flex flex-row items-center justify-between border-b border-primary/20 pb-4 bg-white/50">
                     <div className="space-y-1">
                       <Badge className="gap-1 mb-2 bg-primary"><Monitor size={12} /> PROJETÉ AU COMITÉ</Badge>
-                      <CardTitle className="text-2xl text-primary">{res.proposing_country}</CardTitle>
+                      <CardTitle className="text-2xl text-primary font-black uppercase tracking-tight">{res.title}</CardTitle>
+                      <p className="text-sm font-bold text-muted-foreground uppercase">{res.proposing_country}</p>
                     </div>
                     <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="h-fit">
                       {res.status.toUpperCase()}
                     </Badge>
                   </CardHeader>
                   <CardContent className="pt-8 text-left">
+                    <div className="mb-6 flex flex-wrap gap-4 items-center">
+                       {res.spokesperson && (
+                        <Badge variant="outline" className="gap-2 border-primary/30 text-primary py-1.5 px-3">
+                          <User size={14} /> Porte-parole: <span className="font-bold">{res.spokesperson}</span>
+                        </Badge>
+                      )}
+                    </div>
                     <div 
                       className="text-lg leading-relaxed font-serif whitespace-pre-wrap break-words prose prose-lg max-w-none"
                       dangerouslySetInnerHTML={{ __html: res.content }}
@@ -557,6 +571,30 @@ export default function DelegateDashboard() {
             </CardHeader>
             <form onSubmit={submitResolution}>
               <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="font-bold">Titre de la Résolution</Label>
+                    <Input 
+                      id="title" 
+                      placeholder="Ex: Protection des civils en zone de conflit" 
+                      disabled={!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis'}
+                      value={resolutionForm.title} 
+                      onChange={e => setResolutionForm({...resolutionForm, title: e.target.value})} 
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="spokesperson" className="font-bold">Porte-parole</Label>
+                    <Input 
+                      id="spokesperson" 
+                      placeholder="Nom du délégué" 
+                      disabled={!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis'}
+                      value={resolutionForm.spokesperson} 
+                      onChange={e => setResolutionForm({...resolutionForm, spokesperson: e.target.value})} 
+                      required
+                    />
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="sponsors" className="font-bold">Pays Sponsors</Label>
                   <Input 

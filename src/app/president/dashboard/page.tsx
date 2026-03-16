@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, AlertOctagon } from 'lucide-react';
+import { Play, Pause, Square, Database, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, AlertOctagon, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -137,7 +137,6 @@ export default function PresidentDashboard() {
   const toggleSuspension = () => {
     if (!db) return;
     const sessionRef = doc(db, 'sessionState', 'current');
-    // Utiliser setDocument avec merge pour garantir l'existence du document
     setDocumentNonBlocking(sessionRef, { isSuspended: !isSuspended, lastUpdated: new Date().toISOString() }, { merge: true });
   };
 
@@ -742,7 +741,7 @@ export default function PresidentDashboard() {
                     <Card key={res.id} className={`overflow-hidden border-2 ${res.is_displayed ? 'border-primary' : ''}`}>
                       <div className="bg-muted/50 p-4 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-primary">{res.proposing_country}</span>
+                          <span className="font-bold text-primary uppercase tracking-tight">{res.title || "SANS TITRE"}</span>
                           {res.is_displayed && <Badge className="bg-primary"><Monitor className="h-3 w-3 mr-1" /> PROJETÉ</Badge>}
                         </div>
                         <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
@@ -750,6 +749,14 @@ export default function PresidentDashboard() {
                         </Badge>
                       </div>
                       <CardContent className="p-4 space-y-4">
+                        <div className="flex flex-wrap gap-4 items-center text-xs font-bold text-muted-foreground">
+                          <span className="bg-muted px-2 py-1 rounded">DE: {res.proposing_country}</span>
+                          {res.spokesperson && (
+                            <span className="flex items-center gap-1 bg-muted px-2 py-1 rounded">
+                              <User size={12} /> PORTE-PAROLE: {res.spokesperson}
+                            </span>
+                          )}
+                        </div>
                         <div 
                           className="text-sm leading-relaxed whitespace-pre-wrap break-words prose prose-sm max-w-none"
                           dangerouslySetInnerHTML={{ __html: res.content }}
