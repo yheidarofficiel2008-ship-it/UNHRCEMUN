@@ -29,7 +29,7 @@ export default function DelegateDashboard() {
     content: ''
   });
   const [myResolutions, setMyResolutions] = useState<any[]>([]);
-  const [displayedResolution, setDisplayedResolution] = useState<any>(null);
+  const [displayedResolutions, setDisplayedResolutions] = useState<any[]>([]);
 
   useEffect(() => {
     const session = localStorage.getItem('delegate_session');
@@ -47,14 +47,10 @@ export default function DelegateDashboard() {
       setMyResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    // Résolution projetée (is_displayed == true)
+    // Résolutions projetées (plusieurs possibles)
     const qDisplayed = query(collection(db, 'resolutions'), where('is_displayed', '==', true));
     const unsubDisplayed = onSnapshot(qDisplayed, (snap) => {
-      if (!snap.empty) {
-        setDisplayedResolution({ id: snap.docs[0].id, ...snap.docs[0].data() });
-      } else {
-        setDisplayedResolution(null);
-      }
+      setDisplayedResolutions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
     return () => {
@@ -212,24 +208,28 @@ export default function DelegateDashboard() {
         </div>
 
         <div className="lg:col-span-7 space-y-6">
-          {displayedResolution && (
-            <Card className="border-primary border-2 bg-primary/5 shadow-2xl animate-in fade-in zoom-in duration-300">
-              <CardHeader className="flex flex-row items-center justify-between border-b border-primary/20 pb-4">
-                <div className="space-y-1">
-                  <Badge className="gap-1 mb-2"><Monitor size={12} /> EN DISCUSSION</Badge>
-                  <CardTitle className="text-xl text-primary">{displayedResolution.proposing_country}</CardTitle>
-                </div>
-                <Badge variant={displayedResolution.status === 'approved' ? 'default' : displayedResolution.status === 'rejected' ? 'destructive' : 'secondary'} className="text-sm px-4 py-1">
-                  {displayedResolution.status.toUpperCase()}
-                </Badge>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <p className="text-lg italic leading-relaxed font-serif">"{displayedResolution.content}"</p>
-                {displayedResolution.sponsors && (
-                  <p className="mt-4 text-sm text-muted-foreground font-semibold">Sponsors: {displayedResolution.sponsors}</p>
-                )}
-              </CardContent>
-            </Card>
+          {displayedResolutions.length > 0 && (
+            <div className="space-y-6">
+              {displayedResolutions.map((res) => (
+                <Card key={res.id} className="border-primary border-2 bg-primary/5 shadow-2xl animate-in fade-in zoom-in duration-300">
+                  <CardHeader className="flex flex-row items-center justify-between border-b border-primary/20 pb-4">
+                    <div className="space-y-1">
+                      <Badge className="gap-1 mb-2"><Monitor size={12} /> EN DISCUSSION</Badge>
+                      <CardTitle className="text-xl text-primary">{res.proposing_country}</CardTitle>
+                    </div>
+                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="text-sm px-4 py-1">
+                      {res.status.toUpperCase()}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <p className="text-lg italic leading-relaxed font-serif">"{res.content}"</p>
+                    {res.sponsors && (
+                      <p className="mt-4 text-sm text-muted-foreground font-semibold">Sponsors: {res.sponsors}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
 
           <Card className="shadow-xl">
