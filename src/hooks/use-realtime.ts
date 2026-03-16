@@ -12,8 +12,7 @@ export function useRealtime() {
   const [currentAction, setCurrentAction] = useState<any>(null);
 
   useEffect(() => {
-    // On n'active les écouteurs que si l'utilisateur est authentifié.
-    // Pour le délégué, il doit se connecter anonymement d'abord.
+    // N'active les écouteurs que si l'utilisateur est authentifié et que le chargement est fini
     if (!db || isUserLoading || !user) return;
 
     // Écouter l'état global de la session
@@ -21,12 +20,10 @@ export function useRealtime() {
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
       if (docSnap.exists()) {
         setIsSuspended(docSnap.data().isSuspended === true);
-      } else {
-        setIsSuspended(false);
       }
     }, (error) => {
-      // On ne lève l'erreur que si l'utilisateur est censé avoir accès
-      if (user && error.code !== 'permission-denied') {
+      // Silencieux si l'erreur est liée aux permissions lors de la phase de login
+      if (error.code !== 'permission-denied') {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: 'sessionState/current',
           operation: 'get'
@@ -51,8 +48,8 @@ export function useRealtime() {
         setCurrentAction(null);
       }
     }, (error) => {
-      // Silencieux si c'est une erreur de permission transitoire au démarrage
-      if (user && error.code !== 'permission-denied') {
+      // Silencieux si l'erreur est liée aux permissions lors de la phase de login
+      if (error.code !== 'permission-denied') {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: 'actions',
           operation: 'list'
