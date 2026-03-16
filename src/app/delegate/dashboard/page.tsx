@@ -480,7 +480,7 @@ export default function DelegateDashboard() {
                   </CardHeader>
                   <CardContent className="pt-8">
                     <div 
-                      className="text-2xl leading-relaxed font-serif text-left px-4 whitespace-pre-wrap break-words prose prose-2xl max-w-none"
+                      className="text-lg leading-relaxed font-serif text-left px-4 whitespace-pre-wrap break-words prose prose-lg max-w-none"
                       dangerouslySetInnerHTML={{ __html: res.content }}
                     />
                     {res.sponsors && (
@@ -525,7 +525,7 @@ export default function DelegateDashboard() {
                   <Textarea 
                     id="content" 
                     ref={textAreaRef}
-                    className="min-h-[250px] text-lg leading-relaxed whitespace-pre-wrap font-serif" 
+                    className="min-h-[250px] text-lg leading-relaxed whitespace-pre-wrap break-words font-serif" 
                     required 
                     disabled={!allowResolutions || isCountrySuspended}
                     placeholder="Rédigez ici votre projet. Utilisez les boutons ci-dessus pour le style."
