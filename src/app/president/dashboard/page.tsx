@@ -472,7 +472,7 @@ export default function PresidentDashboard() {
                       </div>
                       <CardContent className="p-4 space-y-4">
                         <div 
-                          className="text-sm italic leading-relaxed whitespace-pre-wrap prose prose-sm max-w-none"
+                          className="text-sm leading-relaxed whitespace-pre-wrap prose prose-sm max-w-none"
                           dangerouslySetInnerHTML={{ __html: res.content }}
                         />
                         <div className="flex gap-2 justify-end pt-2 border-t">

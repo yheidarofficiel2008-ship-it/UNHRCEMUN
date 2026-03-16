@@ -264,7 +264,7 @@ export default function DelegateDashboard() {
                         )}
                       </div>
                       <div 
-                        className="italic text-muted-foreground whitespace-pre-wrap line-clamp-4 prose prose-sm max-w-none"
+                        className="text-muted-foreground whitespace-pre-wrap line-clamp-4 prose prose-sm max-w-none"
                         dangerouslySetInnerHTML={{ __html: item.content }}
                       />
                     </div>
@@ -368,7 +368,7 @@ export default function DelegateDashboard() {
                   </CardHeader>
                   <CardContent className="pt-8">
                     <div 
-                      className="text-2xl italic leading-relaxed font-serif text-center px-4 whitespace-pre-wrap prose prose-2xl max-w-none"
+                      className="text-2xl leading-relaxed font-serif text-center px-4 whitespace-pre-wrap prose prose-2xl max-w-none"
                       dangerouslySetInnerHTML={{ __html: res.content }}
                     />
                     {res.sponsors && (
@@ -429,7 +429,7 @@ export default function DelegateDashboard() {
                         <Eye size={12} /> Aperçu en temps réel
                       </div>
                       <div 
-                        className="text-lg italic font-serif leading-relaxed whitespace-pre-wrap prose prose-neutral max-w-none"
+                        className="text-lg font-serif leading-relaxed whitespace-pre-wrap prose prose-neutral max-w-none"
                         dangerouslySetInnerHTML={{ __html: resolutionForm.content }}
                       />
                     </div>
