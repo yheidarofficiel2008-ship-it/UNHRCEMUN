@@ -7,13 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { auth, db } from '@/lib/firebase';
+import { useFirebase, setDocumentNonBlocking } from '@/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function PresidentLogin() {
   const [email, setEmail] = useState('');
@@ -21,9 +19,11 @@ export default function PresidentLogin() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { auth, firestore: db } = useFirebase();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return;
     setLoading(true);
 
     try {
@@ -33,7 +33,7 @@ export default function PresidentLogin() {
     } catch (error: any) {
       toast({
         title: "Erreur d'authentification",
-        description: "Identifiants incorrects.",
+        description: "Identifiants incorrects ou bloqueur de publicité actif.",
         variant: "destructive"
       });
       setLoading(false);
@@ -42,6 +42,7 @@ export default function PresidentLogin() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth || !db) return;
     setLoading(true);
 
     try {
@@ -55,16 +56,7 @@ export default function PresidentLogin() {
         createdAt: serverTimestamp()
       };
 
-      // Important: ne pas await setDoc si on veut suivre le pattern non-bloquant, 
-      // mais ici c'est critique pour la suite de la navigation.
-      await setDoc(roleDoc, roleData).catch((err) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: roleDoc.path,
-          operation: 'create',
-          requestResourceData: roleData
-        }));
-        throw err;
-      });
+      setDocumentNonBlocking(roleDoc, roleData, { merge: true });
 
       toast({ title: "Compte créé", description: "Rôle président activé." });
       router.push('/president/dashboard');
@@ -110,13 +102,13 @@ export default function PresidentLogin() {
                     <Input className="pl-10" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                   </div>
                 </div>
+              </form>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="w-full bg-primary" disabled={loading}>
+                <Button type="submit" className="w-full bg-primary" disabled={loading} onClick={handleLogin}>
                   {loading ? "Chargement..." : <><LogIn className="mr-2 h-4 w-4" /> Accéder</>}
                 </Button>
               </CardFooter>
-            </form>
           </TabsContent>
 
           <TabsContent value="signup">
@@ -130,16 +122,17 @@ export default function PresidentLogin() {
                   <Label>Mot de passe</Label>
                   <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
+              </form>
               </CardContent>
               <CardFooter>
-                <Button type="submit" variant="outline" className="w-full border-primary text-primary" disabled={loading}>
+                <Button type="submit" variant="outline" className="w-full border-primary text-primary" disabled={loading} onClick={handleSignUp}>
                   {loading ? "Création..." : <><UserPlus className="mr-2 h-4 w-4" /> Créer le compte</>}
                 </Button>
               </CardFooter>
-            </form>
           </TabsContent>
         </Tabs>
       </Card>
+      <p className="mt-8 text-xs text-muted-foreground">Note: Désactivez AdBlock si vous rencontrez des erreurs de permission.</p>
     </div>
   );
 }

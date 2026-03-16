@@ -1,16 +1,19 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useRealtime() {
+  const { firestore: db } = useFirebase();
   const [isSuspended, setIsSuspended] = useState(false);
   const [currentAction, setCurrentAction] = useState<any>(null);
 
   useEffect(() => {
+    if (!db) return;
+
     // Écouter l'état global de la session (singleton)
     const sessionStateRef = doc(db, 'sessionState', 'current');
     
@@ -56,7 +59,7 @@ export function useRealtime() {
       unsubSettings();
       unsubActions();
     };
-  }, []);
+  }, [db]);
 
   return { isSuspended, currentAction };
 }
