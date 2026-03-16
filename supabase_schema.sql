@@ -1,74 +1,75 @@
 
--- Schéma SQL pour EMUN UNHRC (Migration vers Supabase)
+-- Schéma SQL pour migration vers Supabase (PostgreSQL)
 
--- 1. Table des Délégués
-CREATE TABLE delegates (
+-- Table pour les délégués
+CREATE TABLE IF NOT EXISTS delegates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   country_name TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
-  is_suspended BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now()
+  is_suspended BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Table des Actions / Débats
-CREATE TABLE actions (
+-- Table pour les actions (sessions/débats)
+CREATE TABLE IF NOT EXISTS actions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
-  status TEXT CHECK (status IN ('launched', 'started', 'paused', 'completed')) DEFAULT 'launched',
+  description TEXT,
   duration_minutes INTEGER DEFAULT 15,
   time_per_delegate TEXT DEFAULT '1:00',
-  description TEXT,
-  allow_participation BOOLEAN DEFAULT true,
+  status TEXT CHECK (status IN ('launched', 'started', 'paused', 'completed')),
   total_elapsed_seconds INTEGER DEFAULT 0,
-  started_at TIMESTAMPTZ,
   paused_at TIMESTAMPTZ,
+  started_at TIMESTAMPTZ,
   speaking_timer_status TEXT DEFAULT 'stopped',
   speaking_timer_started_at TIMESTAMPTZ,
   speaking_timer_total_elapsed INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now()
+  allow_participation BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. Table des Résolutions
-CREATE TABLE resolutions (
+-- Table pour les résolutions
+CREATE TABLE IF NOT EXISTS resolutions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   proposing_country TEXT NOT NULL,
   sponsors TEXT,
   content TEXT NOT NULL,
   status TEXT CHECK (status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
-  is_displayed BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now()
+  is_displayed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Table des Messages
-CREATE TABLE messages (
+-- Table pour les messages privés
+CREATE TABLE IF NOT EXISTS messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   sender_country TEXT NOT NULL,
-  type TEXT CHECK (type IN ('privilege', 'general')) DEFAULT 'general',
+  type TEXT CHECK (type IN ('privilege', 'general')),
   content TEXT NOT NULL,
-  is_read BOOLEAN DEFAULT false,
-  timestamp TIMESTAMPTZ DEFAULT now()
+  is_read BOOLEAN DEFAULT FALSE,
+  timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. Table des Participations (Historique Stats)
-CREATE TABLE participations (
-  id TEXT PRIMARY KEY, -- Format: actionId_delegateId
+-- Table pour les participations (speakers list)
+CREATE TABLE IF NOT EXISTS participations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   action_id UUID REFERENCES actions(id) ON DELETE CASCADE,
   delegate_id UUID REFERENCES delegates(id) ON DELETE CASCADE,
   country_name TEXT NOT NULL,
   status TEXT CHECK (status IN ('participating', 'passing')),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(action_id, delegate_id)
 );
 
--- 6. État global de la session (Single row)
-CREATE TABLE session_state (
+-- Table pour l'état global de la session
+CREATE TABLE IF NOT EXISTS session_state (
   id TEXT PRIMARY KEY DEFAULT 'current',
-  is_suspended BOOLEAN DEFAULT false,
-  allow_resolutions BOOLEAN DEFAULT true,
-  active_overlay JSONB DEFAULT '{"type": "none"}',
-  last_updated TIMESTAMPTZ DEFAULT now()
+  is_suspended BOOLEAN DEFAULT FALSE,
+  allow_resolutions BOOLEAN DEFAULT TRUE,
+  active_overlay_type TEXT DEFAULT 'none',
+  active_overlay_title TEXT,
+  active_overlay_vote_id TEXT,
+  active_overlay_results_pour INTEGER DEFAULT 0,
+  active_overlay_results_contre INTEGER DEFAULT 0,
+  active_overlay_results_abstention INTEGER DEFAULT 0,
+  last_updated TIMESTAMPTZ DEFAULT NOW()
 );
-
--- Insertion de l'état initial
-INSERT INTO session_state (id, is_suspended, allow_resolutions, active_overlay) 
-VALUES ('current', false, true, '{"type": "none"}')
-ON CONFLICT (id) DO NOTHING;
