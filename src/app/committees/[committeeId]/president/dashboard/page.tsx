@@ -14,9 +14,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useDoc } from '@/firebase';
+import { useMemoFirebase } from '@/firebase';
 import { useRealtime } from '@/hooks/use-realtime';
 import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc, onSnapshot, query, orderBy, serverTimestamp, increment } from 'firebase/firestore';
@@ -34,6 +35,9 @@ export default function PresidentDashboard() {
   const { firestore: db, auth, user, isUserLoading } = useFirebase();
   const { isSuspended, allowResolutions, currentAction, activeOverlay } = useRealtime(committeeId);
   
+  const committeeRef = useMemoFirebase(() => db ? doc(db, 'committees', committeeId) : null, [db, committeeId]);
+  const { data: committee } = useDoc(committeeRef);
+
   const [customMinutes, setCustomMinutes] = useState('1');
   const [newAction, setNewAction] = useState({
     title: '',
@@ -325,7 +329,7 @@ export default function PresidentDashboard() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-50">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold font-headline uppercase tracking-widest">EMUN - Présidence</h1>
+          <h1 className="text-xl font-bold font-headline uppercase tracking-widest">{committee?.name || "Comité"} - Présidence</h1>
           {isSuspended && <Badge variant="destructive" className="animate-pulse">SÉANCE SUSPENDUE</Badge>}
           {activeOverlay?.type === 'crisis' && <Badge variant="destructive" className="bg-red-600 animate-bounce uppercase font-black px-4 shadow-2xl">Mode Crise Actif</Badge>}
         </div>

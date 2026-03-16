@@ -5,8 +5,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'EMUN UNHRC - MUN HR Council',
-  description: 'Plateforme de gestion pour le United Nations Human Rights Council',
+  title: 'MUN-OS - Management Platform',
+  description: 'Plateforme de gestion centralisée pour les comités de simulation des Nations Unies.',
 };
 
 export default function RootLayout({
