@@ -16,7 +16,8 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useFirebase, useRealtime } from '@/firebase';
+import { useFirebase } from '@/firebase';
+import { useRealtime } from '@/hooks/use-realtime';
 import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc, onSnapshot, query, orderBy, serverTimestamp, increment } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
@@ -123,6 +124,12 @@ export default function PresidentDashboard() {
 
   const handleLogout = async () => { if (auth) { await signOut(auth); router.push('/'); } };
 
+  const parseTimePerDelegate = (timeStr: string) => {
+    if (!timeStr) return 60;
+    const [mins, secs] = timeStr.split(':').map(Number);
+    return (mins * 60) + (secs || 0);
+  };
+
   if (isUserLoading) return <div className="min-h-screen flex items-center justify-center font-bold">Authentification...</div>;
 
   return (
@@ -145,8 +152,16 @@ export default function PresidentDashboard() {
               <DialogFooter><Button onClick={launchOverlay} className="w-full">Lancer l'Action</Button></DialogFooter>
             </DialogContent>
           </Dialog>
-          {activeOverlay?.type !== 'none' && <Button variant="ghost" size="icon" onClick={stopOverlay} className="text-white hover:bg-white/20"><X size={18} /></Button>}
-          <Switch checked={allowResolutions} onCheckedChange={toggleResolutions} />
+          {activeOverlay?.type !== 'none' && (
+            <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
+              <span className="text-xs font-bold uppercase">{activeOverlay.title}</span>
+              <Button variant="ghost" size="icon" onClick={stopOverlay} className="h-6 w-6 text-white hover:bg-white/20"><X size={14} /></Button>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <Label className="text-[10px] font-bold uppercase">Résolutions</Label>
+            <Switch checked={allowResolutions} onCheckedChange={toggleResolutions} />
+          </div>
           <Button variant="destructive" onClick={toggleSuspension}>{isSuspended ? "Reprendre" : "Suspendre"}</Button>
           <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}><LogOut size={20} /></Button>
         </div>
@@ -157,7 +172,7 @@ export default function PresidentDashboard() {
           <Tabs defaultValue="actions">
             <TabsList className="w-full"><TabsTrigger value="actions" className="flex-1">Actions</TabsTrigger><TabsTrigger value="delegates" className="flex-1">Pays</TabsTrigger></TabsList>
             <TabsContent value="actions" className="space-y-6">
-              <Card><CardHeader><CardTitle className="text-lg">Nouvelle Action</CardTitle></CardHeader><CardContent className="space-y-4"><Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="Titre" /><Button className="w-full" onClick={createAction}>Lancer</Button></CardContent></Card>
+              <Card><CardHeader className="pb-4"><CardTitle className="text-lg">Nouvelle Action</CardTitle></CardHeader><CardContent className="space-y-4"><Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="Titre" /><Button className="w-full" onClick={createAction}>Lancer</Button></CardContent></Card>
               {currentAction && currentAction.status !== 'completed' && (
                 <Card className="border-primary/20"><CardHeader><CardTitle className="text-xl">{currentAction.title}</CardTitle></CardHeader><CardContent className="space-y-6">
                   <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
@@ -165,9 +180,44 @@ export default function PresidentDashboard() {
                     <Button className="bg-green-600" onClick={startTimer} disabled={currentAction.status === 'started'}>Démarrer</Button>
                     <Button variant="outline" onClick={pauseTimer} disabled={currentAction.status !== 'started'}>Pause</Button>
                   </div>
+                  <div className="pt-4 border-t space-y-4">
+                    <div className="flex justify-between items-center"><Label className="text-[10px] uppercase">Chrono Orateur</Label><Badge variant="outline">{currentAction.time_per_delegate}</Badge></div>
+                    <div className="flex justify-center"><SpeakingTimer status={currentAction.speaking_timer_status || 'stopped'} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} /></div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button variant="secondary" size="sm" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'actions', currentAction.id), { speaking_timer_status: 'started', speaking_timer_started_at: new Date().toISOString() })}>Lancer</Button>
+                      <Button variant="ghost" size="sm" className="border" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'actions', currentAction.id), { speaking_timer_status: 'stopped', speaking_timer_started_at: null, speaking_timer_total_elapsed: 0 })}>Reset</Button>
+                    </div>
+                  </div>
                   <Button variant="destructive" className="w-full" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'actions', currentAction.id), { status: 'completed' })}>Terminer</Button>
                 </CardContent></Card>
               )}
+            </TabsContent>
+            <TabsContent value="delegates" className="space-y-4">
+               <Card><CardHeader><CardTitle className="text-lg">Ajouter un Pays</CardTitle></CardHeader>
+               <CardContent className="space-y-3">
+                 <Input value={newDelegate.name} onChange={e => setNewDelegate({...newDelegate, name: e.target.value})} placeholder="Nom du Pays" />
+                 <Input value={newDelegate.password} onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} placeholder="Mot de passe" />
+                 <Button className="w-full bg-secondary" onClick={() => {
+                   if (!newDelegate.name || !newDelegate.password) return;
+                   addDocumentNonBlocking(collection(db!, 'committees', committeeId, 'delegates'), { country_name: newDelegate.name, password: newDelegate.password, is_suspended: false, created_at: serverTimestamp() });
+                   setNewDelegate({ name: '', password: '' });
+                 }}>Ajouter</Button>
+               </CardContent></Card>
+               <ScrollArea className="h-[400px]">
+                 <div className="space-y-2">
+                   {delegates.map(d => (
+                     <div key={d.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg border">
+                       <span className="font-bold text-sm">{d.country_name}</span>
+                       <div className="flex gap-1">
+                         <Button variant="ghost" size="icon" className={d.is_suspended ? 'text-green-600' : 'text-amber-600'} onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'delegates', d.id), { is_suspended: !d.is_suspended })}>
+                           {d.is_suspended ? <ShieldOff size={16} /> : <ShieldAlert size={16} />}
+                         </Button>
+                         <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'delegates', d.id))}><Trash2 size={16} /></Button>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               </ScrollArea>
             </TabsContent>
           </Tabs>
         </div>
@@ -178,19 +228,48 @@ export default function PresidentDashboard() {
               <div className="space-y-4">
                 {resolutions.map(res => (
                   <Card key={res.id} className={res.is_displayed ? 'border-primary border-2' : ''}>
-                    <CardHeader className="flex flex-row items-center justify-between"><CardTitle className="text-sm font-bold">{res.title}</CardTitle><Badge>{res.status}</Badge></CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-black uppercase">{res.title || 'SANS TITRE'}</CardTitle>
+                      <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>{res.status.toUpperCase()}</Badge>
+                    </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="flex gap-2"><Badge variant="outline">DE: {res.proposing_country}</Badge><Badge variant="outline">Porte-parole: {res.spokesperson}</Badge></div>
-                      <div className="text-sm prose" dangerouslySetInnerHTML={{ __html: res.content }} />
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <Badge variant="outline" className="bg-primary/10 border-primary/30 text-primary py-1 px-2 text-[10px] font-bold uppercase">DE: {res.proposing_country}</Badge>
+                        {res.spokesperson && <Badge variant="outline" className="bg-secondary/10 border-secondary/30 text-secondary py-1 px-2 text-[10px] font-bold uppercase gap-1"><User size={10} /> Porte-parole: {res.spokesperson}</Badge>}
+                        {res.sponsors && <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-muted-foreground py-1 px-2 text-[10px] font-bold uppercase gap-1"><Users size={10} /> Sponsors: {res.sponsors}</Badge>}
+                      </div>
+                      <div className="text-sm prose max-w-none prose-sm" dangerouslySetInnerHTML={{ __html: res.content }} />
                       <div className="flex gap-2 justify-end pt-4 border-t">
-                        <Button size="sm" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}>{res.is_displayed ? 'Masquer' : 'Afficher'}</Button>
+                        <Button size="sm" variant={res.is_displayed ? 'default' : 'outline'} onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}>{res.is_displayed ? 'Masquer' : 'Afficher'}</Button>
                         <Button size="sm" className="text-green-600" variant="outline" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}>Approuver</Button>
                         <Button size="sm" className="text-red-600" variant="outline" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}>Rejeter</Button>
+                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id))}><Trash2 size={16} /></Button>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
+            </TabsContent>
+            <TabsContent value="messages" className="mt-4">
+               <ScrollArea className="h-[600px]">
+                 <div className="space-y-4">
+                   {messages.map(msg => (
+                     <div key={msg.id} className={`p-4 border-l-4 rounded-r-xl shadow-sm flex flex-col gap-3 ${msg.is_read ? 'bg-muted/10 border-muted-foreground/30' : 'bg-secondary/5 border-secondary'}`}>
+                       <div className="flex justify-between items-start">
+                         <div className="flex items-center gap-2">
+                           <Badge variant={msg.type === 'privilege' ? 'destructive' : 'secondary'} className="uppercase text-[10px]">{msg.type === 'privilege' ? 'Privilège' : 'Général'}</Badge>
+                           <span className="font-bold text-sm">{msg.sender_country}</span>
+                         </div>
+                         <div className="flex gap-1">
+                           {!msg.is_read && <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'messages', msg.id), { is_read: true })}><Check size={16} /></Button>}
+                           <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'messages', msg.id))}><Trash2 size={16} /></Button>
+                         </div>
+                       </div>
+                       <p className="text-sm font-medium">{msg.content}</p>
+                     </div>
+                   ))}
+                 </div>
+               </ScrollArea>
             </TabsContent>
           </Tabs>
         </div>
@@ -198,3 +277,4 @@ export default function PresidentDashboard() {
     </div>
   );
 }
+

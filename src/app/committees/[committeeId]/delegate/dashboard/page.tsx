@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFirebase, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirebase } from '@/firebase';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp, setDoc, doc, increment, updateDoc, orderBy } from 'firebase/firestore';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
@@ -417,9 +417,9 @@ export default function DelegateDashboard() {
               </CardHeader>
               <CardContent className="pt-8 text-left">
                 <div className="mb-6 flex flex-wrap gap-2 items-center">
-                  <Badge variant="outline" className="bg-primary/10 border-primary/30 text-primary py-1 px-2 text-xs font-bold uppercase">DE: {res.proposing_country}</Badge>
-                  {res.spokesperson && <Badge variant="outline" className="bg-secondary/10 border-secondary/30 text-secondary py-1 px-2 text-xs font-bold uppercase gap-1"><User size={12} /> Porte-parole: {res.spokesperson}</Badge>}
-                  {res.sponsors && <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-muted-foreground py-1 px-2 text-xs font-bold uppercase gap-1"><Users size={12} /> Sponsors: {res.sponsors}</Badge>}
+                  <Badge variant="outline" className="bg-primary/10 border-primary/30 text-primary py-1 px-2 text-[10px] font-bold uppercase">DE: {res.proposing_country}</Badge>
+                  {res.spokesperson && <Badge variant="outline" className="bg-secondary/10 border-secondary/30 text-secondary py-1 px-2 text-[10px] font-bold uppercase gap-1"><User size={10} /> Porte-parole: {res.spokesperson}</Badge>}
+                  {res.sponsors && <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-muted-foreground py-1 px-2 text-[10px] font-bold uppercase gap-1"><Users size={10} /> Sponsors: {res.sponsors}</Badge>}
                 </div>
                 <div className="text-lg leading-relaxed font-serif whitespace-pre-wrap break-words prose prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: res.content }} />
               </CardContent>
@@ -465,3 +465,4 @@ export default function DelegateDashboard() {
     </div>
   );
 }
+
