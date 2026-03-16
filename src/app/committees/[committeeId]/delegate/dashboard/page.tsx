@@ -338,17 +338,17 @@ export default function DelegateDashboard() {
             </CardHeader>
             <form onSubmit={submitMessage}>
               <CardContent className="px-4 pb-3 space-y-3">
-                <Select value={messageForm.type} onValueChange={(val) => setMessageForm({...messageForm, type: val})} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}>
+                <Select value={messageForm.type} onValueChange={(val) => setMessageForm({...messageForm, type: val})} disabled={isCountrySuspended || (activeOverlay && activeOverlay.type === 'crisis')}>
                   <SelectTrigger className="h-8 text-xs bg-white"><SelectValue placeholder="Type de message" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="privilege">Point de privilège personnel</SelectItem>
                     <SelectItem value="general">Message général</SelectItem>
                   </SelectContent>
                 </Select>
-                <Textarea placeholder="Votre message..." className="min-h-[60px] text-xs resize-none break-words" value={messageForm.content} onChange={(e) => setMessageForm({...messageForm, content: e.target.value})} required disabled={isCountrySuspended || activeOverlay?.type === 'crisis'} />
+                <Textarea placeholder="Votre message..." className="min-h-[60px] text-xs resize-none break-words" value={messageForm.content} onChange={(e) => setMessageForm({...messageForm, content: e.target.value})} required disabled={isCountrySuspended || (activeOverlay && activeOverlay.type === 'crisis')} />
               </CardContent>
               <CardFooter className="px-4 pb-3 pt-0">
-                <Button size="sm" type="submit" className="w-full bg-secondary text-xs h-8" disabled={isSendingMessage || isCountrySuspended || activeOverlay?.type === 'crisis'}>
+                <Button size="sm" type="submit" className="w-full bg-secondary text-xs h-8" disabled={isSendingMessage || isCountrySuspended || (activeOverlay && activeOverlay.type === 'crisis')}>
                   {isSendingMessage ? "Envoi..." : "Envoyer"}
                 </Button>
               </CardFooter>
@@ -394,8 +394,8 @@ export default function DelegateDashboard() {
                   {currentAction.allow_participation && currentAction.status === 'launched' && (
                     <div className="pt-6 border-t text-center">
                       <div className="grid grid-cols-2 gap-6 max-w-md mx-auto">
-                        <Button size="lg" className={`h-24 text-xl gap-3 shadow-lg transition-transform hover:scale-105 ${participationStatus === 'participating' ? 'bg-green-600' : 'bg-primary'}`} onClick={() => handleParticipation('participating')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><CheckCircle2 size={28} /> Participer</Button>
-                        <Button size="lg" variant="outline" className={`h-24 text-xl gap-3 border-2 transition-transform hover:scale-105 ${participationStatus === 'passing' ? 'border-destructive text-destructive' : 'border-secondary text-secondary'}`} onClick={() => handleParticipation('passing')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><XCircle size={28} /> Passer</Button>
+                        <Button size="lg" className={`h-24 text-xl gap-3 shadow-lg transition-transform hover:scale-105 ${participationStatus === 'participating' ? 'bg-green-600' : 'bg-primary'}`} onClick={() => handleParticipation('participating')} disabled={isCountrySuspended || (activeOverlay && activeOverlay.type === 'crisis')}><CheckCircle2 size={28} /> Participer</Button>
+                        <Button size="lg" variant="outline" className={`h-24 text-xl gap-3 border-2 transition-transform hover:scale-105 ${participationStatus === 'passing' ? 'border-destructive text-destructive' : 'border-secondary text-secondary'}`} onClick={() => handleParticipation('passing')} disabled={isCountrySuspended || (activeOverlay && activeOverlay.type === 'crisis')}><XCircle size={28} /> Passer</Button>
                       </div>
                     </div>
                   )}
@@ -426,7 +426,7 @@ export default function DelegateDashboard() {
             </Card>
           ))}
 
-          <Card className={`shadow-xl ${(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') ? 'opacity-70 grayscale pointer-events-none' : ''}`}>
+          <Card className={`shadow-xl ${(!allowResolutions || isCountrySuspended || (activeOverlay && activeOverlay.type === 'crisis')) ? 'opacity-70 grayscale pointer-events-none' : ''}`}>
             <CardHeader className="bg-secondary/5 border-b mb-6 flex flex-row items-center justify-between">
               <CardTitle className="text-2xl font-headline">Soumettre une Résolution</CardTitle>
             </CardHeader>
@@ -465,4 +465,3 @@ export default function DelegateDashboard() {
     </div>
   );
 }
-

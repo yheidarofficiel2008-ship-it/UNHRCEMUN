@@ -138,7 +138,7 @@ export default function PresidentDashboard() {
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold uppercase tracking-widest">Bureau de Présidence</h1>
           {isSuspended && <Badge variant="destructive" className="animate-pulse">SESSION SUSPENDUE</Badge>}
-          {activeOverlay?.type === 'crisis' && <Badge variant="destructive" className="bg-red-600 animate-bounce uppercase">CRISE ACTIVE</Badge>}
+          {activeOverlay && activeOverlay.type === 'crisis' && <Badge variant="destructive" className="bg-red-600 animate-bounce uppercase">CRISE ACTIVE</Badge>}
         </div>
         <div className="flex items-center gap-4">
           <Dialog open={isOverlayDialogOpen} onOpenChange={setIsOverlayDialogOpen}>
@@ -152,7 +152,7 @@ export default function PresidentDashboard() {
               <DialogFooter><Button onClick={launchOverlay} className="w-full">Lancer l'Action</Button></DialogFooter>
             </DialogContent>
           </Dialog>
-          {activeOverlay?.type !== 'none' && (
+          {activeOverlay && activeOverlay.type !== 'none' && (
             <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
               <span className="text-xs font-bold uppercase">{activeOverlay.title}</span>
               <Button variant="ghost" size="icon" onClick={stopOverlay} className="h-6 w-6 text-white hover:bg-white/20"><X size={14} /></Button>
@@ -277,4 +277,3 @@ export default function PresidentDashboard() {
     </div>
   );
 }
-
