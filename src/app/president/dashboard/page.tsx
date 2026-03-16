@@ -58,7 +58,6 @@ export default function PresidentDashboard() {
   const [allParticipations, setAllParticipations] = useState<any[]>([]);
   const [allActions, setAllActions] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
-  const [initializing, setInitializing] = useState(false);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -744,7 +743,7 @@ export default function PresidentDashboard() {
                       </div>
                       <CardContent className="p-4 space-y-4">
                         <div 
-                          className="text-sm leading-relaxed whitespace-pre-wrap prose prose-sm max-w-none"
+                          className="text-sm leading-relaxed whitespace-pre-wrap break-words prose prose-sm max-w-none"
                           dangerouslySetInnerHTML={{ __html: res.content }}
                         />
                         {res.sponsors && (
@@ -815,7 +814,7 @@ export default function PresidentDashboard() {
                               </Button>
                             </div>
                           </div>
-                          <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                          <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                           <span className="text-[10px] text-muted-foreground self-end">
                             {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "À l'instant"}
                           </span>
