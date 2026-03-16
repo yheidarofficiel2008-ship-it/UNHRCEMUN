@@ -50,13 +50,13 @@ export default function PresidentDashboard() {
   }, [user, isUserLoading, router]);
 
   useEffect(() => {
-    if (!db) return;
+    if (!db || !user) return;
 
     const delRef = collection(db, 'delegates');
     const unsubDel = onSnapshot(query(delRef, orderBy('country_name', 'asc')), (snap) => {
       setDelegates(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }, (err) => {
-      if (user) errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'delegates', operation: 'list' }));
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'delegates', operation: 'list' }));
     });
 
     const resolutionsRef = collection(db, 'resolutions');
@@ -64,7 +64,7 @@ export default function PresidentDashboard() {
     const unsubRes = onSnapshot(qRes, (snapshot) => {
       setResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (err) => {
-      if (user) errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'resolutions', operation: 'list' }));
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'resolutions', operation: 'list' }));
     });
 
     return () => {

@@ -1,59 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isPresident() {
-      // Un président est identifié par son document dans la collection roles_president
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_president/$(request.auth.uid));
-    }
-
-    // --- RÈGLES DES COLLECTIONS ---
-
-    // Lecture publique pour tout ce qui concerne l'état de la séance
-    // Écriture réservée au président
-    match /sessionState/{document} {
-      allow read: if true;
-      allow write: if isPresident();
-    }
-
-    // Permettre la lecture publique des actions pour éviter les erreurs de snapshot au démarrage
-    match /actions/{actionId} {
-      allow read: if true;
-      allow write: if isPresident();
-
-      match /participations/{participationId} {
-        allow read: if true;
-        allow write: if isSignedIn();
-      }
-    }
-
-    // Les délégués sont publics en lecture pour permettre aux pays de se trouver
-    match /delegates/{delegateId} {
-      allow read: if true;
-      allow write: if isPresident();
-    }
-
-    match /resolutions/{resolutionId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
-      allow delete: if isPresident();
-    }
-
-    match /roles_president/{presidentUid} {
-      // Permettre la lecture pour l'auth et l'écriture par l'utilisateur lui-même lors du signup
-      allow read: if true;
-      allow write: if isSignedIn() && request.auth.uid == presidentUid;
-    }
-
-    // Règle de repli sécurisée
+    // Règle simplifiée au maximum pour le développement et la simulation
+    // Permet à tout utilisateur connecté (Président ou Délégué anonyme) de lire et écrire
     match /{document=**} {
-      allow read: if isSignedIn();
-      allow write: if isPresident();
+      allow read, write: if request.auth != null;
     }
   }
 }

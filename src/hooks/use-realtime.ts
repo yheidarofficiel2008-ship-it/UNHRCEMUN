@@ -12,9 +12,10 @@ export function useRealtime() {
   const [currentAction, setCurrentAction] = useState<any>(null);
 
   useEffect(() => {
-    if (!db) return;
+    // N'écouter que si l'utilisateur est authentifié pour éviter les erreurs de permission au boot
+    if (!db || isUserLoading || !user) return;
 
-    // Écouter l'état global de la session (lecture publique)
+    // Écouter l'état global de la session
     const sessionStateRef = doc(db, 'sessionState', 'current');
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -24,7 +25,7 @@ export function useRealtime() {
       }
     }, (error) => {
       // Propagation seulement si authentifié et erreur réelle
-      if (!isUserLoading && user) {
+      if (user) {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: 'sessionState/current',
           operation: 'get'
@@ -32,7 +33,7 @@ export function useRealtime() {
       }
     });
 
-    // Écouter l'action actuelle (lecture publique)
+    // Écouter l'action actuelle
     const actionsRef = collection(db, 'actions');
     const q = query(
       actionsRef, 
@@ -49,7 +50,7 @@ export function useRealtime() {
         setCurrentAction(null);
       }
     }, (error) => {
-      if (!isUserLoading && user) {
+      if (user) {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: 'actions',
           operation: 'list'
