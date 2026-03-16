@@ -1,7 +1,6 @@
--- Schéma SQL pour Immune UERC (MUN HR Council)
--- À utiliser si vous migrez vers une base PostgreSQL/Supabase
+-- Schema for Immune UERC - Human Rights Council MUN Simulation
 
--- 1. Table des Délégués
+-- 1. Delegates table
 CREATE TABLE delegates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     country_name TEXT NOT NULL UNIQUE,
@@ -9,7 +8,7 @@ CREATE TABLE delegates (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. Table des Actions (Agenda)
+-- 2. Actions (Agenda items)
 CREATE TABLE actions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
@@ -17,12 +16,12 @@ CREATE TABLE actions (
     duration_minutes INTEGER DEFAULT 15,
     time_per_delegate TEXT DEFAULT '1:00',
     allow_participation BOOLEAN DEFAULT TRUE,
-    status TEXT DEFAULT 'launched', -- launched, started, completed
+    status TEXT DEFAULT 'pending', -- pending, launched, started, completed
     started_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. Table des Participations (Inscriptions orateurs)
+-- 3. Participations (Orators list)
 CREATE TABLE participations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     action_id UUID REFERENCES actions(id) ON DELETE CASCADE,
@@ -32,7 +31,7 @@ CREATE TABLE participations (
     UNIQUE(action_id, delegate_id)
 );
 
--- 4. Table des Résolutions
+-- 4. Resolutions
 CREATE TABLE resolutions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     proposing_country TEXT NOT NULL,
@@ -43,11 +42,12 @@ CREATE TABLE resolutions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. État de la session (Singleton)
+-- 5. Global Session State (Singleton)
 CREATE TABLE session_state (
     id TEXT PRIMARY KEY DEFAULT 'current',
     is_suspended BOOLEAN DEFAULT FALSE,
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-INSERT INTO session_state (id, is_suspended) VALUES ('current', FALSE) ON CONFLICT DO NOTHING;
+-- Initial session state
+INSERT INTO session_state (id, is_suspended) VALUES ('current', FALSE);

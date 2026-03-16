@@ -15,12 +15,9 @@ import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocki
 import { collection, doc, onSnapshot, query, orderBy, getDoc, serverTimestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useRealtime } from '@/hooks/use-realtime';
-import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
 import { aiResolutionSummarizer } from '@/ai/flows/ai-resolution-summarizer';
 import { useToast } from '@/hooks/use-toast';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function PresidentDashboard() {
   const router = useRouter();
@@ -55,13 +52,13 @@ export default function PresidentDashboard() {
     const delRef = collection(db, 'delegates');
     const unsubDel = onSnapshot(query(delRef, orderBy('country_name', 'asc')), (snap) => {
       setDelegates(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
+    }, (err) => console.warn("Erreur delegates:", err));
 
     const resolutionsRef = collection(db, 'resolutions');
     const qRes = query(resolutionsRef, orderBy('created_at', 'desc'));
     const unsubRes = onSnapshot(qRes, (snapshot) => {
       setResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    }, (err) => console.warn("Erreur resolutions:", err));
 
     return () => {
       unsubDel();
@@ -85,7 +82,7 @@ export default function PresidentDashboard() {
         };
       }));
       setParticipants(parts);
-    });
+    }, (err) => console.warn("Erreur participations:", err));
 
     return () => unsubPart();
   }, [db, currentAction?.id]);
@@ -122,6 +119,7 @@ export default function PresidentDashboard() {
     const sessionRef = doc(db, 'sessionState', 'current');
     const update = { isSuspended: !isSuspended, lastUpdated: new Date().toISOString() };
     setDocumentNonBlocking(sessionRef, update, { merge: true });
+    toast({ title: !isSuspended ? "Séance Suspendue" : "Séance Reprise" });
   };
 
   const createAction = () => {
@@ -193,19 +191,20 @@ export default function PresidentDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {isSuspended && <SuspensionOverlay />}
+      {/* Pas de SuspensionOverlay ici pour le Président pour qu'il puisse reprendre la séance */}
       
-      <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-20">
+      <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-50">
         <div className="flex items-center gap-4">
           <Landmark className="h-8 w-8" />
           <h1 className="text-xl font-bold font-headline uppercase tracking-widest">Immune UERC - Présidence</h1>
+          {isSuspended && <Badge variant="destructive" className="animate-pulse">SÉANCE SUSPENDUE</Badge>}
         </div>
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white" onClick={initDatabase} disabled={initializing}>
             <Database size={16} className="mr-2" /> Initialiser DB
           </Button>
-          <Button variant={isSuspended ? "destructive" : "outline"} onClick={toggleSuspension}>
-            {isSuspended ? "Reprendre" : "Suspendre"}
+          <Button variant={isSuspended ? "destructive" : "outline"} onClick={toggleSuspension} className={isSuspended ? "bg-red-600 hover:bg-red-700" : ""}>
+            {isSuspended ? "Reprendre la Séance" : "Suspendre la Séance"}
           </Button>
           <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}>
             <LogOut size={20} />
