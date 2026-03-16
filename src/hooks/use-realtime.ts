@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useFirebase } from '@/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useRealtime() {
   const { firestore: db, user, isUserLoading } = useFirebase();
@@ -12,28 +10,19 @@ export function useRealtime() {
   const [currentAction, setCurrentAction] = useState<any>(null);
 
   useEffect(() => {
-    // On n'active les écouteurs que si l'utilisateur est authentifié et que le chargement est fini
-    if (!db || isUserLoading || !user) {
-      return;
-    }
+    if (!db) return;
 
-    // Écouter l'état global de la session
+    // Écouter l'état global de la session (Toujours autorisé maintenant)
     const sessionStateRef = doc(db, 'sessionState', 'current');
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
       if (docSnap.exists()) {
         setIsSuspended(docSnap.data().isSuspended === true);
       }
     }, (error) => {
-      // On ne lève l'erreur que si l'utilisateur est connecté et que ce n'est pas juste un délai d'auth
-      if (user && error.code !== 'permission-denied') {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: 'sessionState/current',
-          operation: 'get'
-        }));
-      }
+      console.warn("Erreur silencieuse sessionState:", error.message);
     });
 
-    // Écouter l'action actuelle
+    // Écouter l'action actuelle (Toujours autorisé maintenant)
     const actionsRef = collection(db, 'actions');
     const q = query(
       actionsRef, 
@@ -50,19 +39,14 @@ export function useRealtime() {
         setCurrentAction(null);
       }
     }, (error) => {
-      if (user && error.code !== 'permission-denied') {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: 'actions',
-          operation: 'list'
-        }));
-      }
+      console.warn("Erreur silencieuse actions:", error.message);
     });
 
     return () => {
       unsubSettings();
       unsubActions();
     };
-  }, [db, user, isUserLoading]);
+  }, [db]); // On ne dépend plus de 'user' pour laisser la lecture publique se faire
 
   return { isSuspended, currentAction };
 }
