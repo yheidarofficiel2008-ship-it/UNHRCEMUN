@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check } from 'lucide-react';
+import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirebase } from '@/firebase';
 import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc, onSnapshot, query, orderBy, getDocs, serverTimestamp, writeBatch, increment, where } from 'firebase/firestore';
@@ -26,7 +28,7 @@ export default function PresidentDashboard() {
   const router = useRouter();
   const { toast } = useToast();
   const { firestore: db, auth, user, isUserLoading } = useFirebase();
-  const { isSuspended, allowResolutions, currentAction } = useRealtime();
+  const { isSuspended, allowResolutions, currentAction, activeOverlay } = useRealtime();
   
   const [customMinutes, setCustomMinutes] = useState('1');
   const [newAction, setNewAction] = useState({
@@ -36,6 +38,12 @@ export default function PresidentDashboard() {
     description: '',
     allowParticipation: true
   });
+
+  const [overlayForm, setOverlayForm] = useState({
+    type: 'message',
+    title: ''
+  });
+  const [isOverlayDialogOpen, setIsOverlayDialogOpen] = useState(false);
 
   const [delegates, setDelegates] = useState<any[]>([]);
   const [resolutions, setResolutions] = useState<any[]>([]);
@@ -98,7 +106,8 @@ export default function PresidentDashboard() {
     setDocumentNonBlocking(sessionRef, { 
       isSuspended: false, 
       allowResolutions: true,
-      lastUpdated: new Date().toISOString() 
+      lastUpdated: new Date().toISOString(),
+      activeOverlay: { type: 'none' }
     }, { merge: true });
     toast({ title: "Base de données initialisée" });
     setInitializing(false);
@@ -115,6 +124,28 @@ export default function PresidentDashboard() {
     const sessionRef = doc(db, 'sessionState', 'current');
     updateDocumentNonBlocking(sessionRef, { allowResolutions: val, lastUpdated: new Date().toISOString() });
     toast({ title: val ? "Résolutions autorisées" : "Résolutions bloquées" });
+  };
+
+  const launchOverlay = () => {
+    if (!db || !overlayForm.title) return;
+    const sessionRef = doc(db, 'sessionState', 'current');
+    const overlayData = {
+      type: overlayForm.type,
+      title: overlayForm.title,
+      status: 'active',
+      voteId: overlayForm.type === 'vote' ? Date.now().toString() : null,
+      results: overlayForm.type === 'vote' ? { pour: 0, contre: 0, abstention: 0 } : null
+    };
+    updateDocumentNonBlocking(sessionRef, { activeOverlay: overlayData });
+    setIsOverlayDialogOpen(false);
+    toast({ title: overlayForm.type === 'vote' ? "Vote lancé" : "Message affiché" });
+  };
+
+  const stopOverlay = () => {
+    if (!db) return;
+    const sessionRef = doc(db, 'sessionState', 'current');
+    updateDocumentNonBlocking(sessionRef, { activeOverlay: { type: 'none' } });
+    toast({ title: "Affichage arrêté" });
   };
 
   const createAction = async () => {
@@ -254,6 +285,50 @@ export default function PresidentDashboard() {
           {isSuspended && <Badge variant="destructive" className="animate-pulse">SÉANCE SUSPENDUE</Badge>}
         </div>
         <div className="flex items-center gap-6">
+          <Dialog open={isOverlayDialogOpen} onOpenChange={setIsOverlayDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-amber-500 hover:bg-amber-600 font-bold gap-2">
+                <Stars size={18} /> Action Spéciale
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Annonce ou Vote Global</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Type d'affichage</Label>
+                  <Select value={overlayForm.type} onValueChange={(val) => setOverlayForm({...overlayForm, type: val})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="message">Message à afficher (Bleu)</SelectItem>
+                      <SelectItem value="vote">Procédure de vote</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Titre / Sujet</Label>
+                  <Input 
+                    placeholder="Ex: Vote sur la résolution A-12" 
+                    value={overlayForm.title} 
+                    onChange={(e) => setOverlayForm({...overlayForm, title: e.target.value})} 
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={launchOverlay} className="bg-primary w-full">Lancer sur tous les écrans</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {activeOverlay && activeOverlay.type !== 'none' && (
+            <Button variant="outline" className="bg-white/10 text-white border-white/40 gap-2" onClick={stopOverlay}>
+              <X size={16} /> Arrêter Modal
+            </Button>
+          )}
+
           <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
             {allowResolutions ? <MessageSquare size={16} /> : <MessageSquareOff size={16} />}
             <span className="text-xs font-bold uppercase tracking-tighter">Résolutions</span>

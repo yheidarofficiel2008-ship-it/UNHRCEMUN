@@ -10,6 +10,7 @@ export function useRealtime() {
   const [isSuspended, setIsSuspended] = useState(false);
   const [allowResolutions, setAllowResolutions] = useState(true);
   const [currentAction, setCurrentAction] = useState<any>(null);
+  const [activeOverlay, setActiveOverlay] = useState<any>(null);
 
   useEffect(() => {
     if (!db) return;
@@ -21,6 +22,7 @@ export function useRealtime() {
         const data = docSnap.data();
         setIsSuspended(data.isSuspended === true);
         setAllowResolutions(data.allowResolutions !== false);
+        setActiveOverlay(data.activeOverlay || { type: 'none' });
       }
     }, (error) => {
       console.warn("Session state error:", error.message);
@@ -52,5 +54,5 @@ export function useRealtime() {
     };
   }, [db]);
 
-  return { isSuspended, allowResolutions, currentAction };
+  return { isSuspended, allowResolutions, currentAction, activeOverlay };
 }

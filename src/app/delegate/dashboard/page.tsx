@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, setDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, setDoc, doc, increment, updateDoc } from 'firebase/firestore';
 import { useRealtime } from '@/hooks/use-realtime';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
@@ -23,9 +23,10 @@ import { useToast } from '@/hooks/use-toast';
 export default function DelegateDashboard() {
   const router = useRouter();
   const { toast } = useToast();
-  const { isSuspended, allowResolutions, currentAction } = useRealtime();
+  const { isSuspended, allowResolutions, currentAction, activeOverlay } = useRealtime();
   const [delegate, setDelegate] = useState<any>(null);
   const [participationStatus, setParticipationStatus] = useState<string | null>(null);
+  const [hasVoted, setHasVoted] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   
   const [resolutionForm, setResolutionForm] = useState({
@@ -90,6 +91,10 @@ export default function DelegateDashboard() {
     return () => unsub();
   }, [currentAction, delegate]);
 
+  useEffect(() => {
+    setHasVoted(false);
+  }, [activeOverlay?.voteId]);
+
   const handleParticipation = async (status: 'participating' | 'passing') => {
     if (!currentAction || !delegate) return;
     try {
@@ -104,6 +109,20 @@ export default function DelegateDashboard() {
       toast({ title: "Choix enregistré" });
     } catch (e) {
       toast({ title: "Erreur", description: "Échec de l'enregistrement.", variant: "destructive" });
+    }
+  };
+
+  const handleVote = async (choice: 'pour' | 'contre' | 'abstention') => {
+    if (!activeOverlay || activeOverlay.type !== 'vote' || hasVoted) return;
+    try {
+      const sessionRef = doc(db, 'sessionState', 'current');
+      await updateDoc(sessionRef, {
+        [`activeOverlay.results.${choice}`]: increment(1)
+      });
+      setHasVoted(true);
+      toast({ title: "Vote enregistré" });
+    } catch (e) {
+      toast({ title: "Erreur lors du vote", variant: "destructive" });
     }
   };
 
@@ -122,14 +141,12 @@ export default function DelegateDashboard() {
     let newSelectionStart;
     let newSelectionEnd;
 
-    // 1. Vérifier si la sélection est EXACTEMENT entourée par les balises
     if (selectedText.startsWith(openTag) && selectedText.endsWith(closeTag)) {
       const unwrapped = selectedText.substring(openTag.length, selectedText.length - closeTag.length);
       newText = text.substring(0, start) + unwrapped + text.substring(end);
       newSelectionStart = start;
       newSelectionEnd = start + unwrapped.length;
     } 
-    // 2. Vérifier si le texte entourant la sélection contient les balises
     else if (
       text.substring(start - openTag.length, start) === openTag &&
       text.substring(end, end + closeTag.length) === closeTag
@@ -138,7 +155,6 @@ export default function DelegateDashboard() {
       newSelectionStart = start - openTag.length;
       newSelectionEnd = end - openTag.length;
     }
-    // 3. Sinon, ajouter les balises (comportement par défaut)
     else {
       newText = text.substring(0, start) + openTag + selectedText + closeTag + text.substring(end);
       newSelectionStart = start + openTag.length;
@@ -214,8 +230,61 @@ export default function DelegateDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative">
       {isSuspended && <SuspensionOverlay />}
+      
+      {activeOverlay && activeOverlay.type !== 'none' && (
+        <div className="fixed inset-0 z-[9999] bg-primary flex flex-col items-center justify-center p-8 text-white animate-in fade-in zoom-in duration-500">
+          <div className="max-w-4xl w-full text-center space-y-12">
+            <h1 className="text-6xl font-black uppercase tracking-tighter leading-tight">{activeOverlay.title}</h1>
+            
+            {activeOverlay.type === 'vote' && (
+              <div className="space-y-12">
+                <div className="grid grid-cols-3 gap-8">
+                  <div className="flex flex-col items-center gap-4">
+                    <Button 
+                      size="lg" 
+                      className="w-full h-32 bg-green-500 hover:bg-green-600 text-3xl font-bold gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
+                      onClick={() => handleVote('pour')}
+                      disabled={hasVoted}
+                    >
+                      <ThumbsUp size={40} /> POUR
+                    </Button>
+                    <div className="text-5xl font-black tabular-nums">{activeOverlay.results?.pour || 0}</div>
+                  </div>
+                  <div className="flex flex-col items-center gap-4">
+                    <Button 
+                      size="lg" 
+                      className="w-full h-32 bg-red-500 hover:bg-red-600 text-3xl font-bold gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
+                      onClick={() => handleVote('contre')}
+                      disabled={hasVoted}
+                    >
+                      <ThumbsDown size={40} /> CONTRE
+                    </Button>
+                    <div className="text-5xl font-black tabular-nums">{activeOverlay.results?.contre || 0}</div>
+                  </div>
+                  <div className="flex flex-col items-center gap-4">
+                    <Button 
+                      size="lg" 
+                      className="w-full h-32 bg-yellow-500 hover:bg-yellow-600 text-3xl font-bold gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
+                      onClick={() => handleVote('abstention')}
+                      disabled={hasVoted}
+                    >
+                      <CircleSlash size={40} /> ABST.
+                    </Button>
+                    <div className="text-5xl font-black tabular-nums">{activeOverlay.results?.abstention || 0}</div>
+                  </div>
+                </div>
+                {hasVoted && <div className="text-xl font-bold uppercase tracking-widest text-white/80 animate-pulse">Vote enregistré avec succès</div>}
+              </div>
+            )}
+            
+            {activeOverlay.type === 'message' && (
+              <div className="text-2xl font-bold uppercase tracking-[0.3em] text-white/60 animate-pulse">Annonce de la Présidence</div>
+            )}
+          </div>
+        </div>
+      )}
 
       <header className="bg-secondary text-white p-4 shadow-md flex justify-between items-center z-20">
         <div className="flex items-center gap-4">
