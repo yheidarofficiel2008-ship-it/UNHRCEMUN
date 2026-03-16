@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, Info } from 'lucide-react';
+import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, Info, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,11 @@ export default function PresidentDashboard() {
     timePerDelegate: '1:00',
     description: '',
     allowParticipation: true
+  });
+
+  const [newDelegate, setNewDelegate] = useState({
+    name: '',
+    password: ''
   });
 
   const [overlayForm, setOverlayForm] = useState({
@@ -174,6 +179,24 @@ export default function PresidentDashboard() {
       setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
     } catch (e) {
       toast({ title: "Erreur", description: "Impossible de créer l'action.", variant: "destructive" });
+    }
+  };
+
+  const handleAddDelegate = async () => {
+    if (!db || !newDelegate.name || !newDelegate.password) {
+      toast({ title: "Champs manquants", description: "Veuillez saisir un pays et un mot de passe.", variant: "destructive" });
+      return;
+    }
+    try {
+      await addDocumentNonBlocking(collection(db, 'delegates'), {
+        country_name: newDelegate.name,
+        password: newDelegate.password,
+        created_at: serverTimestamp()
+      });
+      setNewDelegate({ name: '', password: '' });
+      toast({ title: "Pays ajouté avec succès" });
+    } catch (e) {
+      toast({ title: "Erreur", description: "Échec de l'ajout.", variant: "destructive" });
     }
   };
 
@@ -526,15 +549,47 @@ export default function PresidentDashboard() {
 
             <TabsContent value="delegates" className="space-y-6 mt-4">
               <Card>
-                <CardHeader><CardTitle className="text-lg">Délégués ({delegates.length})</CardTitle></CardHeader>
+                <CardHeader className="pb-3 flex flex-row items-center gap-2">
+                  <UserPlus size={18} className="text-secondary" />
+                  <CardTitle className="text-lg">Ajouter un Pays</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Nom du Pays</Label>
+                    <Input 
+                      value={newDelegate.name} 
+                      onChange={e => setNewDelegate({...newDelegate, name: e.target.value})} 
+                      placeholder="Ex: Canada" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Mot de passe</Label>
+                    <Input 
+                      value={newDelegate.password} 
+                      onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} 
+                      placeholder="Secret123" 
+                    />
+                  </div>
+                  <Button className="w-full bg-secondary" onClick={handleAddDelegate}>Ajouter à la liste</Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle className="text-lg">Délégués Enregistrés ({delegates.length})</CardTitle></CardHeader>
                 <CardContent>
-                  <ScrollArea className="h-[400px]">
+                  <ScrollArea className="h-[300px]">
                     {delegates.map(d => (
                       <div key={d.id} className="flex justify-between items-center p-3 bg-muted/50 mb-2 rounded-lg">
-                        <span className="font-semibold">{d.country_name}</span>
-                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteDocumentNonBlocking(doc(db!, 'delegates', d.id))}><Trash2 size={16} /></Button>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-sm">{d.country_name}</span>
+                          <span className="text-[10px] text-muted-foreground font-mono">Pass: {d.password}</span>
+                        </div>
+                        <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => deleteDocumentNonBlocking(doc(db!, 'delegates', d.id))}>
+                          <Trash2 size={16} />
+                        </Button>
                       </div>
                     ))}
+                    {delegates.length === 0 && <p className="text-xs text-center text-muted-foreground italic py-4">Aucun pays enregistré.</p>}
                   </ScrollArea>
                 </CardContent>
               </Card>
