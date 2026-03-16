@@ -1,0 +1,362 @@
+{
+  "entities": {
+    "Delegate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Delegate",
+      "type": "object",
+      "description": "Represents a delegate participating in the Model United Nations committee. Delegates use a simplified authentication method based on their country name and a password.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Delegate entity."
+        },
+        "countryName": {
+          "type": "string",
+          "description": "The official name of the country represented by this delegate."
+        },
+        "passwordHash": {
+          "type": "string",
+          "description": "The securely hashed password used by the delegate for authentication. (Note: Store hashes, not plain passwords)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the delegate record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the delegate record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "countryName",
+        "passwordHash",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CommitteeSession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CommitteeSession",
+      "type": "object",
+      "description": "Manages the overall state of a single committee session, including its suspension status.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CommitteeSession entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the committee session, e.g., 'UERC 2024 Session 1'."
+        },
+        "isSuspended": {
+          "type": "boolean",
+          "description": "Boolean indicating if the current committee session is suspended by the President."
+        },
+        "suspensionMessage": {
+          "type": "string",
+          "description": "An optional message to be displayed to all users when the session is suspended."
+        },
+        "suspendedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the session was last suspended. Null if not currently suspended.",
+          "format": "date-time"
+        },
+        "currentActionId": {
+          "type": "string",
+          "description": "Reference to the Action currently in progress within this session. (Relationship: CommitteeSession 1:N Action)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the committee session record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the committee session record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "isSuspended",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Action": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Action",
+      "type": "object",
+      "description": "Represents a specific agenda item or discussion period managed by the President, with a timer and delegate participation options.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Action entity."
+        },
+        "committeeSessionId": {
+          "type": "string",
+          "description": "Reference to the CommitteeSession this action belongs to. (Relationship: CommitteeSession 1:N Action)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The title or name of the action, e.g., 'Débat Général'."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the action's purpose or topic."
+        },
+        "totalDurationMinutes": {
+          "type": "number",
+          "description": "The total intended duration of the action in minutes."
+        },
+        "speechTimePerDelegateMinutes": {
+          "type": "number",
+          "description": "The allowed speaking time for each participating delegate in minutes, for guidance."
+        },
+        "allowDelegateParticipation": {
+          "type": "boolean",
+          "description": "Boolean indicating if delegates are allowed to indicate their participation in this action."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the action (e.g., 'pending', 'open_for_participation', 'in_progress', 'completed')."
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Timestamp indicating when the action officially started and the global timer began.",
+          "format": "date-time"
+        },
+        "presidentId": {
+          "type": "string",
+          "description": "Reference to the unique identifier of the President user from the external authentication system who created or manages this action."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the action record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the action record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "committeeSessionId",
+        "name",
+        "description",
+        "totalDurationMinutes",
+        "allowDelegateParticipation",
+        "status",
+        "presidentId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ActionParticipation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ActionParticipation",
+      "type": "object",
+      "description": "Records a delegate's decision to participate or pass on a specific action.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ActionParticipation entity."
+        },
+        "actionId": {
+          "type": "string",
+          "description": "Reference to the Action for which the delegate is indicating participation. (Relationship: Action 1:N ActionParticipation)"
+        },
+        "delegateId": {
+          "type": "string",
+          "description": "Reference to the Delegate making the participation choice. (Relationship: Delegate 1:N ActionParticipation)"
+        },
+        "isParticipating": {
+          "type": "boolean",
+          "description": "Boolean indicating true if the delegate chose to participate, or false if they chose to pass/abstain."
+        },
+        "responseTimestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when the delegate's participation choice was recorded.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the action participation record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the action participation record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "actionId",
+        "delegateId",
+        "isParticipating",
+        "responseTimestamp",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Resolution": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Resolution",
+      "type": "object",
+      "description": "Represents a resolution proposed by a delegate, which is then subject to review and approval by the President.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Resolution entity."
+        },
+        "delegateId": {
+          "type": "string",
+          "description": "Reference to the Delegate who proposed this resolution. (Relationship: Delegate 1:N Resolution)"
+        },
+        "proposingCountryName": {
+          "type": "string",
+          "description": "The name of the country proposing the resolution, as entered by the delegate."
+        },
+        "sponsors": {
+          "type": "string",
+          "description": "A text field listing the sponsoring countries or entities for the resolution."
+        },
+        "content": {
+          "type": "string",
+          "description": "The full text content of the proposed resolution."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the resolution (e.g., 'pending', 'approved', 'rejected', 'modification_requested')."
+        },
+        "presidentFeedback": {
+          "type": "string",
+          "description": "Optional feedback or specific reasons from the President if the resolution is rejected or requires modification."
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the resolution was submitted by the delegate.",
+          "format": "date-time"
+        },
+        "reviewedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the resolution was last reviewed by the President. Null if not yet reviewed.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the resolution record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the resolution record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "delegateId",
+        "proposingCountryName",
+        "sponsors",
+        "content",
+        "status",
+        "submittedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/delegates/{delegateId}",
+        "definition": {
+          "entityName": "Delegate",
+          "schema": {
+            "$ref": "#/backend/entities/Delegate"
+          },
+          "description": "Stores individual delegate profiles. The `{delegateId}` corresponds to the `request.auth.uid` of the authenticated delegate, allowing for direct ownership checks in security rules. Includes 'passwordHash' for the custom authentication system."
+        }
+      },
+      {
+        "path": "/committeeSessions/{sessionId}",
+        "definition": {
+          "entityName": "CommitteeSession",
+          "schema": {
+            "$ref": "#/backend/entities/CommitteeSession"
+          },
+          "description": "Manages the global state of the MUN committee session. It is expected to contain a single document (e.g., 'activeSession') for the current session. Includes 'currentActionId' to point to the active action. Read access for all authenticated users; write access for the President, who is identified by a 'presidentId' field within the document for authorization independence.",
+          "params": [
+            {
+              "name": "sessionId",
+              "description": "The unique identifier for the committee session. Expected to be a single, well-known ID like 'activeSession'."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/actions/{actionId}",
+        "definition": {
+          "entityName": "Action",
+          "schema": {
+            "$ref": "#/backend/entities/Action"
+          },
+          "description": "Contains details for each action (agenda item) created by the President. The `presidentId` field is denormalized for direct President ownership and authorization. The `status` field explicitly models the action's lifecycle (e.g., 'pending', 'in_progress').",
+          "params": [
+            {
+              "name": "actionId",
+              "description": "The unique identifier for an action within a committee session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/actionParticipations/{actionParticipationId}",
+        "definition": {
+          "entityName": "ActionParticipation",
+          "schema": {
+            "$ref": "#/backend/entities/ActionParticipation"
+          },
+          "description": "Records a delegate's participation choice for a specific action. Denormalizes `delegateId` for direct ownership and `actionId` for efficient querying by both delegates and presidents, ensuring Authorization Independence and QAPs.",
+          "params": [
+            {
+              "name": "actionParticipationId",
+              "description": "The unique identifier for a delegate's participation record in an action."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/resolutions/{resolutionId}",
+        "definition": {
+          "entityName": "Resolution",
+          "schema": {
+            "$ref": "#/backend/entities/Resolution"
+          },
+          "description": "Stores proposed resolutions from delegates. Denormalizes `delegateId` and `proposingCountryName` for direct ownership and `status` for explicit state modeling, supporting Authorization Independence and QAPs for review and display.",
+          "params": [
+            {
+              "name": "resolutionId",
+              "description": "The unique identifier for a proposed resolution."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure for Immune UERC is designed to ensure robust security, scalability, and debuggability, adhering strictly to the provided design principles. It leverages top-level collections for primary entities to facilitate efficient querying and strong authorization independence.\n\n**Authorization Independence (CRITICAL):**\n1.  **Delegate Ownership:** Each `Delegate` document is stored at `/delegates/{delegateId}`, where `{delegateId}` directly corresponds to the authenticated `request.auth.uid`. This allows for simple, atomic ownership rules (e.g., `request.auth.uid == delegateId`) without any `get()` operations.\n2.  **Action Management:** `Action` documents, stored at `/actions/{actionId}`, explicitly include the `presidentId`. This denormalized field allows rules to verify the President's authority (e.g., `request.auth.uid == resource.data.presidentId`) directly on the document, preventing hierarchical authorization dependencies.\n3.  **Action Participation:** `ActionParticipation` documents, at `/actionParticipations/{actionParticipationId}`, denormalize both `delegateId` and `actionId`. This is crucial for two reasons:\n    *   **Delegate Ownership:** A delegate can create/modify their own participation by checking `request.auth.uid == resource.data.delegateId` directly.\n    *   **Query Efficiency:** Presidents can query all participations for a given action using `where('actionId', '==', ...)` without complex subcollection traversals or `get()` calls to parent `Action` documents for authorization.\n4.  **Resolution Ownership and Review:** `Resolution` documents, at `/resolutions/{resolutionId}`, denormalize `delegateId` and `proposingCountryName`. This enables delegates to manage their own resolutions (`request.auth.uid == resource.data.delegateId`) and presidents to review all resolutions efficiently, without `get()` calls to `Delegate` documents for authorization context.\n5.  **Committee Session Management:** The `CommitteeSession` document (expected to be a single 'activeSession' document at `/committeeSessions/activeSession`) requires a `presidentId` field (even if not explicitly in the provided schema) to allow direct authorization checks for its management by the President. For read access, it's globally accessible, ensuring authorization independence for all interactions.\n\n**Queryable Authorization Patterns (QAPs):**\nBy maintaining top-level collections and denormalizing relevant `id` fields:\n*   **Delegates** can easily `list` their own `ActionParticipation` records by querying `where('delegateId', '==', request.auth.uid)` on the `/actionParticipations` collection. Similarly, they can list their own `Resolution` proposals from the `/resolutions` collection using `where('delegateId', '==', request.auth.uid)`.\n*   **Presidents** can `list` all `Action` documents, and for the current action, they can `list` all `ActionParticipation` records by querying `where('actionId', '==', currentActionId)` on the `/actionParticipations` collection. They can also `list` all `Resolution` documents for review from the `/resolutions` collection. These patterns avoid filtering data clientside and ensure security rules can enforce access efficiently on `list` operations.\n\n**Structural Segregation & Explicit State Modeling:**\n*   Each collection (e.g., `/delegates`, `/actions`, `/resolutions`) maintains a homogeneous security posture, simplifying security rules. For instance, all documents in `/delegates` are self-owned, while all documents in `/actions` are publicly readable but president-writable.\n*   Explicit `status` fields in `Action` (e.g., 'pending', 'open_for_participation', 'in_progress', 'completed') and `Resolution` (e.g., 'pending', 'approved', 'rejected') clearly model the lifecycle of these entities, making rules for state transitions straightforward and debuggable. The `isSuspended` field in `CommitteeSession` serves a similar purpose for global session state.\n\n**DBAC:** The `presidentId` field within `Action` and the conceptual `presidentId` in `CommitteeSession` serve as the Database Access Control mechanism for the President role. Their `uid` is stored directly in the database resource for ownership and management permissions, fulfilling the DBAC mandate without custom claims or problematic hierarchical `get()` calls."
+  }
+}
