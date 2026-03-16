@@ -1,17 +1,28 @@
 
 {
   "entities": {
+    "Committee": {
+      "title": "Committee",
+      "type": "object",
+      "description": "Un comité spécifique (ex: UNHRC, ECOSOC).",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
     "Delegate": {
       "title": "Delegate",
       "type": "object",
       "description": "Représente un pays délégué au MUN.",
       "properties": {
         "id": { "type": "string" },
+        "committeeId": { "type": "string" },
         "country_name": { "type": "string" },
         "password": { "type": "string" },
         "is_suspended": { "type": "boolean", "default": false }
       },
-      "required": ["country_name", "password"]
+      "required": ["country_name", "password", "committeeId"]
     },
     "Action": {
       "title": "Action",
@@ -19,6 +30,7 @@
       "description": "Une action de débat lancée par la présidence.",
       "properties": {
         "id": { "type": "string" },
+        "committeeId": { "type": "string" },
         "title": { "type": "string" },
         "status": { "type": "string", "enum": ["launched", "started", "paused", "completed"] },
         "duration_minutes": { "type": "number" },
@@ -31,38 +43,14 @@
       "description": "Un projet de résolution soumis par un pays.",
       "properties": {
         "id": { "type": "string" },
-        "title": { "type": "string", "description": "Le titre de la résolution." },
+        "committeeId": { "type": "string" },
+        "title": { "type": "string" },
         "proposing_country": { "type": "string" },
-        "spokesperson": { "type": "string", "description": "Le porte-parole de la délégation." },
-        "sponsors": { "type": "string", "description": "Liste des pays soutenant la résolution." },
+        "spokesperson": { "type": "string" },
+        "sponsors": { "type": "string" },
         "content": { "type": "string" },
         "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
         "is_displayed": { "type": "boolean" }
-      }
-    },
-    "Message": {
-      "title": "Message",
-      "type": "object",
-      "description": "Un message privé pour la présidence.",
-      "properties": {
-        "id": { "type": "string" },
-        "sender_country": { "type": "string" },
-        "type": { "type": "string", "enum": ["privilege", "general"] },
-        "content": { "type": "string" },
-        "is_read": { "type": "boolean" },
-        "timestamp": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Participation": {
-      "title": "Participation",
-      "type": "object",
-      "description": "Enregistrement d'un pays sur une liste d'orateurs.",
-      "properties": {
-        "action_id": { "type": "string" },
-        "delegate_id": { "type": "string" },
-        "country_name": { "type": "string" },
-        "status": { "type": "string", "enum": ["participating", "passing"] },
-        "updated_at": { "type": "string", "format": "date-time" }
       }
     }
   },
@@ -70,11 +58,9 @@
     "providers": ["password", "anonymous"]
   },
   "firestore": {
-    "/delegates/{id}": { "schema": "Delegate", "description": "Liste des pays enregistrés." },
-    "/actions/{id}": { "schema": "Action", "description": "Actions et débats en cours." },
-    "/resolutions/{id}": { "schema": "Resolution", "description": "Projets de résolutions soumis." },
-    "/messages/{id}": { "schema": "Message", "description": "Messages privés délégués -> présidence." },
-    "/participations/{id}": { "schema": "Participation", "description": "Historique des participations aux débats." },
-    "/sessionState/current": { "schema": "object", "description": "Paramètres globaux de la session." }
+    "/committees/{committeeId}": { "schema": "Committee", "description": "Données de base du comité." },
+    "/committees/{committeeId}/delegates/{id}": { "schema": "Delegate", "description": "Délégués par comité." },
+    "/committees/{committeeId}/actions/{id}": { "schema": "Action", "description": "Débats par comité." },
+    "/committees/{committeeId}/resolutions/{id}": { "schema": "Resolution", "description": "Résolutions par comité." }
   }
 }

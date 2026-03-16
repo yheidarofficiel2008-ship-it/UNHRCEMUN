@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from 'react';
@@ -352,7 +353,7 @@ export default function DelegateDashboard() {
             {(activeOverlay.type === 'message' || activeOverlay.type === 'crisis') && (
               <div className="space-y-4">
                 <div className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] text-white/80 animate-pulse">
-                  {activeOverlay.type === 'crisis' ? "APPEL À L'ACTION" : "Annonce de la Présidence"}
+                  {activeOverlay.type === 'crisis' ? "ALERTE NATIONALE" : "Annonce de la Présidence"}
                 </div>
               </div>
             )}
@@ -532,7 +533,7 @@ export default function DelegateDashboard() {
                       <Badge className="gap-1 mb-2 bg-primary"><Monitor size={12} /> PROJETÉ AU COMITÉ</Badge>
                       <CardTitle className="text-2xl text-primary font-black uppercase tracking-tight break-words">{res.title}</CardTitle>
                     </div>
-                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="h-fit py-0 px-2 text-[10px]">
+                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="h-fit py-0.5 px-2 text-[10px]">
                       {res.status.toUpperCase()}
                     </Badge>
                   </CardHeader>
