@@ -2,85 +2,62 @@
 {
   "entities": {
     "Delegate": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Delegate",
       "type": "object",
-      "description": "Represents a delegate participating in the Model United Nations session.",
+      "description": "Représente un pays délégué au MUN.",
       "properties": {
         "id": { "type": "string" },
-        "countryName": { "type": "string" },
-        "passwordHash": { "type": "string" }
+        "country_name": { "type": "string" },
+        "password": { "type": "string" }
       },
-      "required": ["id", "countryName", "passwordHash"]
+      "required": ["country_name", "password"]
     },
     "Action": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Action",
       "type": "object",
+      "description": "Une action de débat lancée par la présidence.",
       "properties": {
         "id": { "type": "string" },
-        "name": { "type": "string" },
-        "status": { "type": "string" }
-      },
-      "required": ["id", "name", "status"]
-    },
-    "Participation": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Participation",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "actionId": { "type": "string" },
-        "delegateId": { "type": "string" }
+        "title": { "type": "string" },
+        "status": { "type": "string", "enum": ["launched", "started", "paused", "completed"] },
+        "duration_minutes": { "type": "number" },
+        "time_per_delegate": { "type": "string" }
       }
     },
     "Resolution": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Resolution",
       "type": "object",
+      "description": "Un projet de résolution soumis par un pays.",
       "properties": {
         "id": { "type": "string" },
+        "proposing_country": { "type": "string" },
         "content": { "type": "string" },
-        "status": { "type": "string" }
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "is_displayed": { "type": "boolean" }
       }
     },
     "Message": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Message",
       "type": "object",
-      "description": "Un message privé envoyé par un délégué à la présidence.",
+      "description": "Un message privé pour la présidence.",
       "properties": {
         "id": { "type": "string" },
-        "senderCountry": { "type": "string" },
+        "sender_country": { "type": "string" },
         "type": { "type": "string", "enum": ["privilege", "general"] },
         "content": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" },
-        "isRead": { "type": "boolean" }
-      },
-      "required": ["id", "senderCountry", "type", "content", "timestamp"]
+        "is_read": { "type": "boolean" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
     "providers": ["password", "anonymous"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/delegates/{delegateId}",
-        "definition": { "entityName": "Delegate", "schema": { "$ref": "#/backend/entities/Delegate" } }
-      },
-      {
-        "path": "/actions/{actionId}",
-        "definition": { "entityName": "Action", "schema": { "$ref": "#/backend/entities/Action" } }
-      },
-      {
-        "path": "/messages/{messageId}",
-        "definition": {
-          "entityName": "Message",
-          "schema": { "$ref": "#/backend/entities/Message" },
-          "description": "Messages privés pour la présidence."
-        }
-      }
-    ]
+    "/delegates/{id}": { "schema": "Delegate", "description": "Liste des pays enregistrés." },
+    "/actions/{id}": { "schema": "Action", "description": "Actions et débats en cours." },
+    "/resolutions/{id}": { "schema": "Resolution", "description": "Projets de résolutions soumis." },
+    "/messages/{id}": { "schema": "Message", "description": "Messages privés délégués -> présidence." },
+    "/sessionState/current": { "schema": "object", "description": "Paramètres globaux de la session." }
   }
 }

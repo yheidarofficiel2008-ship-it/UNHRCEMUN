@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, Info } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, MessageSquare, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,7 @@ export default function DelegateDashboard() {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   const [myResolutions, setMyResolutions] = useState<any[]>([]);
+  const [myMessages, setMyMessages] = useState<any[]>([]);
   const [displayedResolutions, setDisplayedResolutions] = useState<any[]>([]);
 
   useEffect(() => {
@@ -49,11 +50,21 @@ export default function DelegateDashboard() {
     const del = JSON.parse(session);
     setDelegate(del);
 
-    // Mes résolutions
+    // Écoute des résolutions envoyées par ce pays
     const resRef = collection(db, 'resolutions');
-    const q = query(resRef, where('proposing_country', '==', del.country_name), orderBy('created_at', 'desc'));
-    const unsubRes = onSnapshot(q, (snapshot) => {
-      setMyResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const qRes = query(resRef, where('proposing_country', '==', del.country_name));
+    const unsubRes = onSnapshot(qRes, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), _type: 'resolution' }));
+      // Tri manuel pour éviter l'exigence d'index composite complexe
+      setMyResolutions(data.sort((a: any, b: any) => (b.created_at?.seconds || 0) - (a.created_at?.seconds || 0)));
+    });
+
+    // Écoute des messages envoyés par ce pays
+    const msgRef = collection(db, 'messages');
+    const qMsg = query(msgRef, where('sender_country', '==', del.country_name));
+    const unsubMsg = onSnapshot(qMsg, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), _type: 'message' }));
+      setMyMessages(data.sort((a: any, b: any) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)));
     });
 
     // Résolutions projetées
@@ -64,6 +75,7 @@ export default function DelegateDashboard() {
 
     return () => {
       unsubRes();
+      unsubMsg();
       unsubDisplayed();
     };
   }, [router]);
@@ -147,6 +159,11 @@ export default function DelegateDashboard() {
   if (!delegate) return null;
 
   const isActive = currentAction && currentAction.status !== 'completed';
+  const myEnvois = [...myResolutions, ...myMessages].sort((a: any, b: any) => {
+    const timeA = a.created_at?.seconds || a.timestamp?.seconds || 0;
+    const timeB = b.created_at?.seconds || b.timestamp?.seconds || 0;
+    return timeB - timeA;
+  });
 
   const parseTimePerDelegate = (timeStr: string) => {
     if (!timeStr) return 60;
@@ -173,7 +190,6 @@ export default function DelegateDashboard() {
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1400px] mx-auto w-full">
         {/* Barre latérale gauche */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Message à la présidence - En haut et compact */}
           <Card className="border-secondary/30 bg-secondary/5">
             <CardHeader className="py-3 px-4 flex flex-row items-center gap-2">
               <MessageSquarePlus size={18} className="text-secondary" />
@@ -275,21 +291,32 @@ export default function DelegateDashboard() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg"><FileText size={18} /> Mes Propositions</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg"><Send size={18} /> Mes Envois</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[200px]">
-                <div className="space-y-4">
-                  {myResolutions.map(res => (
-                    <div key={res.id} className="p-4 border rounded-xl bg-muted/20">
-                      <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
-                        {res.status.toUpperCase()}
-                      </Badge>
-                      <p className="text-xs mt-2 italic line-clamp-2">"{res.content}"</p>
+            <CardContent className="px-4">
+              <ScrollArea className="h-[300px]">
+                <div className="space-y-3">
+                  {myEnvois.map(item => (
+                    <div key={item.id} className="p-3 border rounded-lg bg-muted/10 text-xs">
+                      <div className="flex justify-between items-center mb-1">
+                        <Badge variant="outline" className="text-[10px] uppercase">
+                          {item._type === 'resolution' ? 'Résolution' : item.type === 'privilege' ? 'Privilège' : 'Message'}
+                        </Badge>
+                        {item._type === 'resolution' ? (
+                          <Badge variant={item.status === 'approved' ? 'default' : item.status === 'rejected' ? 'destructive' : 'secondary'}>
+                            {item.status.toUpperCase()}
+                          </Badge>
+                        ) : (
+                          <Badge variant="ghost" className="opacity-60">
+                            {item.is_read ? <Check size={12} className="text-green-500" /> : <Clock size={12} />}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="italic text-muted-foreground line-clamp-2">"{item.content}"</p>
                     </div>
                   ))}
-                  {myResolutions.length === 0 && <p className="text-xs text-center text-muted-foreground italic py-4">Aucun projet envoyé.</p>}
+                  {myEnvois.length === 0 && <p className="text-xs text-center text-muted-foreground italic py-4">Aucun envoi trouvé.</p>}
                 </div>
               </ScrollArea>
             </CardContent>
