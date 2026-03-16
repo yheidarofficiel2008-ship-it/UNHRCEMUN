@@ -206,7 +206,6 @@ export default function DelegateDashboard() {
       </header>
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1400px] mx-auto w-full">
-        {/* Colonne latérale GAUCHE */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="border-secondary/30 bg-secondary/5">
             <CardHeader className="py-3 px-4 flex flex-row items-center gap-2">
@@ -276,7 +275,6 @@ export default function DelegateDashboard() {
           </Card>
         </div>
 
-        {/* Colonne CENTRALE */}
         <div className="lg:col-span-8 space-y-6">
           <Card className="border-secondary/20 shadow-xl overflow-hidden">
             <CardHeader className="bg-secondary/5 border-b pb-4">
@@ -352,7 +350,6 @@ export default function DelegateDashboard() {
             </CardContent>
           </Card>
 
-          {/* RÉSOLUTIONS PROJETÉES */}
           {displayedResolutions.length > 0 && (
             <div className="space-y-6">
               {displayedResolutions.map((res) => (
@@ -382,7 +379,6 @@ export default function DelegateDashboard() {
             </div>
           )}
 
-          {/* RÉDACTION DE RÉSOLUTION */}
           <Card className={`shadow-xl transition-all ${!allowResolutions ? 'opacity-70 grayscale pointer-events-none' : 'hover:shadow-2xl'}`}>
             <CardHeader className="bg-secondary/5 border-b mb-6 flex flex-row items-center justify-between">
               <CardTitle className="text-2xl font-headline">Soumettre une Résolution</CardTitle>
@@ -422,7 +418,6 @@ export default function DelegateDashboard() {
                     onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} 
                   />
                   
-                  {/* APERÇU EN TEMPS RÉEL */}
                   {resolutionForm.content && (
                     <div className="mt-4 p-4 border rounded-lg bg-muted/5">
                       <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase mb-2">

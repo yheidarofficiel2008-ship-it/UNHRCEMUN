@@ -1,73 +1,79 @@
 
--- Schéma SQL pour la migration Supabase / PostgreSQL
+-- Schéma SQL pour Immune UERC MUN Platform
 
--- 1. Table des Délégués (Pays)
+-- Table des délégués
 CREATE TABLE delegates (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   country_name TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. Table des Actions (Débats)
+-- Table des actions (Débats)
 CREATE TABLE actions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   description TEXT,
-  status TEXT NOT NULL CHECK (status IN ('launched', 'started', 'paused', 'completed')),
   duration_minutes INTEGER DEFAULT 15,
   time_per_delegate TEXT DEFAULT '1:00',
   allow_participation BOOLEAN DEFAULT TRUE,
+  status TEXT DEFAULT 'launched' CHECK (status IN ('launched', 'started', 'paused', 'completed')),
   total_elapsed_seconds INTEGER DEFAULT 0,
-  started_at TIMESTAMPTZ,
-  paused_at TIMESTAMPTZ,
-  speaking_timer_status TEXT DEFAULT 'stopped',
-  speaking_timer_started_at TIMESTAMPTZ,
+  started_at TIMESTAMP WITH TIME ZONE,
+  paused_at TIMESTAMP WITH TIME ZONE,
+  speaking_timer_status TEXT DEFAULT 'stopped' CHECK (speaking_timer_status IN ('started', 'stopped')),
+  speaking_timer_started_at TIMESTAMP WITH TIME ZONE,
   speaking_timer_total_elapsed INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. Table des Résolutions
+-- Table des résolutions
 CREATE TABLE resolutions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   proposing_country TEXT NOT NULL,
   sponsors TEXT,
   content TEXT NOT NULL,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
   is_displayed BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. Table des Participations (Liste des orateurs)
-CREATE TABLE participations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  action_id UUID REFERENCES actions(id) ON DELETE CASCADE,
-  delegate_id UUID REFERENCES delegates(id) ON DELETE CASCADE,
-  country_name TEXT NOT NULL,
-  status TEXT CHECK (status IN ('participating', 'passing')),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(action_id, delegate_id)
-);
-
--- 5. Table des Messages Privés
+-- Table des messages privés à la présidence
 CREATE TABLE messages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   sender_country TEXT NOT NULL,
-  type TEXT CHECK (type IN ('privilege', 'general')),
+  type TEXT DEFAULT 'general' CHECK (type IN ('privilege', 'general')),
   content TEXT NOT NULL,
   is_read BOOLEAN DEFAULT FALSE,
-  timestamp TIMESTAMPTZ DEFAULT now()
+  timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 6. Table de l'état de la session
+-- État global de la session
 CREATE TABLE session_state (
   id TEXT PRIMARY KEY DEFAULT 'current',
   is_suspended BOOLEAN DEFAULT FALSE,
   allow_resolutions BOOLEAN DEFAULT TRUE,
-  last_updated TIMESTAMPTZ DEFAULT now()
+  last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Index pour la performance
-CREATE INDEX idx_resolutions_displayed ON resolutions(is_displayed) WHERE is_displayed = TRUE;
-CREATE INDEX idx_messages_unread ON messages(is_read) WHERE is_read = FALSE;
-CREATE INDEX idx_participations_action ON participations(action_id);
+-- Participations (Liste des orateurs par action)
+CREATE TABLE participations (
+  id TEXT PRIMARY KEY, -- format: actionId_delegateId
+  action_id UUID REFERENCES actions(id) ON DELETE CASCADE,
+  delegate_id UUID REFERENCES delegates(id) ON DELETE CASCADE,
+  country_name TEXT NOT NULL,
+  status TEXT CHECK (status IN ('participating', 'passing')),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Rôles Président
+CREATE TABLE roles_president (
+  uid TEXT PRIMARY KEY,
+  email TEXT,
+  role TEXT DEFAULT 'president',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index pour optimiser l'affichage multiple des résolutions
+CREATE INDEX idx_resolutions_is_displayed ON resolutions(is_displayed) WHERE is_displayed = true;
+CREATE INDEX idx_messages_unread ON messages(is_read) WHERE is_read = false;

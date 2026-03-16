@@ -266,8 +266,8 @@ export default function PresidentDashboard() {
           <div className="h-6 w-px bg-white/20" />
           <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white" onClick={initDatabase} disabled={initializing}>
             <Database size={16} className="mr-2" /> Init
-          </Button>
-          <Button variant={isSuspended ? "destructive" : "outline"} onClick={toggleSuspension}>
+          </Database>
+          <Button variant="destructive" onClick={toggleSuspension}>
             {isSuspended ? "Reprendre" : "Suspendre"}
           </Button>
           <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}>
@@ -277,7 +277,6 @@ export default function PresidentDashboard() {
       </header>
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1600px] mx-auto w-full">
-        {/* Colonne Gauche */}
         <div className="lg:col-span-4 space-y-6">
           <Tabs defaultValue="actions">
             <TabsList className="w-full">
@@ -437,7 +436,6 @@ export default function PresidentDashboard() {
           </Tabs>
         </div>
 
-        {/* Colonne Droite */}
         <div className="lg:col-span-8 space-y-6">
           <Tabs defaultValue="resolutions">
             <TabsList className="w-full">
@@ -537,7 +535,7 @@ export default function PresidentDashboard() {
                               </Button>
                             </div>
                           </div>
-                          <p className="text-sm font-medium leading-relaxed italic whitespace-pre-wrap">"{msg.content}"</p>
+                          <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">"{msg.content}"</p>
                           <span className="text-[10px] text-muted-foreground self-end">
                             {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "À l'instant"}
                           </span>
