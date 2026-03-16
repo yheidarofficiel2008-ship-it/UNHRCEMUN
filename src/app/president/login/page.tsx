@@ -102,13 +102,13 @@ export default function PresidentLogin() {
                     <Input className="pl-10" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                   </div>
                 </div>
-              </form>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="w-full bg-primary" disabled={loading} onClick={handleLogin}>
+                <Button type="submit" className="w-full bg-primary" disabled={loading}>
                   {loading ? "Chargement..." : <><LogIn className="mr-2 h-4 w-4" /> Accéder</>}
                 </Button>
               </CardFooter>
+            </form>
           </TabsContent>
 
           <TabsContent value="signup">
@@ -122,13 +122,13 @@ export default function PresidentLogin() {
                   <Label>Mot de passe</Label>
                   <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
-              </form>
               </CardContent>
               <CardFooter>
-                <Button type="submit" variant="outline" className="w-full border-primary text-primary" disabled={loading} onClick={handleSignUp}>
+                <Button type="submit" variant="outline" className="w-full border-primary text-primary" disabled={loading}>
                   {loading ? "Création..." : <><UserPlus className="mr-2 h-4 w-4" /> Créer le compte</>}
                 </Button>
               </CardFooter>
+            </form>
           </TabsContent>
         </Tabs>
       </Card>
