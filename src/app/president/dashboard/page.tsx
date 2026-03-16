@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X } from 'lucide-react';
+import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -324,9 +324,28 @@ export default function PresidentDashboard() {
           </Dialog>
 
           {activeOverlay && activeOverlay.type !== 'none' && (
-            <Button variant="outline" className="bg-white/10 text-white border-white/40 gap-2" onClick={stopOverlay}>
-              <X size={16} /> Arrêter Modal
-            </Button>
+            <div className="flex items-center gap-4 bg-white/10 px-4 py-1.5 rounded-full border border-white/20 animate-in fade-in zoom-in duration-300">
+              <span className="text-xs font-bold uppercase tracking-widest truncate max-w-[150px]">{activeOverlay.title}</span>
+              {activeOverlay.type === 'vote' && (
+                <div className="flex gap-2 ml-2 border-l border-white/20 pl-4 items-center">
+                  <div className="flex items-center gap-1 bg-green-500/20 px-2 py-0.5 rounded border border-green-500/30">
+                    <ThumbsUp size={12} className="text-green-400" />
+                    <span className="font-bold tabular-nums text-xs">{activeOverlay.results?.pour || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-red-500/20 px-2 py-0.5 rounded border border-red-500/30">
+                    <ThumbsDown size={12} className="text-red-400" />
+                    <span className="font-bold tabular-nums text-xs">{activeOverlay.results?.contre || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-yellow-500/20 px-2 py-0.5 rounded border border-yellow-500/30">
+                    <CircleSlash size={12} className="text-yellow-400" />
+                    <span className="font-bold tabular-nums text-xs">{activeOverlay.results?.abstention || 0}</span>
+                  </div>
+                </div>
+              )}
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20 ml-2" onClick={stopOverlay}>
+                <X size={14} />
+              </Button>
+            </div>
           )}
 
           <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
