@@ -1,33 +1,28 @@
-
 "use client"
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, limit, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
 
 export function useRealtime() {
   const [isSuspended, setIsSuspended] = useState(false);
   const [currentAction, setCurrentAction] = useState<any>(null);
 
   useEffect(() => {
-    // Ensure the settings document exists and listen to it
-    const settingsRef = doc(db, 'settings', 'session_suspended');
+    // Écouter l'état global de la session (singleton)
+    const sessionStateRef = doc(db, 'sessionState', 'current');
     
-    const checkAndInit = async () => {
-      const snap = await getDoc(settingsRef);
-      if (!snap.exists()) {
-        await setDoc(settingsRef, { value: false });
-      }
-    };
-    checkAndInit();
-
-    const unsubSettings = onSnapshot(settingsRef, (docSnap) => {
+    const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
       if (docSnap.exists()) {
-        setIsSuspended(docSnap.data().value === true);
+        setIsSuspended(docSnap.data().isSuspended === true);
+      } else {
+        setIsSuspended(false);
       }
+    }, (error) => {
+      console.warn("Permission denied for sessionState, user might not be logged in yet.", error);
     });
 
-    // Listen to current action
+    // Écouter l'action actuelle
     const actionsRef = collection(db, 'actions');
     const q = query(
       actionsRef, 
@@ -43,6 +38,8 @@ export function useRealtime() {
       } else {
         setCurrentAction(null);
       }
+    }, (error) => {
+      console.warn("Permission denied for actions listener.", error);
     });
 
     return () => {

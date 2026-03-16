@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -51,7 +50,7 @@ export default function PresidentDashboard() {
     const delRef = collection(db, 'delegates');
     const unsubDel = onSnapshot(query(delRef, orderBy('country_name', 'asc')), (snap) => {
       setDelegates(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
+    }, (err) => console.error("Delegates listener error:", err));
 
     // Listen to resolutions
     const resolutionsRef = collection(db, 'resolutions');
@@ -59,7 +58,7 @@ export default function PresidentDashboard() {
     const unsubRes = onSnapshot(qRes, (snapshot) => {
       const resData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setResolutions(resData);
-    });
+    }, (err) => console.error("Resolutions listener error:", err));
 
     // Listen to participations for current action
     let unsubPart = () => {};
@@ -92,8 +91,11 @@ export default function PresidentDashboard() {
   const initDatabase = async () => {
     setInitializing(true);
     try {
-      // Create initial settings
-      await setDoc(doc(db, 'settings', 'session_suspended'), { value: false });
+      // Create initial session state
+      await setDoc(doc(db, 'sessionState', 'current'), { 
+        isSuspended: false,
+        lastUpdated: new Date().toISOString()
+      }, { merge: true });
       
       // Create a test action
       await addDoc(collection(db, 'actions'), {
@@ -106,7 +108,7 @@ export default function PresidentDashboard() {
         created_at: serverTimestamp()
       });
 
-      toast({ title: "Base de données prête", description: "Les collections initiales ont été créées." });
+      toast({ title: "Base de données prête", description: "Les documents initiaux ont été créés." });
     } catch (e: any) {
       toast({ title: "Erreur d'initialisation", description: e.message, variant: "destructive" });
     } finally {
@@ -115,12 +117,14 @@ export default function PresidentDashboard() {
   };
 
   const toggleSuspension = async () => {
-    const settingsRef = doc(db, 'settings', 'session_suspended');
+    const sessionRef = doc(db, 'sessionState', 'current');
     try {
-      await updateDoc(settingsRef, { value: !isSuspended });
-    } catch (e) {
-      // If doc doesn't exist, create it
-      await setDoc(settingsRef, { value: !isSuspended });
+      await setDoc(sessionRef, { 
+        isSuspended: !isSuspended,
+        lastUpdated: new Date().toISOString()
+      }, { merge: true });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: "Impossible de modifier l'état de la séance.", variant: "destructive" });
     }
   };
 

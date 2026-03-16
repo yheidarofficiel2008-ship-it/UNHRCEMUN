@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -42,8 +43,17 @@ export default function PresidentLogin() {
     setLoading(true);
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      toast({ title: "Compte créé", description: "Vous pouvez maintenant accéder au panel." });
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Enregistrer le rôle de président dans Firestore pour activer les règles de sécurité
+      await setDoc(doc(db, 'roles_president', user.uid), {
+        email: user.email,
+        role: 'president',
+        createdAt: serverTimestamp()
+      });
+
+      toast({ title: "Compte créé", description: "Votre rôle de président a été activé." });
       router.push('/president/dashboard');
     } catch (error: any) {
       toast({
@@ -115,7 +125,7 @@ export default function PresidentLogin() {
             <form onSubmit={handleSignUp}>
               <CardContent className="space-y-4 pt-4">
                 <p className="text-xs text-muted-foreground mb-4 italic">
-                  Utilisez cet onglet uniquement pour créer le premier compte président de votre session.
+                  Utilisez cet onglet pour créer le compte président. Cela activera vos droits d'administration.
                 </p>
                 <div className="space-y-2">
                   <Label htmlFor="email-signup">Email souhaité</Label>

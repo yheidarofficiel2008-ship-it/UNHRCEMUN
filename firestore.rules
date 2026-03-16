@@ -4,33 +4,7 @@ service cloud.firestore {
 
     /**
      * MODEL UNITED NATIONS (MUN) SESSION SECURITY RULES
-     *
-     * Core Philosophy:
-     * This ruleset enforces a strict role-based and ownership model optimized for Model UN sessions. 
-     * It distinguishes between "Presidents" (administrators) and "Delegates" (participants).
-     *
-     * Data Structure:
-     * - /delegates/{delegateId}: User profiles for participants.
-     * - /roles_president/{presidentUid}: Administrative role markers.
-     * - /actions/{actionId}: Agenda items and session timers.
-     * - /actions/{actionId}/participations/{participationId}: Delegate participation tracking.
-     * - /resolutions/{resolutionId}: Proposals submitted by delegates.
-     * - /sessionState/current: Global singleton for session status (e.g., suspension).
-     *
-     * Key Security Decisions:
-     * 1. Role-Based Access: A separate collection `/roles_president` stores UIDs of users with 
-     *    administrative privileges. This is checked via an `exists()` lookup.
-     * 2. Authorization Independence: Critical IDs (delegateId, actionId) are denormalized 
-     *    directly onto documents (Participations, Resolutions) to allow for fast, 
-     *    non-hierarchical security checks without costly parent-document lookups.
-     * 3. Prototyping Flexibility: While authorization is strictly enforced based on identity 
-     *    and roles, specific data schemas (types, optional fields) are not enforced to 
-     *    allow for rapid UI/UX iteration.
-     * 4. Session Integrity: Only the President can manage global state and session actions, 
-     *    ensuring the flow of the MUN session remains controlled.
      */
-
-    // --- HELPER FUNCTIONS ---
 
     function isSignedIn() {
       return request.auth != null;
@@ -44,93 +18,51 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
     // --- COLLECTION RULES ---
 
-    /**
-     * @description Rules for the Delegate entity. Presidents manage all accounts; delegates read their own.
-     * @path /delegates/{delegateId}
-     * @allow get: if the user is the owner or a President.
-     * @deny list: if the user is a Delegate (Delegates cannot list all accounts).
-     * @principle Restricts access to sensitive delegate profiles to the owner or admins.
-     */
     match /delegates/{delegateId} {
       allow get: if isOwner(delegateId) || isPresident();
       allow list: if isPresident();
       allow create, update, delete: if isPresident();
     }
 
-    /**
-     * @description Administrative role marker. Only used for authorization lookups.
-     * @path /roles_president/{presidentUid}
-     * @allow get: if the user is checking their own role status.
-     * @deny write: if any user attempts to modify role assignments directly from the client.
-     * @principle System-managed roles ensure administrative integrity.
-     */
     match /roles_president/{presidentUid} {
       allow get: if isOwner(presidentUid);
-      allow list, create, update, delete: if false;
+      // Permettre la création par l'utilisateur lui-même lors de l'inscription (Initialisation)
+      allow create: if isOwner(presidentUid);
+      allow list, update, delete: if false;
     }
 
-    /**
-     * @description Session actions/agenda items. Managed by President, read by all.
-     * @path /actions/{actionId}
-     * @allow get, list: if the user is signed in.
-     * @deny write: if the user is not a President.
-     * @principle Global visibility for session items with administrative-only control.
-     */
     match /actions/{actionId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isPresident();
 
-      /**
-       * @description Records of delegate participation for a specific action.
-       * @path /actions/{actionId}/participations/{participationId}
-       * @allow create: if the delegateId in the data matches the authenticated user.
-       * @deny update: if the delegate attempts to change the original owner or action link.
-       * @principle Relational integrity: enforces that delegates only submit for themselves.
-       */
       match /participations/{participationId} {
         allow get: if isPresident() || isOwner(resource.data.delegateId);
-        allow list: if isPresident() || (isSignedIn() && request.query.limit <= 100); // Restricted list for delegates via query
+        allow list: if isPresident() || (isSignedIn() && request.query.limit <= 100);
         allow create: if isSignedIn() && request.resource.data.delegateId == request.auth.uid && request.resource.data.actionId == actionId;
-        allow update: if isExistingOwner(resource.data.delegateId) && request.resource.data.delegateId == resource.data.delegateId && request.resource.data.actionId == resource.data.actionId;
-        allow delete: if isPresident() || isExistingOwner(resource.data.delegateId);
+        allow update: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
+        allow delete: if isPresident();
       }
     }
 
-    /**
-     * @description Resolutions proposed by delegates.
-     * @path /resolutions/{resolutionId}
-     * @allow create: if the user sets themselves as the delegateId.
-     * @deny update: if a delegate tries to modify a resolution they do not own.
-     * @principle Ownership-based writes for delegates, administrative oversight for Presidents.
-     */
     match /resolutions/{resolutionId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.delegateId == request.auth.uid;
-      allow update: if isPresident() || (isExistingOwner(resource.data.delegateId) && request.resource.data.delegateId == resource.data.delegateId);
-      allow delete: if isPresident() || isExistingOwner(resource.data.delegateId);
+      allow update: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
+      allow delete: if isPresident();
     }
 
-    /**
-     * @description Global session state singleton.
-     * @path /sessionState/current
-     * @allow get: if the user is signed in.
-     * @deny update: if the user is not a President.
-     * @principle Centralized session control restricted to administrative users.
-     */
     match /sessionState/current {
       allow get: if isSignedIn();
-      allow list: if false; // Singleton access only
-      allow create: if isPresident();
-      allow update: if isPresident();
-      allow delete: if false;
+      allow create, update: if isPresident();
+      allow list, delete: if false;
     }
 
+    // Règle de repli pour éviter les erreurs sur d'autres collections potentielles durant le dev
+    match /{document=**} {
+      allow read, write: if isPresident();
+    }
   }
 }
