@@ -297,12 +297,12 @@ export default function DelegateDashboard() {
           <div className="max-w-4xl w-full text-center space-y-8">
             {activeOverlay.type === 'crisis' && (
               <div className="flex flex-col items-center gap-4 mb-4 animate-pulse">
-                <AlertTriangle size={80} className="text-white" />
-                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-6 py-2">URGENCE : CRISE</h2>
+                <AlertTriangle size={60} className="text-white" />
+                <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-6 py-2">URGENCE : CRISE</h2>
               </div>
             )}
             
-            <h1 className={`text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight border-b-4 md:border-b-8 border-white pb-6 ${activeOverlay.type === 'crisis' ? 'text-white' : ''}`}>
+            <h1 className={`text-3xl md:text-4xl font-black uppercase tracking-tighter leading-tight border-b-4 md:border-b-8 border-white pb-6 ${activeOverlay.type === 'crisis' ? 'text-white' : ''}`}>
               {activeOverlay.title}
             </h1>
             
@@ -349,14 +349,9 @@ export default function DelegateDashboard() {
             
             {(activeOverlay.type === 'message' || activeOverlay.type === 'crisis') && (
               <div className="space-y-4">
-                <div className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] text-white/80 animate-pulse">
+                <div className="text-lg md:text-xl font-black uppercase tracking-[0.2em] text-white/80 animate-pulse">
                   {activeOverlay.type === 'crisis' ? "APPEL À L'ACTION" : "Annonce de la Présidence"}
                 </div>
-                {activeOverlay.type === 'crisis' && (
-                  <div className="text-lg md:text-xl font-bold uppercase tracking-widest animate-pulse border-2 md:border-4 border-white p-4 md:p-6 rounded-xl bg-black/20">
-                    La parole est à la présidence. Toutes les interactions sont suspendues.
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -533,7 +528,7 @@ export default function DelegateDashboard() {
                       <Badge className="gap-1 mb-2 bg-primary"><Monitor size={12} /> PROJETÉ AU COMITÉ</Badge>
                       <CardTitle className="text-2xl text-primary">{res.proposing_country}</CardTitle>
                     </div>
-                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
+                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="h-fit">
                       {res.status.toUpperCase()}
                     </Badge>
                   </CardHeader>
