@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash } from 'lucide-react';
+import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useFirebase } from '@/firebase';
 import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc, onSnapshot, query, orderBy, getDocs, serverTimestamp, writeBatch, increment, where } from 'firebase/firestore';
@@ -108,7 +110,7 @@ export default function PresidentDashboard() {
       lastUpdated: new Date().toISOString(),
       activeOverlay: { type: 'none' }
     }, { merge: true });
-    toast({ title: "Base de données initialisée" });
+    toast({ title: "Session synchronisée et réinitialisée" });
     setInitializing(false);
   };
 
@@ -357,9 +359,20 @@ export default function PresidentDashboard() {
             />
           </div>
           <div className="h-6 w-px bg-white/20" />
-          <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white" onClick={initDatabase} disabled={initializing}>
-            <Database size={16} className="mr-2" /> Init
-          </Button>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white" onClick={initDatabase} disabled={initializing}>
+                  <Database size={16} className="mr-2" /> Sync Session
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[200px] text-xs">
+                <p>Initialise ou réinitialise l'état global de la séance (suspension, résolutions, overlays).</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           <Button variant="destructive" onClick={toggleSuspension}>
             {isSuspended ? "Reprendre" : "Suspendre"}
           </Button>
