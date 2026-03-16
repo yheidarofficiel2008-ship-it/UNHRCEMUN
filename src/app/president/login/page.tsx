@@ -3,17 +3,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, Mail, UserPlus, LogIn } from 'lucide-react';
+import { Lock, Mail, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useFirebase } from '@/firebase';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, serverTimestamp } from 'firebase/firestore';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function PresidentLogin() {
   const [email, setEmail] = useState('');
@@ -21,7 +18,7 @@ export default function PresidentLogin() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const { auth, firestore: db } = useFirebase();
+  const { auth } = useFirebase();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,37 +32,7 @@ export default function PresidentLogin() {
     } catch (error: any) {
       toast({
         title: "Erreur d'authentification",
-        description: "Identifiants incorrects ou bloqueur de scripts actif.",
-        variant: "destructive"
-      });
-      setLoading(false);
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!auth || !db) return;
-    setLoading(true);
-
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      const roleDoc = doc(db, 'roles_president', user.uid);
-      const roleData = {
-        email: user.email,
-        role: 'president',
-        createdAt: serverTimestamp()
-      };
-
-      setDocumentNonBlocking(roleDoc, roleData, { merge: true });
-
-      toast({ title: "Compte créé", description: "Votre accès président est activé." });
-      router.push('/president/dashboard');
-    } catch (error: any) {
-      toast({
-        title: "Erreur de création",
-        description: error.message,
+        description: "Identifiants incorrects ou accès non autorisé.",
         variant: "destructive"
       });
       setLoading(false);
@@ -80,58 +47,43 @@ export default function PresidentLogin() {
           <CardDescription className="font-bold uppercase tracking-widest text-[10px]">Accès réservé EMUN UNHRC</CardDescription>
         </CardHeader>
         
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 px-6 bg-transparent">
-            <TabsTrigger value="login" className="data-[state=active]:font-bold">Connexion</TabsTrigger>
-            <TabsTrigger value="signup" className="data-[state=active]:font-bold">Initialiser</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="login">
-            <form onSubmit={handleLogin}>
-              <CardContent className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email Professionnel</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="login-email" className="pl-10 h-11" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Mot de passe</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="login-password" type="password" className="pl-10 h-11" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" className="w-full bg-primary h-12 text-lg font-bold" disabled={loading}>
-                  {loading ? "Chargement..." : <><LogIn className="mr-2 h-5 w-5" /> Accéder au Bureau</>}
-                </Button>
-              </CardFooter>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="signup">
-            <form onSubmit={handleSignUp}>
-              <CardContent className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Mot de passe</Label>
-                  <Input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-11" />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" variant="outline" className="w-full border-primary text-primary h-12 text-lg font-bold" disabled={loading}>
-                  {loading ? "Création..." : <><UserPlus className="mr-2 h-5 w-5" /> Créer le compte</>}
-                </Button>
-              </CardFooter>
-            </form>
-          </TabsContent>
-        </Tabs>
+        <form onSubmit={handleLogin}>
+          <CardContent className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="login-email">Email Professionnel</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  id="login-email" 
+                  className="pl-10 h-11" 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  required 
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="login-password">Mot de passe</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  id="login-password" 
+                  type="password" 
+                  className="pl-10 h-11" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                />
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" className="w-full bg-primary h-12 text-lg font-bold" disabled={loading}>
+              {loading ? "Chargement..." : <><LogIn className="mr-2 h-5 w-5" /> Accéder au Bureau</>}
+            </Button>
+          </CardFooter>
+        </form>
       </Card>
       <p className="mt-8 text-[10px] text-muted-foreground text-center uppercase tracking-widest opacity-50">EMUN UNHRC - Management Suite</p>
     </div>
