@@ -1,9 +1,8 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users } from 'lucide-react';
+import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -321,6 +320,32 @@ export default function PresidentDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {activeOverlay && activeOverlay.type !== 'none' && (
+        <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 text-white animate-in fade-in zoom-in duration-500 ${activeOverlay.type === 'crisis' ? 'bg-red-700' : 'bg-primary'}`}>
+          <div className="max-w-4xl w-full text-center space-y-8">
+            {activeOverlay.type === 'crisis' && (
+              <div className="flex flex-col items-center gap-4 mb-4 animate-pulse">
+                <AlertTriangle size={80} className="text-white" />
+                <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-10 py-3">URGENCE : CRISE</h2>
+              </div>
+            )}
+            
+            <h1 className={`text-4xl md:text-7xl font-black uppercase tracking-tighter leading-tight border-b-4 md:border-b-8 border-white pb-6 ${activeOverlay.type === 'crisis' ? 'text-white' : ''} break-words`}>
+              {activeOverlay.title}
+            </h1>
+            
+            {(activeOverlay.type === 'message' || activeOverlay.type === 'crisis') && (
+              <div className="space-y-4">
+                <div className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] text-white/80 animate-pulse">
+                  {activeOverlay.type === 'crisis' ? "APPEL À L'ACTION" : "Annonce de la Présidence"}
+                </div>
+                <Button variant="outline" className="text-white border-white hover:bg-white hover:text-red-700 mt-8 font-black uppercase px-12 h-16 text-2xl" onClick={stopOverlay}>Fermer l'Alerte</Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-50">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold font-headline uppercase tracking-widest">EMUN UNHRC - Présidence</h1>

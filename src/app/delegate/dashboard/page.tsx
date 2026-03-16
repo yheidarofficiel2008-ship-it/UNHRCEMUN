@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useRef } from 'react';
@@ -300,12 +299,12 @@ export default function DelegateDashboard() {
           <div className="max-w-4xl w-full text-center space-y-8">
             {activeOverlay.type === 'crisis' && (
               <div className="flex flex-col items-center gap-4 mb-4 animate-pulse">
-                <AlertTriangle size={60} className="text-white" />
-                <h2 className="text-xl md:text-2xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-6 py-2">URGENCE : CRISE</h2>
+                <AlertTriangle size={80} className="text-white" />
+                <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-10 py-3">URGENCE : CRISE</h2>
               </div>
             )}
             
-            <h1 className={`text-xl md:text-2xl font-black uppercase tracking-tighter leading-tight border-b-4 md:border-b-8 border-white pb-6 ${activeOverlay.type === 'crisis' ? 'text-white' : ''}`}>
+            <h1 className={`text-4xl md:text-7xl font-black uppercase tracking-tighter leading-tight border-b-4 md:border-b-8 border-white pb-6 ${activeOverlay.type === 'crisis' ? 'text-white' : ''} break-words`}>
               {activeOverlay.title}
             </h1>
             
@@ -352,7 +351,7 @@ export default function DelegateDashboard() {
             
             {(activeOverlay.type === 'message' || activeOverlay.type === 'crisis') && (
               <div className="space-y-4">
-                <div className="text-lg md:text-xl font-black uppercase tracking-[0.2em] text-white/80 animate-pulse">
+                <div className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] text-white/80 animate-pulse">
                   {activeOverlay.type === 'crisis' ? "APPEL À L'ACTION" : "Annonce de la Présidence"}
                 </div>
               </div>
@@ -394,7 +393,7 @@ export default function DelegateDashboard() {
                 </Select>
                 <Textarea 
                   placeholder="Votre message..." 
-                  className="min-h-[60px] text-xs resize-none"
+                  className="min-h-[60px] text-xs resize-none break-words"
                   value={messageForm.content}
                   onChange={(e) => setMessageForm({...messageForm, content: e.target.value})}
                   required
@@ -511,7 +510,6 @@ export default function DelegateDashboard() {
 
                   {currentAction.status === 'started' && (
                     <div className="bg-primary/5 p-4 rounded-xl flex items-center justify-center gap-3 text-primary animate-pulse border border-primary/20">
-                      <Clock size={20} />
                       <span className="font-black text-sm uppercase tracking-[0.2em]">DÉBAT OUVERT - LA PAROLE EST AUX DÉLÉGUÉS</span>
                     </div>
                   )}
@@ -534,10 +532,10 @@ export default function DelegateDashboard() {
                       <Badge className="gap-1 mb-2 bg-primary"><Monitor size={12} /> PROJETÉ AU COMITÉ</Badge>
                       <CardTitle className="text-2xl text-primary font-black uppercase tracking-tight break-words">{res.title}</CardTitle>
                     </div>
-                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="h-fit">
+                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="h-fit py-0 px-2 text-[10px]">
                       {res.status.toUpperCase()}
                     </Badge>
-                  </CardHeader>
+                  </Header>
                   <CardContent className="pt-8 text-left">
                     <div className="mb-6 flex flex-wrap gap-2 items-center">
                       <Badge variant="outline" className="bg-primary/10 border-primary/30 text-primary py-1 px-2 text-xs font-bold uppercase tracking-widest break-words">
