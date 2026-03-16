@@ -29,7 +29,7 @@ export default function PresidentLogin() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast({ title: "Connexion réussie", description: "Bienvenue." });
+      toast({ title: "Connexion réussie", description: "Bienvenue au bureau de la présidence." });
       router.push('/president/dashboard');
     } catch (error: any) {
       toast({
@@ -59,7 +59,7 @@ export default function PresidentLogin() {
 
       setDocumentNonBlocking(roleDoc, roleData, { merge: true });
 
-      toast({ title: "Compte créé", description: "Rôle président activé." });
+      toast({ title: "Compte créé", description: "Votre accès président est activé." });
       router.push('/president/dashboard');
     } catch (error: any) {
       toast({
@@ -90,17 +90,17 @@ export default function PresidentLogin() {
             <form onSubmit={handleLogin}>
               <CardContent className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label>Email</Label>
+                  <Label htmlFor="login-email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input className="pl-10" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <Input id="login-email" className="pl-10" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Mot de passe</Label>
+                  <Label htmlFor="login-password">Mot de passe</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input className="pl-10" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                    <Input id="login-password" className="pl-10" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                   </div>
                 </div>
               </CardContent>
@@ -116,12 +116,12 @@ export default function PresidentLogin() {
             <form onSubmit={handleSignUp}>
               <CardContent className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Mot de passe</Label>
-                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                  <Label htmlFor="signup-password">Mot de passe</Label>
+                  <Input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
               </CardContent>
               <CardFooter>
@@ -133,7 +133,7 @@ export default function PresidentLogin() {
           </TabsContent>
         </Tabs>
       </Card>
-      <p className="mt-8 text-xs text-muted-foreground text-center">Note: Désactivez vos extensions de blocage si vous rencontrez des erreurs.</p>
+      <p className="mt-8 text-xs text-muted-foreground text-center">Note: Si vous rencontrez des erreurs "Blocked by Client", désactivez AdBlock.</p>
     </div>
   );
 }

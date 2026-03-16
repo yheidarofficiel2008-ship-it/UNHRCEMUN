@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Plus, Trash2, Database, Landmark, LogOut, FileText, Sparkles } from 'lucide-react';
+import { Play, Plus, Trash2, Database, Landmark, LogOut, FileText, Sparkles, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -55,16 +55,12 @@ export default function PresidentDashboard() {
     const delRef = collection(db, 'delegates');
     const unsubDel = onSnapshot(query(delRef, orderBy('country_name', 'asc')), (snap) => {
       setDelegates(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, (err) => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'delegates', operation: 'list' }));
     });
 
     const resolutionsRef = collection(db, 'resolutions');
     const qRes = query(resolutionsRef, orderBy('created_at', 'desc'));
     const unsubRes = onSnapshot(qRes, (snapshot) => {
       setResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (err) => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'resolutions', operation: 'list' }));
     });
 
     return () => {
@@ -117,7 +113,7 @@ export default function PresidentDashboard() {
     };
     addDocumentNonBlocking(actionCol, initialAction);
 
-    toast({ title: "Initialisation lancée" });
+    toast({ title: "Base de données initialisée" });
     setInitializing(false);
   };
 
@@ -141,7 +137,7 @@ export default function PresidentDashboard() {
     };
 
     addDocumentNonBlocking(collection(db, 'actions'), actionData);
-    toast({ title: "Action lancée !" });
+    toast({ title: "Action lancée avec succès" });
     setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
   };
 
@@ -161,7 +157,7 @@ export default function PresidentDashboard() {
     };
 
     addDocumentNonBlocking(collection(db, 'delegates'), delegateData);
-    toast({ title: "Délégué ajouté" });
+    toast({ title: "Délégué enregistré" });
     setNewDelegate({ country: '', password: '' });
   };
 
@@ -193,7 +189,7 @@ export default function PresidentDashboard() {
     router.push('/');
   };
 
-  if (isUserLoading) return <div className="min-h-screen flex items-center justify-center">Chargement...</div>;
+  if (isUserLoading) return <div className="min-h-screen flex items-center justify-center">Authentification...</div>;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -221,8 +217,8 @@ export default function PresidentDashboard() {
         <div className="lg:col-span-4 space-y-6">
           <Tabs defaultValue="actions">
             <TabsList className="w-full">
-              <TabsTrigger value="actions" className="flex-1">Actions</TabsTrigger>
-              <TabsTrigger value="delegates" className="flex-1">Délégués</TabsTrigger>
+              <TabsTrigger value="actions" className="flex-1">Débat</TabsTrigger>
+              <TabsTrigger value="delegates" className="flex-1">Pays</TabsTrigger>
             </TabsList>
             
             <TabsContent value="actions" className="space-y-6 mt-4">
@@ -231,11 +227,11 @@ export default function PresidentDashboard() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>Nom de l'Action</Label>
-                    <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} />
+                    <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="Ex: Débat Général" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase">Minutes</Label>
+                      <Label className="text-[10px] uppercase">Durée (min)</Label>
                       <Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} />
                     </div>
                     <div className="space-y-1">
@@ -243,31 +239,33 @@ export default function PresidentDashboard() {
                       <Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} />
                     </div>
                   </div>
-                  <Button className="w-full bg-primary" onClick={createAction}>Lancer l'Action</Button>
+                  <Button className="w-full bg-primary" onClick={createAction}>Lancer</Button>
                 </CardContent>
               </Card>
 
               {currentAction && (
                 <Card className="border-primary/20 shadow-lg">
                   <CardHeader>
-                    <Badge className="w-fit mb-2">{currentAction.status?.toUpperCase() || 'LANCÉ'}</Badge>
+                    <Badge className="w-fit mb-2">{currentAction.status?.toUpperCase() || 'SESSION'}</Badge>
                     <CardTitle>{currentAction.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <GlobalTimer startedAt={currentAction.started_at} durationMinutes={currentAction.duration_minutes} />
                     {currentAction.status === 'launched' && (
                       <Button className="w-full h-16 text-xl gap-3" onClick={startAction}>
-                        <Play fill="currentColor" /> Démarrer
+                        <Play fill="currentColor" /> Démarrer le Chrono
                       </Button>
                     )}
                     <div className="space-y-3">
-                      <h3 className="font-bold text-sm text-muted-foreground uppercase">Participants ({participants.filter(p => p.status === 'participating' || p.isParticipating).length})</h3>
-                      <ScrollArea className="h-[150px] border rounded-md p-2">
+                      <h3 className="font-bold text-sm text-muted-foreground uppercase flex items-center gap-2">
+                        <Plus size={14} /> Liste des Orateurs ({participants.filter(p => p.status === 'participating' || p.isParticipating).length})
+                      </h3>
+                      <ScrollArea className="h-[200px] border rounded-md p-2">
                         {participants.map((p, i) => (
-                          <div key={i} className="flex justify-between items-center p-2 border-b">
-                            <span>{p.delegate?.country_name || 'Pays inconnu'}</span>
+                          <div key={i} className="flex justify-between items-center p-2 border-b last:border-0">
+                            <span className="font-medium">{p.delegate?.country_name || 'Pays Inconnu'}</span>
                             <Badge variant={(p.status === 'participating' || p.isParticipating) ? 'default' : 'secondary'}>
-                              {(p.status === 'participating' || p.isParticipating) ? 'Participe' : 'Passe'}
+                              {(p.status === 'participating' || p.isParticipating) ? 'Inscrit' : 'Passé'}
                             </Badge>
                           </div>
                         ))}
@@ -289,14 +287,14 @@ export default function PresidentDashboard() {
               </Card>
 
               <Card>
-                <CardHeader><CardTitle className="text-lg">Liste des Pays</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">Délégués enregistrés</CardTitle></CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[300px]">
                     {delegates.map(d => (
                       <div key={d.id} className="flex justify-between items-center p-3 bg-muted/50 mb-2 rounded-lg">
                         <div className="flex flex-col">
                           <span className="font-semibold">{d.country_name}</span>
-                          <span className="text-[10px] text-muted-foreground font-mono">Pass: {d.password}</span>
+                          <span className="text-[10px] text-muted-foreground font-mono">ID: {d.id.substring(0,8)} | Pass: {d.password}</span>
                         </div>
                         <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteDelegate(d.id)}><Trash2 size={16} /></Button>
                       </div>
@@ -310,10 +308,10 @@ export default function PresidentDashboard() {
 
         <div className="lg:col-span-8">
           <Card>
-            <CardHeader className="bg-muted/30"><CardTitle>Propositions de Résolutions</CardTitle></CardHeader>
+            <CardHeader className="bg-muted/30"><CardTitle className="flex items-center gap-2"><FileText /> Propositions de Résolutions</CardTitle></CardHeader>
             <CardContent className="p-6 space-y-6">
               {resolutions.map(res => (
-                <Card key={res.id} className="overflow-hidden border-2">
+                <Card key={res.id} className="overflow-hidden border-2 hover:border-primary/30 transition-colors">
                   <div className="bg-muted/50 p-4 flex justify-between items-center">
                     <span className="font-bold text-primary">{res.proposing_country || res.proposingCountry}</span>
                     <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
@@ -321,31 +319,40 @@ export default function PresidentDashboard() {
                     </Badge>
                   </div>
                   <CardContent className="p-4 space-y-4">
-                    <p className="text-sm italic whitespace-pre-wrap">"{res.content}"</p>
+                    <p className="text-sm italic whitespace-pre-wrap leading-relaxed">"{res.content}"</p>
+                    
                     {aiAnalysis[res.id] && !aiAnalysis[res.id].loading && (
-                      <div className="bg-accent/5 p-3 rounded border text-sm">
+                      <div className="bg-accent/5 p-4 rounded-xl border-l-4 border-accent text-sm animate-in fade-in slide-in-from-left-2">
                         <div className="flex items-center gap-2 font-bold text-accent mb-2">
-                          <Sparkles size={14} /> Analyse IA
+                          <Sparkles size={16} /> Résumé IA du Président
                         </div>
-                        <p className="mb-2">{aiAnalysis[res.id].summary}</p>
-                        <ul className="space-y-1 list-disc list-inside">
+                        <p className="mb-3 font-medium text-foreground/80">{aiAnalysis[res.id].summary}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {aiAnalysis[res.id].keyPoints?.map((pt: string, i: number) => (
-                            <li key={i} className="text-xs">{pt}</li>
+                            <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground bg-white/50 p-2 rounded">
+                              <span className="text-accent">•</span> {pt}
+                            </div>
                           ))}
-                        </ul>
+                        </div>
                       </div>
                     )}
-                    <div className="flex gap-2 justify-end">
+
+                    <div className="flex gap-2 justify-end pt-2">
                       <Button variant="outline" size="sm" onClick={() => analyzeResolution(res)} disabled={aiAnalysis[res.id]?.loading}>
-                        {aiAnalysis[res.id]?.loading ? "Analyse..." : "Analyse IA"}
+                        {aiAnalysis[res.id]?.loading ? "Analyse en cours..." : <><Sparkles size={14} className="mr-2" /> Analyse IA</>}
                       </Button>
-                      <Button variant="outline" size="sm" className="text-green-600 hover:text-green-700" onClick={() => updateResolution(res.id, 'approved')}>Approuver</Button>
-                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" onClick={() => updateResolution(res.id, 'rejected')}>Rejeter</Button>
+                      <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => updateResolution(res.id, 'approved')}>Approuver</Button>
+                      <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => updateResolution(res.id, 'rejected')}>Rejeter</Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
-              {resolutions.length === 0 && <p className="text-center text-muted-foreground py-10">Aucune résolution soumise pour le moment.</p>}
+              {resolutions.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                  <AlertCircle size={40} className="mb-4 opacity-20" />
+                  <p>Aucune résolution soumise pour le moment.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

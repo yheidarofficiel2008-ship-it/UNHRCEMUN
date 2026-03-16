@@ -1,8 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Règle simplifiée au maximum pour le développement et la simulation
-    // Permet à tout utilisateur connecté (Président ou Délégué anonyme) de lire et écrire
+    // Permet à tout utilisateur authentifié (Président ou Délégué anonyme) de lire et écrire
+    // Cette règle est simplifiée pour le prototypage afin d'éviter les blocages de permission répétitifs.
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
