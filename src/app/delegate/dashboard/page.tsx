@@ -293,67 +293,67 @@ export default function DelegateDashboard() {
       )}
       
       {activeOverlay && activeOverlay.type !== 'none' && (
-        <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-8 text-white animate-in fade-in zoom-in duration-500 ${activeOverlay.type === 'crisis' ? 'bg-red-700' : 'bg-primary'}`}>
-          <div className="max-w-4xl w-full text-center space-y-12">
+        <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 text-white animate-in fade-in zoom-in duration-500 ${activeOverlay.type === 'crisis' ? 'bg-red-700' : 'bg-primary'}`}>
+          <div className="max-w-4xl w-full text-center space-y-8">
             {activeOverlay.type === 'crisis' && (
-              <div className="flex flex-col items-center gap-6 mb-8 animate-pulse">
-                <AlertTriangle size={120} className="text-white" />
-                <h2 className="text-8xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-6 py-2">URGENCE : CRISE</h2>
+              <div className="flex flex-col items-center gap-4 mb-4 animate-pulse">
+                <AlertTriangle size={80} className="text-white" />
+                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-6 py-2">URGENCE : CRISE</h2>
               </div>
             )}
             
-            <h1 className={`text-6xl font-black uppercase tracking-tighter leading-tight border-b-8 border-white pb-8 ${activeOverlay.type === 'crisis' ? 'text-white' : ''}`}>
+            <h1 className={`text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight border-b-4 md:border-b-8 border-white pb-6 ${activeOverlay.type === 'crisis' ? 'text-white' : ''}`}>
               {activeOverlay.title}
             </h1>
             
             {activeOverlay.type === 'vote' && (
-              <div className="space-y-12">
-                <div className="grid grid-cols-3 gap-8">
+              <div className="space-y-10">
+                <div className="grid grid-cols-3 gap-4 md:gap-8">
                   <div className="flex flex-col items-center gap-4">
                     <Button 
                       size="lg" 
-                      className="w-full h-32 bg-green-500 hover:bg-green-600 text-3xl font-bold gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
+                      className="w-full h-24 md:h-32 bg-green-500 hover:bg-green-600 text-xl md:text-3xl font-bold gap-2 md:gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
                       onClick={() => handleVote('pour')}
                       disabled={hasVoted || isCountrySuspended}
                     >
-                      <ThumbsUp size={40} /> POUR
+                      <ThumbsUp className="h-6 w-6 md:h-10 md:w-10" /> POUR
                     </Button>
-                    <div className="text-5xl font-black tabular-nums">{activeOverlay.results?.pour || 0}</div>
+                    <div className="text-3xl md:text-5xl font-black tabular-nums">{activeOverlay.results?.pour || 0}</div>
                   </div>
                   <div className="flex flex-col items-center gap-4">
                     <Button 
                       size="lg" 
-                      className="w-full h-32 bg-red-500 hover:bg-red-600 text-3xl font-bold gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
+                      className="w-full h-24 md:h-32 bg-red-500 hover:bg-red-600 text-xl md:text-3xl font-bold gap-2 md:gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
                       onClick={() => handleVote('contre')}
                       disabled={hasVoted || isCountrySuspended}
                     >
-                      <ThumbsDown size={40} /> CONTRE
+                      <ThumbsDown className="h-6 w-6 md:h-10 md:w-10" /> CONTRE
                     </Button>
-                    <div className="text-5xl font-black tabular-nums">{activeOverlay.results?.contre || 0}</div>
+                    <div className="text-3xl md:text-5xl font-black tabular-nums">{activeOverlay.results?.contre || 0}</div>
                   </div>
                   <div className="flex flex-col items-center gap-4">
                     <Button 
                       size="lg" 
-                      className="w-full h-32 bg-yellow-500 hover:bg-yellow-600 text-3xl font-bold gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
+                      className="w-full h-24 md:h-32 bg-yellow-500 hover:bg-yellow-600 text-xl md:text-3xl font-bold gap-2 md:gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
                       onClick={() => handleVote('abstention')}
                       disabled={hasVoted || isCountrySuspended}
                     >
-                      <CircleSlash size={40} /> ABST.
+                      <CircleSlash className="h-6 w-6 md:h-10 md:w-10" /> ABST.
                     </Button>
-                    <div className="text-5xl font-black tabular-nums">{activeOverlay.results?.abstention || 0}</div>
+                    <div className="text-3xl md:text-5xl font-black tabular-nums">{activeOverlay.results?.abstention || 0}</div>
                   </div>
                 </div>
-                {hasVoted && <div className="text-xl font-bold uppercase tracking-widest text-white/80 animate-pulse bg-white/20 py-4 rounded-full">Vote enregistré avec succès</div>}
+                {hasVoted && <div className="text-lg md:text-xl font-bold uppercase tracking-widest text-white/80 animate-pulse bg-white/20 py-4 rounded-full">Vote enregistré avec succès</div>}
               </div>
             )}
             
             {(activeOverlay.type === 'message' || activeOverlay.type === 'crisis') && (
               <div className="space-y-4">
-                <div className="text-3xl font-black uppercase tracking-[0.3em] text-white/80 animate-pulse">
+                <div className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] text-white/80 animate-pulse">
                   {activeOverlay.type === 'crisis' ? "APPEL À L'ACTION" : "Annonce de la Présidence"}
                 </div>
                 {activeOverlay.type === 'crisis' && (
-                  <div className="text-2xl font-bold uppercase tracking-widest animate-pulse border-4 border-white p-6 rounded-xl bg-black/20">
+                  <div className="text-lg md:text-xl font-bold uppercase tracking-widest animate-pulse border-2 md:border-4 border-white p-4 md:p-6 rounded-xl bg-black/20">
                     La parole est à la présidence. Toutes les interactions sont suspendues.
                   </div>
                 )}
