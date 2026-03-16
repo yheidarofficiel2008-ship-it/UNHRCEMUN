@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -51,7 +51,6 @@ export default function DelegateDashboard() {
     const del = JSON.parse(session);
     setDelegate(del);
 
-    // Écoute des résolutions envoyées par ce pays
     const resRef = collection(db, 'resolutions');
     const qRes = query(resRef, where('proposing_country', '==', del.country_name));
     const unsubRes = onSnapshot(qRes, (snapshot) => {
@@ -59,7 +58,6 @@ export default function DelegateDashboard() {
       setMyResolutions(data.sort((a: any, b: any) => (b.created_at?.seconds || 0) - (a.created_at?.seconds || 0)));
     });
 
-    // Écoute des messages envoyés par ce pays
     const msgRef = collection(db, 'messages');
     const qMsg = query(msgRef, where('sender_country', '==', del.country_name));
     const unsubMsg = onSnapshot(qMsg, (snapshot) => {
@@ -67,7 +65,6 @@ export default function DelegateDashboard() {
       setMyMessages(data.sort((a: any, b: any) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)));
     });
 
-    // Résolutions projetées
     const qDisplayed = query(collection(db, 'resolutions'), where('is_displayed', '==', true));
     const unsubDisplayed = onSnapshot(qDisplayed, (snap) => {
       setDisplayedResolutions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -95,7 +92,6 @@ export default function DelegateDashboard() {
 
   const handleParticipation = async (status: 'participating' | 'passing') => {
     if (!currentAction || !delegate) return;
-    
     try {
       const participationId = `${currentAction.id}_${delegate.id}`;
       await setDoc(doc(db, 'participations', participationId), {
@@ -127,7 +123,6 @@ export default function DelegateDashboard() {
     const newText = before + openTag + selectedText + closeTag + after;
     setResolutionForm({ ...resolutionForm, content: newText });
     
-    // Reposer le focus
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + openTag.length, end + openTag.length);
@@ -220,10 +215,7 @@ export default function DelegateDashboard() {
             </CardHeader>
             <form onSubmit={submitMessage}>
               <CardContent className="px-4 pb-3 space-y-3">
-                <Select 
-                  value={messageForm.type} 
-                  onValueChange={(val) => setMessageForm({...messageForm, type: val})}
-                >
+                <Select value={messageForm.type} onValueChange={(val) => setMessageForm({...messageForm, type: val})}>
                   <SelectTrigger className="h-8 text-xs bg-white">
                     <SelectValue placeholder="Type de message" />
                   </SelectTrigger>
@@ -253,11 +245,11 @@ export default function DelegateDashboard() {
               <CardTitle className="flex items-center gap-2 text-lg"><Send size={18} /> Mes Envois</CardTitle>
             </CardHeader>
             <CardContent className="px-4">
-              <ScrollArea className="h-[400px]">
+              <ScrollArea className="h-[500px]">
                 <div className="space-y-3">
                   {myEnvois.map(item => (
                     <div key={item.id} className="p-3 border rounded-lg bg-muted/10 text-xs">
-                      <div className="flex justify-between items-center mb-1">
+                      <div className="flex justify-between items-center mb-2">
                         <Badge variant="outline" className="text-[10px] uppercase">
                           {item._type === 'resolution' ? 'Résolution' : item.type === 'privilege' ? 'Privilège' : 'Message'}
                         </Badge>
@@ -272,7 +264,7 @@ export default function DelegateDashboard() {
                         )}
                       </div>
                       <div 
-                        className="italic text-muted-foreground whitespace-pre-wrap line-clamp-3"
+                        className="italic text-muted-foreground whitespace-pre-wrap line-clamp-4 prose prose-sm max-w-none"
                         dangerouslySetInnerHTML={{ __html: item.content }}
                       />
                     </div>
@@ -376,7 +368,7 @@ export default function DelegateDashboard() {
                   </CardHeader>
                   <CardContent className="pt-8">
                     <div 
-                      className="text-2xl italic leading-relaxed font-serif text-center px-4 whitespace-pre-wrap"
+                      className="text-2xl italic leading-relaxed font-serif text-center px-4 whitespace-pre-wrap prose prose-2xl max-w-none"
                       dangerouslySetInnerHTML={{ __html: res.content }}
                     />
                     {res.sponsors && (
@@ -410,8 +402,8 @@ export default function DelegateDashboard() {
                     onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} 
                   />
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center mb-1">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
                     <Label htmlFor="content" className="font-bold">Texte de la Résolution</Label>
                     <div className="flex gap-1">
                       <Button type="button" variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => wrapText('b')}><Bold size={14} /></Button>
@@ -422,13 +414,26 @@ export default function DelegateDashboard() {
                   <Textarea 
                     id="content" 
                     ref={textAreaRef}
-                    className="min-h-[300px] text-lg leading-relaxed whitespace-pre-wrap" 
+                    className="min-h-[250px] text-lg leading-relaxed whitespace-pre-wrap font-serif" 
                     required 
                     disabled={!allowResolutions}
-                    placeholder="Rédigez ici votre projet. Utilisez la barre d'outils pour formater."
+                    placeholder="Rédigez ici votre projet. Utilisez les boutons ci-dessus pour le style."
                     value={resolutionForm.content} 
                     onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} 
                   />
+                  
+                  {/* APERÇU EN TEMPS RÉEL */}
+                  {resolutionForm.content && (
+                    <div className="mt-4 p-4 border rounded-lg bg-muted/5">
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase mb-2">
+                        <Eye size={12} /> Aperçu en temps réel
+                      </div>
+                      <div 
+                        className="text-lg italic font-serif leading-relaxed whitespace-pre-wrap prose prose-neutral max-w-none"
+                        dangerouslySetInnerHTML={{ __html: resolutionForm.content }}
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
               <CardFooter>
