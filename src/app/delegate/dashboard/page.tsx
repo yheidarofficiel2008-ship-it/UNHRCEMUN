@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,10 +23,11 @@ import { useToast } from '@/hooks/use-toast';
 export default function DelegateDashboard() {
   const router = useRouter();
   const { toast } = useToast();
-  const { isSuspended, allowResolutions, currentAction, activeOverlay } = useRealtime();
+  const { isSuspended: isGlobalSuspended, allowResolutions, currentAction, activeOverlay } = useRealtime();
   const [delegate, setDelegate] = useState<any>(null);
   const [participationStatus, setParticipationStatus] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
+  const [isCountrySuspended, setIsCountrySuspended] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   
   const [resolutionForm, setResolutionForm] = useState({
@@ -52,6 +53,14 @@ export default function DelegateDashboard() {
     const del = JSON.parse(session);
     setDelegate(del);
 
+    // Écouter le statut de suspension spécifique au pays
+    const unsubDelegate = onSnapshot(doc(db, 'delegates', del.id), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setIsCountrySuspended(data.is_suspended === true);
+      }
+    });
+
     const resRef = collection(db, 'resolutions');
     const qRes = query(resRef, where('proposing_country', '==', del.country_name));
     const unsubRes = onSnapshot(qRes, (snapshot) => {
@@ -72,6 +81,7 @@ export default function DelegateDashboard() {
     });
 
     return () => {
+      unsubDelegate();
       unsubRes();
       unsubMsg();
       unsubDisplayed();
@@ -96,7 +106,7 @@ export default function DelegateDashboard() {
   }, [activeOverlay?.voteId]);
 
   const handleParticipation = async (status: 'participating' | 'passing') => {
-    if (!currentAction || !delegate) return;
+    if (!currentAction || !delegate || isCountrySuspended) return;
     try {
       const participationId = `${currentAction.id}_${delegate.id}`;
       await setDoc(doc(db, 'participations', participationId), {
@@ -113,7 +123,7 @@ export default function DelegateDashboard() {
   };
 
   const handleVote = async (choice: 'pour' | 'contre' | 'abstention') => {
-    if (!activeOverlay || activeOverlay.type !== 'vote' || hasVoted) return;
+    if (!activeOverlay || activeOverlay.type !== 'vote' || hasVoted || isCountrySuspended) return;
     try {
       const sessionRef = doc(db, 'sessionState', 'current');
       await updateDoc(sessionRef, {
@@ -171,7 +181,7 @@ export default function DelegateDashboard() {
 
   const submitResolution = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!delegate || !allowResolutions) return;
+    if (!delegate || !allowResolutions || isCountrySuspended) return;
     try {
       await addDoc(collection(db, 'resolutions'), {
         proposing_country: delegate.country_name,
@@ -190,7 +200,7 @@ export default function DelegateDashboard() {
 
   const submitMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!delegate || !messageForm.content) return;
+    if (!delegate || !messageForm.content || isCountrySuspended) return;
     setIsSendingMessage(true);
     try {
       await addDoc(collection(db, 'messages'), {
@@ -231,7 +241,17 @@ export default function DelegateDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
-      {isSuspended && <SuspensionOverlay />}
+      {isGlobalSuspended && <SuspensionOverlay />}
+      
+      {isCountrySuspended && (
+        <div className="fixed inset-0 z-[10000] bg-destructive/95 flex flex-col items-center justify-center p-8 text-white animate-in fade-in zoom-in duration-300">
+          <ShieldAlert size={100} className="mb-8" />
+          <h1 className="text-5xl font-black uppercase text-center mb-4">Délégation Suspendue</h1>
+          <p className="text-2xl text-center opacity-90 max-w-2xl">
+            Votre délégation a été suspendue de parole et d'interaction par la présidence. Veuillez patienter jusqu'au rétablissement officiel.
+          </p>
+        </div>
+      )}
       
       {activeOverlay && activeOverlay.type !== 'none' && (
         <div className="fixed inset-0 z-[9999] bg-primary flex flex-col items-center justify-center p-8 text-white animate-in fade-in zoom-in duration-500">
@@ -246,7 +266,7 @@ export default function DelegateDashboard() {
                       size="lg" 
                       className="w-full h-32 bg-green-500 hover:bg-green-600 text-3xl font-bold gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
                       onClick={() => handleVote('pour')}
-                      disabled={hasVoted}
+                      disabled={hasVoted || isCountrySuspended}
                     >
                       <ThumbsUp size={40} /> POUR
                     </Button>
@@ -257,7 +277,7 @@ export default function DelegateDashboard() {
                       size="lg" 
                       className="w-full h-32 bg-red-500 hover:bg-red-600 text-3xl font-bold gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
                       onClick={() => handleVote('contre')}
-                      disabled={hasVoted}
+                      disabled={hasVoted || isCountrySuspended}
                     >
                       <ThumbsDown size={40} /> CONTRE
                     </Button>
@@ -268,7 +288,7 @@ export default function DelegateDashboard() {
                       size="lg" 
                       className="w-full h-32 bg-yellow-500 hover:bg-yellow-600 text-3xl font-bold gap-4 shadow-2xl transition-transform active:scale-95 disabled:opacity-50"
                       onClick={() => handleVote('abstention')}
-                      disabled={hasVoted}
+                      disabled={hasVoted || isCountrySuspended}
                     >
                       <CircleSlash size={40} /> ABST.
                     </Button>
@@ -307,7 +327,7 @@ export default function DelegateDashboard() {
             </CardHeader>
             <form onSubmit={submitMessage}>
               <CardContent className="px-4 pb-3 space-y-3">
-                <Select value={messageForm.type} onValueChange={(val) => setMessageForm({...messageForm, type: val})}>
+                <Select value={messageForm.type} onValueChange={(val) => setMessageForm({...messageForm, type: val})} disabled={isCountrySuspended}>
                   <SelectTrigger className="h-8 text-xs bg-white">
                     <SelectValue placeholder="Type de message" />
                   </SelectTrigger>
@@ -322,10 +342,11 @@ export default function DelegateDashboard() {
                   value={messageForm.content}
                   onChange={(e) => setMessageForm({...messageForm, content: e.target.value})}
                   required
+                  disabled={isCountrySuspended}
                 />
               </CardContent>
               <CardFooter className="px-4 pb-3 pt-0">
-                <Button size="sm" type="submit" className="w-full bg-secondary text-xs h-8" disabled={isSendingMessage}>
+                <Button size="sm" type="submit" className="w-full bg-secondary text-xs h-8" disabled={isSendingMessage || isCountrySuspended}>
                   {isSendingMessage ? "Envoi..." : "Envoyer"}
                 </Button>
               </CardFooter>
@@ -412,6 +433,7 @@ export default function DelegateDashboard() {
                           size="lg" 
                           className={`h-24 text-xl gap-3 shadow-lg transition-transform hover:scale-105 ${participationStatus === 'participating' ? 'bg-green-600' : 'bg-primary'}`}
                           onClick={() => handleParticipation('participating')}
+                          disabled={isCountrySuspended}
                         >
                           <CheckCircle2 size={28} /> Participer
                         </Button>
@@ -420,6 +442,7 @@ export default function DelegateDashboard() {
                           variant="outline" 
                           className={`h-24 text-xl gap-3 border-2 transition-transform hover:scale-105 ${participationStatus === 'passing' ? 'border-destructive text-destructive' : 'border-secondary text-secondary'}`}
                           onClick={() => handleParticipation('passing')}
+                          disabled={isCountrySuspended}
                         >
                           <XCircle size={28} /> Passer
                         </Button>
@@ -472,10 +495,10 @@ export default function DelegateDashboard() {
             </div>
           )}
 
-          <Card className={`shadow-xl transition-all ${!allowResolutions ? 'opacity-70 grayscale pointer-events-none' : 'hover:shadow-2xl'}`}>
+          <Card className={`shadow-xl transition-all ${(!allowResolutions || isCountrySuspended) ? 'opacity-70 grayscale pointer-events-none' : 'hover:shadow-2xl'}`}>
             <CardHeader className="bg-secondary/5 border-b mb-6 flex flex-row items-center justify-between">
               <CardTitle className="text-2xl font-headline">Soumettre une Résolution</CardTitle>
-              {!allowResolutions && (
+              {(!allowResolutions || isCountrySuspended) && (
                 <Badge variant="destructive" className="gap-1"><Lock size={12} /> ENVOIS SUSPENDUS</Badge>
               )}
             </CardHeader>
@@ -486,7 +509,7 @@ export default function DelegateDashboard() {
                   <Input 
                     id="sponsors" 
                     placeholder="France, Japon, Brésil..." 
-                    disabled={!allowResolutions}
+                    disabled={!allowResolutions || isCountrySuspended}
                     value={resolutionForm.sponsors} 
                     onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} 
                   />
@@ -495,9 +518,9 @@ export default function DelegateDashboard() {
                   <div className="flex justify-between items-center">
                     <Label htmlFor="content" className="font-bold">Texte de la Résolution</Label>
                     <div className="flex gap-1">
-                      <Button type="button" variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => wrapText('b')}><Bold size={14} /></Button>
-                      <Button type="button" variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => wrapText('i')}><Italic size={14} /></Button>
-                      <Button type="button" variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => wrapText('u')}><Underline size={14} /></Button>
+                      <Button type="button" variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => wrapText('b')} disabled={isCountrySuspended}><Bold size={14} /></Button>
+                      <Button type="button" variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => wrapText('i')} disabled={isCountrySuspended}><Italic size={14} /></Button>
+                      <Button type="button" variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => wrapText('u')} disabled={isCountrySuspended}><Underline size={14} /></Button>
                     </div>
                   </div>
                   <Textarea 
@@ -505,7 +528,7 @@ export default function DelegateDashboard() {
                     ref={textAreaRef}
                     className="min-h-[250px] text-lg leading-relaxed whitespace-pre-wrap font-serif" 
                     required 
-                    disabled={!allowResolutions}
+                    disabled={!allowResolutions || isCountrySuspended}
                     placeholder="Rédigez ici votre projet. Utilisez les boutons ci-dessus pour le style."
                     value={resolutionForm.content} 
                     onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} 
@@ -527,7 +550,7 @@ export default function DelegateDashboard() {
               <CardFooter>
                 <Button 
                   type="submit" 
-                  disabled={!allowResolutions}
+                  disabled={!allowResolutions || isCountrySuspended}
                   className="w-full h-16 bg-secondary text-xl font-bold gap-3 shadow-lg"
                 >
                   <Send size={24} /> Transmettre au Bureau

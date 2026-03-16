@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History } from 'lucide-react';
+import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -221,6 +221,7 @@ export default function PresidentDashboard() {
       await addDocumentNonBlocking(collection(db, 'delegates'), {
         country_name: newDelegate.name,
         password: newDelegate.password,
+        is_suspended: false,
         created_at: serverTimestamp()
       });
       setNewDelegate({ name: '', password: '' });
@@ -228,6 +229,15 @@ export default function PresidentDashboard() {
     } catch (e) {
       toast({ title: "Erreur", description: "Échec de l'ajout.", variant: "destructive" });
     }
+  };
+
+  const toggleDelegateSuspension = (delegateId: string, currentStatus: boolean) => {
+    if (!db) return;
+    updateDocumentNonBlocking(doc(db, 'delegates', delegateId), { is_suspended: !currentStatus });
+    toast({ 
+      title: currentStatus ? "Délégation rétablie" : "Délégation suspendue",
+      description: currentStatus ? "Le pays peut à nouveau interagir." : "Le pays ne peut plus interagir."
+    });
   };
 
   const extendTime = (mins: number) => {
@@ -599,16 +609,39 @@ export default function PresidentDashboard() {
               <Card>
                 <CardHeader><CardTitle className="text-lg">Délégués Enregistrés ({delegates.length})</CardTitle></CardHeader>
                 <CardContent>
-                  <ScrollArea className="h-[300px]">
+                  <ScrollArea className="h-[400px]">
                     {delegates.map(d => (
-                      <div key={d.id} className="flex justify-between items-center p-3 bg-muted/50 mb-2 rounded-lg">
+                      <div key={d.id} className={`flex justify-between items-center p-3 mb-2 rounded-lg border transition-colors ${d.is_suspended ? 'bg-destructive/5 border-destructive/20' : 'bg-muted/50 border-transparent'}`}>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-sm">{d.country_name}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">{d.country_name}</span>
+                            {d.is_suspended && <Badge variant="destructive" className="h-4 text-[8px] px-1 uppercase"><ShieldAlert size={10} className="mr-0.5" /> Suspendu</Badge>}
+                          </div>
                           <span className="text-[10px] text-muted-foreground font-mono">Pass: {d.password}</span>
                         </div>
-                        <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => deleteDocumentNonBlocking(doc(db!, 'delegates', d.id))}>
-                          <Trash2 size={16} />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className={`h-8 w-8 ${d.is_suspended ? 'text-green-600 hover:text-green-700' : 'text-amber-600 hover:text-amber-700'}`} 
+                                  onClick={() => toggleDelegateSuspension(d.id, d.is_suspended)}
+                                >
+                                  {d.is_suspended ? <ShieldOff size={16} /> : <ShieldAlert size={16} />}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{d.is_suspended ? 'Rétablir le pays' : 'Suspendre le pays'}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => deleteDocumentNonBlocking(doc(db!, 'delegates', d.id))}>
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                     {delegates.length === 0 && <p className="text-xs text-center text-muted-foreground italic py-4">Aucun pays enregistré.</p>}

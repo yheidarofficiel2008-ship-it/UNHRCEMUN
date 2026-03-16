@@ -8,7 +8,8 @@
       "properties": {
         "id": { "type": "string" },
         "country_name": { "type": "string" },
-        "password": { "type": "string" }
+        "password": { "type": "string" },
+        "is_suspended": { "type": "boolean", "default": false }
       },
       "required": ["country_name", "password"]
     },
