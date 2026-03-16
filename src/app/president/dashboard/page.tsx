@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert } from 'lucide-react';
+import { Play, Pause, Square, Database, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, AlertOctagon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -159,7 +159,10 @@ export default function PresidentDashboard() {
     };
     updateDocumentNonBlocking(sessionRef, { activeOverlay: overlayData });
     setIsOverlayDialogOpen(false);
-    toast({ title: overlayForm.type === 'vote' ? "Vote lancé" : "Message affiché" });
+    toast({ 
+      title: overlayForm.type === 'vote' ? "Vote lancé" : overlayForm.type === 'crisis' ? "CRISE DÉCLENCHÉE" : "Message affiché",
+      variant: overlayForm.type === 'crisis' ? "destructive" : "default"
+    });
   };
 
   const stopOverlay = () => {
@@ -322,6 +325,7 @@ export default function PresidentDashboard() {
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold font-headline uppercase tracking-widest">EMUN UNHRC - Présidence</h1>
           {isSuspended && <Badge variant="destructive" className="animate-pulse">SÉANCE SUSPENDUE</Badge>}
+          {activeOverlay?.type === 'crisis' && <Badge variant="destructive" className="bg-red-600 animate-bounce uppercase font-black px-4 shadow-2xl">Mode Crise Actif</Badge>}
         </div>
         <div className="flex items-center gap-6">
           <Dialog open={isOverlayDialogOpen} onOpenChange={setIsOverlayDialogOpen}>
@@ -332,7 +336,7 @@ export default function PresidentDashboard() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Annonce ou Vote Global</DialogTitle>
+                <DialogTitle>Annonce, Vote ou Crise</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
@@ -344,20 +348,23 @@ export default function PresidentDashboard() {
                     <SelectContent>
                       <SelectItem value="message">Message à afficher (Bleu)</SelectItem>
                       <SelectItem value="vote">Procédure de vote</SelectItem>
+                      <SelectItem value="crisis" className="text-red-600 font-bold">🚨 CRISE (Écran rouge + Alarme)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Titre / Sujet</Label>
+                  <Label>{overlayForm.type === 'crisis' ? 'Sujet de la Crise' : 'Titre / Sujet'}</Label>
                   <Input 
-                    placeholder="Ex: Vote sur la résolution A-12" 
+                    placeholder={overlayForm.type === 'crisis' ? "Décrivez la situation d'urgence..." : "Ex: Vote sur la résolution A-12"} 
                     value={overlayForm.title} 
                     onChange={(e) => setOverlayForm({...overlayForm, title: e.target.value})} 
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={launchOverlay} className="bg-primary w-full">Lancer sur tous les écrans</Button>
+                <Button onClick={launchOverlay} className={overlayForm.type === 'crisis' ? "bg-red-600 hover:bg-red-700 w-full font-black uppercase" : "bg-primary w-full"}>
+                  {overlayForm.type === 'crisis' ? 'Lancer la Crise' : 'Lancer sur tous les écrans'}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
