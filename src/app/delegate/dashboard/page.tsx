@@ -535,7 +535,7 @@ export default function DelegateDashboard() {
                     <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="h-fit py-0 px-2 text-[10px]">
                       {res.status.toUpperCase()}
                     </Badge>
-                  </Header>
+                  </CardHeader>
                   <CardContent className="pt-8 text-left">
                     <div className="mb-6 flex flex-wrap gap-2 items-center">
                       <Badge variant="outline" className="bg-primary/10 border-primary/30 text-primary py-1 px-2 text-xs font-bold uppercase tracking-widest break-words">
