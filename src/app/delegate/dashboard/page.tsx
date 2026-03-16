@@ -1,8 +1,9 @@
+
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, MessageSquare, Check } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ export default function DelegateDashboard() {
   const { isSuspended, allowResolutions, currentAction } = useRealtime();
   const [delegate, setDelegate] = useState<any>(null);
   const [participationStatus, setParticipationStatus] = useState<string | null>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   
   const [resolutionForm, setResolutionForm] = useState({
     sponsors: '',
@@ -109,6 +111,29 @@ export default function DelegateDashboard() {
     }
   };
 
+  const wrapText = (tag: string) => {
+    if (!textAreaRef.current) return;
+    const textarea = textAreaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+
+    const openTag = `<${tag}>`;
+    const closeTag = `</${tag}>`;
+    
+    const newText = before + openTag + selectedText + closeTag + after;
+    setResolutionForm({ ...resolutionForm, content: newText });
+    
+    // Reposer le focus
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + openTag.length, end + openTag.length);
+    }, 0);
+  };
+
   const submitResolution = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!delegate || !allowResolutions) return;
@@ -186,7 +211,7 @@ export default function DelegateDashboard() {
       </header>
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1400px] mx-auto w-full">
-        {/* Colonne latérale GAUCHE (Plus petite) */}
+        {/* Colonne latérale GAUCHE */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="border-secondary/30 bg-secondary/5">
             <CardHeader className="py-3 px-4 flex flex-row items-center gap-2">
@@ -246,7 +271,10 @@ export default function DelegateDashboard() {
                           </Badge>
                         )}
                       </div>
-                      <p className="italic text-muted-foreground line-clamp-2">"{item.content}"</p>
+                      <div 
+                        className="italic text-muted-foreground whitespace-pre-wrap line-clamp-3"
+                        dangerouslySetInnerHTML={{ __html: item.content }}
+                      />
                     </div>
                   ))}
                   {myEnvois.length === 0 && <p className="text-xs text-center text-muted-foreground italic py-4">Aucun envoi trouvé.</p>}
@@ -256,14 +284,13 @@ export default function DelegateDashboard() {
           </Card>
         </div>
 
-        {/* Colonne CENTRALE (Principale) */}
+        {/* Colonne CENTRALE */}
         <div className="lg:col-span-8 space-y-6">
-          {/* SESSION ACTIVE - PLACE PRINCIPALE */}
           <Card className="border-secondary/20 shadow-xl overflow-hidden">
             <CardHeader className="bg-secondary/5 border-b pb-4">
               <div className="flex justify-between items-center">
                 <Badge className="bg-secondary">SÉANCE EN COURS</Badge>
-                {isActive && <Badge variant="outline" className="text-[10px] opacity-60">Alloué par orateur: {currentAction.time_per_delegate}</Badge>}
+                {isActive && <Badge variant="outline" className="text-[10px] opacity-60">Temps alloué: {currentAction.time_per_delegate}</Badge>}
               </div>
               <CardTitle className="text-3xl font-headline mt-2">{isActive ? currentAction.title : 'En attente d\'une action...'}</CardTitle>
               {isActive && <CardDescription className="text-lg">{currentAction.description}</CardDescription>}
@@ -295,8 +322,8 @@ export default function DelegateDashboard() {
                   </div>
                   
                   {currentAction.allow_participation && currentAction.status === 'launched' && (
-                    <div className="pt-6 border-t">
-                      <p className="text-sm font-bold text-center text-muted-foreground uppercase mb-4 tracking-tighter">Souhaitez-vous vous inscrire sur la liste des orateurs ?</p>
+                    <div className="pt-6 border-t text-center">
+                      <p className="text-sm font-bold text-muted-foreground uppercase mb-4">Inscription sur la liste des orateurs</p>
                       <div className="grid grid-cols-2 gap-6 max-w-md mx-auto">
                         <Button 
                           size="lg" 
@@ -327,7 +354,7 @@ export default function DelegateDashboard() {
               ) : (
                 <div className="py-20 text-center space-y-4">
                   <Monitor size={60} className="mx-auto text-muted-foreground/30" />
-                  <p className="text-muted-foreground italic">Le Bureau de la Présidence n'a pas encore lancé d'action de débat.</p>
+                  <p className="text-muted-foreground italic">En attente d'une action de la présidence.</p>
                 </div>
               )}
             </CardContent>
@@ -337,8 +364,8 @@ export default function DelegateDashboard() {
           {displayedResolutions.length > 0 && (
             <div className="space-y-6">
               {displayedResolutions.map((res) => (
-                <Card key={res.id} className="border-primary border-4 bg-primary/5 shadow-2xl animate-in fade-in zoom-in duration-500">
-                  <CardHeader className="flex flex-row items-center justify-between border-b border-primary/20 pb-4">
+                <Card key={res.id} className="border-primary border-4 bg-primary/5 shadow-2xl animate-in fade-in zoom-in duration-500 overflow-hidden">
+                  <CardHeader className="flex flex-row items-center justify-between border-b border-primary/20 pb-4 bg-white/50">
                     <div className="space-y-1">
                       <Badge className="gap-1 mb-2 bg-primary"><Monitor size={12} /> PROJETÉ AU COMITÉ</Badge>
                       <CardTitle className="text-2xl text-primary">{res.proposing_country}</CardTitle>
@@ -348,7 +375,10 @@ export default function DelegateDashboard() {
                     </Badge>
                   </CardHeader>
                   <CardContent className="pt-8">
-                    <p className="text-2xl italic leading-relaxed font-serif text-center px-4">"{res.content}"</p>
+                    <div 
+                      className="text-2xl italic leading-relaxed font-serif text-center px-4 whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{ __html: res.content }}
+                    />
                     {res.sponsors && (
                       <div className="mt-8 pt-4 border-t border-primary/10 flex justify-center">
                         <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Sponsors: <span className="text-primary">{res.sponsors}</span></p>
@@ -365,7 +395,7 @@ export default function DelegateDashboard() {
             <CardHeader className="bg-secondary/5 border-b mb-6 flex flex-row items-center justify-between">
               <CardTitle className="text-2xl font-headline">Soumettre une Résolution</CardTitle>
               {!allowResolutions && (
-                <Badge variant="destructive" className="gap-1"><Lock size={12} /> ENVOIS SUSPENDUS PAR LA PRÉSIDENCE</Badge>
+                <Badge variant="destructive" className="gap-1"><Lock size={12} /> ENVOIS SUSPENDUS</Badge>
               )}
             </CardHeader>
             <form onSubmit={submitResolution}>
@@ -374,20 +404,28 @@ export default function DelegateDashboard() {
                   <Label htmlFor="sponsors" className="font-bold">Pays Sponsors</Label>
                   <Input 
                     id="sponsors" 
-                    placeholder="Listez les pays qui soutiennent votre texte (ex: France, Japon, Brésil...)" 
+                    placeholder="France, Japon, Brésil..." 
                     disabled={!allowResolutions}
                     value={resolutionForm.sponsors} 
                     onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="content" className="font-bold">Texte de la Résolution</Label>
+                  <div className="flex justify-between items-center mb-1">
+                    <Label htmlFor="content" className="font-bold">Texte de la Résolution</Label>
+                    <div className="flex gap-1">
+                      <Button type="button" variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => wrapText('b')}><Bold size={14} /></Button>
+                      <Button type="button" variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => wrapText('i')}><Italic size={14} /></Button>
+                      <Button type="button" variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => wrapText('u')}><Underline size={14} /></Button>
+                    </div>
+                  </div>
                   <Textarea 
                     id="content" 
-                    className="min-h-[200px] text-lg leading-relaxed" 
+                    ref={textAreaRef}
+                    className="min-h-[300px] text-lg leading-relaxed whitespace-pre-wrap" 
                     required 
                     disabled={!allowResolutions}
-                    placeholder={allowResolutions ? "Rédigez ici le contenu de votre projet de résolution..." : "L'envoi de résolutions est actuellement désactivé."}
+                    placeholder="Rédigez ici votre projet. Utilisez la barre d'outils pour formater."
                     value={resolutionForm.content} 
                     onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} 
                   />

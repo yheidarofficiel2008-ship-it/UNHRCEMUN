@@ -277,7 +277,7 @@ export default function PresidentDashboard() {
       </header>
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1600px] mx-auto w-full">
-        {/* Colonne Gauche: Actions & Pays */}
+        {/* Colonne Gauche */}
         <div className="lg:col-span-4 space-y-6">
           <Tabs defaultValue="actions">
             <TabsList className="w-full">
@@ -363,7 +363,7 @@ export default function PresidentDashboard() {
                     <div className="pt-4 border-t space-y-4">
                       <div className="flex justify-between items-center">
                         <h3 className="font-bold text-[10px] text-muted-foreground uppercase flex items-center gap-2">
-                          <Timer size={14} /> Chrono Orateur (À reculons)
+                          <Timer size={14} /> Chrono Orateur (À rebours)
                         </h3>
                         <Badge variant="outline" className="text-[10px]">{currentAction.time_per_delegate}</Badge>
                       </div>
@@ -437,7 +437,7 @@ export default function PresidentDashboard() {
           </Tabs>
         </div>
 
-        {/* Colonne Droite: Résolutions & Messages */}
+        {/* Colonne Droite */}
         <div className="lg:col-span-8 space-y-6">
           <Tabs defaultValue="resolutions">
             <TabsList className="w-full">
@@ -445,7 +445,7 @@ export default function PresidentDashboard() {
               <TabsTrigger value="messages" className="flex-1 relative">
                 Messages Privés
                 {unreadMessagesCount > 0 && (
-                  <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full animate-pulse">
+                  <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full">
                     {unreadMessagesCount}
                   </Badge>
                 )}
@@ -471,7 +471,10 @@ export default function PresidentDashboard() {
                         </Badge>
                       </div>
                       <CardContent className="p-4 space-y-4">
-                        <p className="text-sm italic leading-relaxed">"{res.content}"</p>
+                        <div 
+                          className="text-sm italic leading-relaxed whitespace-pre-wrap"
+                          dangerouslySetInnerHTML={{ __html: res.content }}
+                        />
                         <div className="flex gap-2 justify-end pt-2 border-t">
                           <Button 
                             variant={res.is_displayed ? "default" : "outline"} 
@@ -512,8 +515,8 @@ export default function PresidentDashboard() {
                       {messages.map(msg => (
                         <div 
                           key={msg.id} 
-                          className={`p-4 border-l-4 rounded-r-xl shadow-sm transition-all flex flex-col gap-3 ${
-                            msg.is_read ? 'bg-muted/10 border-muted-foreground/30' : 'bg-secondary/5 border-secondary animate-in slide-in-from-right-2'
+                          className={`p-4 border-l-4 rounded-r-xl shadow-sm flex flex-col gap-3 ${
+                            msg.is_read ? 'bg-muted/10 border-muted-foreground/30' : 'bg-secondary/5 border-secondary'
                           }`}
                         >
                           <div className="flex justify-between items-start">
@@ -534,14 +537,14 @@ export default function PresidentDashboard() {
                               </Button>
                             </div>
                           </div>
-                          <p className="text-sm font-medium leading-relaxed italic">"{msg.content}"</p>
+                          <p className="text-sm font-medium leading-relaxed italic whitespace-pre-wrap">"{msg.content}"</p>
                           <span className="text-[10px] text-muted-foreground self-end">
                             {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "À l'instant"}
                           </span>
                         </div>
                       ))}
                       {messages.length === 0 && (
-                        <div className="text-center py-20 text-muted-foreground italic">Aucun message pour le moment</div>
+                        <div className="text-center py-20 text-muted-foreground italic">Aucun message</div>
                       )}
                     </div>
                   </ScrollArea>
