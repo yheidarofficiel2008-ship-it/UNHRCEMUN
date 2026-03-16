@@ -77,7 +77,7 @@ export default function PresidentLogin() {
         <CardHeader className="text-center space-y-4">
           <Landmark className="mx-auto h-12 w-12 text-primary" />
           <CardTitle className="text-2xl font-bold font-headline">Portail Président</CardTitle>
-          <CardDescription>Accès réservé Immune UERC</CardDescription>
+          <CardDescription>Accès réservé EMUN UNHRC</CardDescription>
         </CardHeader>
         
         <Tabs defaultValue="login" className="w-full">

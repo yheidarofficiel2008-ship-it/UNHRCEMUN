@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -281,7 +280,7 @@ export default function PresidentDashboard() {
       <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-50">
         <div className="flex items-center gap-4">
           <Landmark className="h-8 w-8" />
-          <h1 className="text-xl font-bold font-headline uppercase tracking-widest">Immune UERC - Présidence</h1>
+          <h1 className="text-xl font-bold font-headline uppercase tracking-widest">EMUN UNHRC - Présidence</h1>
           {isSuspended && <Badge variant="destructive" className="animate-pulse">SÉANCE SUSPENDUE</Badge>}
         </div>
         <div className="flex items-center gap-6">

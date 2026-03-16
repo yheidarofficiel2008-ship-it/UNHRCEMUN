@@ -12,7 +12,7 @@ export default function Home() {
         <div className="space-y-4">
           <Landmark className="mx-auto h-20 w-20 text-primary" />
           <h1 className="text-5xl font-extrabold tracking-tight text-primary font-headline">
-            Immune UERC
+            EMUN UNHRC
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Plateforme de gestion pour le Conseil des droits de l'homme des Nations Unies.

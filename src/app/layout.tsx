@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'Immune UERC - MUN HR Council',
+  title: 'EMUN UNHRC - MUN HR Council',
   description: 'Plateforme de gestion pour le United Nations Human Rights Council',
 };
 
