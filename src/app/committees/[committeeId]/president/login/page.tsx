@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Lock, Mail, LogIn, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useFirebase, useDoc } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useToast } from '@/hooks/use-toast';
+import { useMemoFirebase } from '@/firebase';
+import { signInAnonymously } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 export default function PresidentLogin() {
@@ -32,7 +33,7 @@ export default function PresidentLogin() {
     if (!auth || !committee) return;
     setLoading(true);
 
-    // Vérifier si les identifiants correspondent au comité
+    // Validation des identifiants par rapport au document Firestore du comité
     if (email !== committee.president_email || password !== committee.president_password) {
       toast({
         title: "Accès Refusé",
@@ -44,9 +45,17 @@ export default function PresidentLogin() {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      // On utilise l'auth anonyme pour obtenir une session valide pour les Security Rules
+      await signInAnonymously(auth);
+      
+      // Stockage de l'ID du comité actif pour le contexte du dashboard
       localStorage.setItem('active_committee_id', committeeId);
-      toast({ title: "Connexion réussie", description: `Bureau de la présidence - ${committee.name}` });
+      
+      toast({ 
+        title: "Connexion réussie", 
+        description: `Bureau de la présidence - ${committee.name}` 
+      });
+      
       router.push(`/committees/${committeeId}/president/dashboard`);
     } catch (error: any) {
       toast({
@@ -78,6 +87,7 @@ export default function PresidentLogin() {
                   id="login-email" 
                   className="pl-10 h-11" 
                   type="email" 
+                  placeholder="president@mun.org"
                   value={email} 
                   onChange={(e) => setEmail(e.target.value)} 
                   required 
@@ -109,8 +119,7 @@ export default function PresidentLogin() {
           </CardFooter>
         </form>
       </Card>
+      <p className="mt-8 text-[10px] text-muted-foreground text-center uppercase tracking-widest opacity-30">MUN-OS v2.0</p>
     </div>
   );
 }
-
-import { useMemoFirebase } from '@/firebase';
