@@ -3,12 +3,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, AlertOctagon, User } from 'lucide-react';
+import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -761,12 +761,20 @@ export default function PresidentDashboard() {
                           className="text-sm leading-relaxed whitespace-pre-wrap break-words prose prose-sm max-w-none"
                           dangerouslySetInnerHTML={{ __html: res.content }}
                         />
-                        {res.sponsors && (
-                          <div className="mt-4 p-3 border rounded-lg bg-muted/20">
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Pays Sponsors</p>
-                            <p className="text-sm font-medium">{res.sponsors}</p>
-                          </div>
-                        )}
+                        <div className="mt-4 p-3 border rounded-lg bg-muted/20 space-y-3">
+                          {res.spokesperson && (
+                            <div>
+                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Porte-parole</p>
+                              <p className="text-sm font-bold text-primary">{res.spokesperson}</p>
+                            </div>
+                          )}
+                          {res.sponsors && (
+                            <div>
+                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Pays Sponsors</p>
+                              <p className="text-sm font-medium">{res.sponsors}</p>
+                            </div>
+                          )}
+                        </div>
                         <div className="flex gap-2 justify-end pt-4 border-t">
                           <Button 
                             variant={res.is_displayed ? "default" : "outline"} 

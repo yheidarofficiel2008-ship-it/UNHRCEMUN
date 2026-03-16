@@ -551,11 +551,14 @@ export default function DelegateDashboard() {
                       className="text-lg leading-relaxed font-serif whitespace-pre-wrap break-words prose prose-lg max-w-none"
                       dangerouslySetInnerHTML={{ __html: res.content }}
                     />
-                    {res.sponsors && (
-                      <div className="mt-8 pt-4 border-t border-primary/10 flex justify-center">
+                    <div className="mt-8 pt-4 border-t border-primary/10 space-y-2 text-center">
+                      {res.spokesperson && (
+                        <p className="text-sm text-primary font-black uppercase tracking-widest">Porte-parole: {res.spokesperson}</p>
+                      )}
+                      {res.sponsors && (
                         <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Sponsors: <span className="text-primary">{res.sponsors}</span></p>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
