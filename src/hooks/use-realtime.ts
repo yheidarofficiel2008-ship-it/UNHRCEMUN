@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useFirebase } from '@/firebase';
 import { collection, query, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
 
-export function useRealtime() {
+export function useRealtime(committeeId?: string) {
   const { firestore: db } = useFirebase();
   const [isSuspended, setIsSuspended] = useState(false);
   const [allowResolutions, setAllowResolutions] = useState(true);
@@ -13,23 +13,28 @@ export function useRealtime() {
   const [activeOverlay, setActiveOverlay] = useState<any>(null);
 
   useEffect(() => {
-    if (!db) return;
+    if (!db || !committeeId) return;
 
-    // Écouter l'état global de la session
-    const sessionStateRef = doc(db, 'sessionState', 'current');
+    // Écouter l'état global de la session du comité spécifique
+    const sessionStateRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setIsSuspended(data.isSuspended === true);
         setAllowResolutions(data.allowResolutions !== false);
         setActiveOverlay(data.activeOverlay || { type: 'none' });
+      } else {
+        // Initialiser si n'existe pas
+        setIsSuspended(false);
+        setAllowResolutions(true);
+        setActiveOverlay({ type: 'none' });
       }
     }, (error) => {
       console.warn("Session state error:", error.message);
     });
 
-    // Écouter l'action la plus récente
-    const actionsRef = collection(db, 'actions');
+    // Écouter l'action la plus récente du comité
+    const actionsRef = collection(db, 'committees', committeeId, 'actions');
     const q = query(
       actionsRef, 
       orderBy('created_at', 'desc'), 
@@ -52,7 +57,7 @@ export function useRealtime() {
       unsubSettings();
       unsubActions();
     };
-  }, [db]);
+  }, [db, committeeId]);
 
   return { isSuspended, allowResolutions, currentAction, activeOverlay };
 }

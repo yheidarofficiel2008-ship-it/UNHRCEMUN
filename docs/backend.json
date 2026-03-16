@@ -8,7 +8,9 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
-        "description": { "type": "string" }
+        "president_email": { "type": "string" },
+        "president_password": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
       }
     },
     "Delegate": {
@@ -17,12 +19,11 @@
       "description": "Représente un pays délégué au MUN.",
       "properties": {
         "id": { "type": "string" },
-        "committeeId": { "type": "string" },
         "country_name": { "type": "string" },
         "password": { "type": "string" },
         "is_suspended": { "type": "boolean", "default": false }
       },
-      "required": ["country_name", "password", "committeeId"]
+      "required": ["country_name", "password"]
     },
     "Action": {
       "title": "Action",
@@ -30,7 +31,6 @@
       "description": "Une action de débat lancée par la présidence.",
       "properties": {
         "id": { "type": "string" },
-        "committeeId": { "type": "string" },
         "title": { "type": "string" },
         "status": { "type": "string", "enum": ["launched", "started", "paused", "completed"] },
         "duration_minutes": { "type": "number" },
@@ -43,7 +43,6 @@
       "description": "Un projet de résolution soumis par un pays.",
       "properties": {
         "id": { "type": "string" },
-        "committeeId": { "type": "string" },
         "title": { "type": "string" },
         "proposing_country": { "type": "string" },
         "spokesperson": { "type": "string" },
@@ -58,9 +57,11 @@
     "providers": ["password", "anonymous"]
   },
   "firestore": {
-    "/committees/{committeeId}": { "schema": "Committee", "description": "Données de base du comité." },
-    "/committees/{committeeId}/delegates/{id}": { "schema": "Delegate", "description": "Délégués par comité." },
-    "/committees/{committeeId}/actions/{id}": { "schema": "Action", "description": "Débats par comité." },
-    "/committees/{committeeId}/resolutions/{id}": { "schema": "Resolution", "description": "Résolutions par comité." }
+    "/committees/{committeeId}": { "schema": "Committee", "description": "Données du comité." },
+    "/committees/{committeeId}/delegates/{id}": { "schema": "Delegate", "description": "Délégués du comité." },
+    "/committees/{committeeId}/actions/{id}": { "schema": "Action", "description": "Actions du comité." },
+    "/committees/{committeeId}/resolutions/{id}": { "schema": "Resolution", "description": "Résolutions du comité." },
+    "/committees/{committeeId}/messages/{id}": { "schema": "object", "description": "Messages du comité." },
+    "/committees/{committeeId}/sessionState/{id}": { "schema": "object", "description": "État de la session." }
   }
 }
