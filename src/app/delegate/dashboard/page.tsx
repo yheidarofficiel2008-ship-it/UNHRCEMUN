@@ -474,7 +474,7 @@ export default function DelegateDashboard() {
                       <Badge className="gap-1 mb-2 bg-primary"><Monitor size={12} /> PROJETÉ AU COMITÉ</Badge>
                       <CardTitle className="text-2xl text-primary">{res.proposing_country}</CardTitle>
                     </div>
-                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="text-lg px-6 py-2">
+                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
                       {res.status.toUpperCase()}
                     </Badge>
                   </CardHeader>
