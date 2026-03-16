@@ -1,16 +1,18 @@
+
 "use client"
 
 import Link from 'next/link';
-import { Shield, Users, Landmark } from 'lucide-react';
+import { Shield, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Logo } from '@/components/Logo';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="max-w-4xl w-full space-y-8 text-center">
         <div className="space-y-4">
-          <Landmark className="mx-auto h-20 w-20 text-primary" />
+          <Logo className="mx-auto h-32 w-32 text-primary" />
           <h1 className="text-5xl font-extrabold tracking-tight text-primary font-headline">
             EMUN UNHRC
           </h1>

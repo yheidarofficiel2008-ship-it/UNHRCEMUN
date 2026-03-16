@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,12 +13,13 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, setDoc, doc, increment, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp, setDoc, doc, increment, updateDoc } from 'firebase/firestore';
 import { useRealtime } from '@/hooks/use-realtime';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
 import { SpeakingTimer } from '@/components/SpeakingTimer';
 import { useToast } from '@/hooks/use-toast';
+import { Logo } from '@/components/Logo';
 
 export default function DelegateDashboard() {
   const router = useRouter();
@@ -53,7 +54,6 @@ export default function DelegateDashboard() {
     const del = JSON.parse(session);
     setDelegate(del);
 
-    // Écouter le statut de suspension spécifique au pays
     const unsubDelegate = onSnapshot(doc(db, 'delegates', del.id), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -256,6 +256,7 @@ export default function DelegateDashboard() {
       {activeOverlay && activeOverlay.type !== 'none' && (
         <div className="fixed inset-0 z-[9999] bg-primary flex flex-col items-center justify-center p-8 text-white animate-in fade-in zoom-in duration-500">
           <div className="max-w-4xl w-full text-center space-y-12">
+            <Logo className="mx-auto h-32 w-32 text-white/50 mb-8" />
             <h1 className="text-6xl font-black uppercase tracking-tighter leading-tight">{activeOverlay.title}</h1>
             
             {activeOverlay.type === 'vote' && (
@@ -308,7 +309,7 @@ export default function DelegateDashboard() {
 
       <header className="bg-secondary text-white p-4 shadow-md flex justify-between items-center z-20">
         <div className="flex items-center gap-4">
-          <Landmark className="h-8 w-8" />
+          <Logo className="h-10 w-10 text-white" />
           <h1 className="text-xl font-bold font-headline uppercase tracking-widest">{delegate.country_name}</h1>
         </div>
         <div className="flex items-center gap-4">

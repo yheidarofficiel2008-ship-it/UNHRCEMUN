@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert } from 'lucide-react';
+import { Play, Pause, Square, Database, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ import { GlobalTimer } from '@/components/GlobalTimer';
 import { SpeakingTimer } from '@/components/SpeakingTimer';
 import { useToast } from '@/hooks/use-toast';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, Cell } from 'recharts';
+import { Logo } from '@/components/Logo';
 
 export default function PresidentDashboard() {
   const router = useRouter();
@@ -335,7 +336,7 @@ export default function PresidentDashboard() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-50">
         <div className="flex items-center gap-4">
-          <Landmark className="h-8 w-8" />
+          <Logo className="h-10 w-10 text-white" />
           <h1 className="text-xl font-bold font-headline uppercase tracking-widest">EMUN UNHRC - Présidence</h1>
           {isSuspended && <Badge variant="destructive" className="animate-pulse">SÉANCE SUSPENDUE</Badge>}
         </div>
@@ -418,7 +419,7 @@ export default function PresidentDashboard() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white" onClick={initDatabase} disabled={initializing}>
-                  <Database size={16} className="mr-2" /> Sync Session
+                  <Database size={16} className="mr-2" /> Init
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="max-w-[200px] text-xs">

@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Landmark, Lock, Mail, UserPlus, LogIn } from 'lucide-react';
+import { Lock, Mail, UserPlus, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'fire
 import { doc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Logo } from '@/components/Logo';
 
 export default function PresidentLogin() {
   const [email, setEmail] = useState('');
@@ -75,7 +77,7 @@ export default function PresidentLogin() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-2xl border-t-4 border-primary">
         <CardHeader className="text-center space-y-4">
-          <Landmark className="mx-auto h-12 w-12 text-primary" />
+          <Logo className="mx-auto h-16 w-16 text-primary" />
           <CardTitle className="text-2xl font-bold font-headline">Portail Président</CardTitle>
           <CardDescription>Accès réservé EMUN UNHRC</CardDescription>
         </CardHeader>

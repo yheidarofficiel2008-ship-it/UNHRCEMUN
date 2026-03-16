@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Landmark, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle, CardFooter } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { signInAnonymously } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Logo } from '@/components/Logo';
 
 export default function DelegateLogin() {
   const [country, setCountry] = useState('');
@@ -26,10 +28,8 @@ export default function DelegateLogin() {
     setLoading(true);
 
     try {
-      // 1. Connexion anonyme pour satisfaire les règles Firestore
       await signInAnonymously(auth);
 
-      // 2. Recherche du délégué dans Firestore
       const q = query(
         collection(db, 'delegates'), 
         where('country_name', '==', country), 
@@ -56,7 +56,6 @@ export default function DelegateLogin() {
         const delegateDoc = querySnapshot.docs[0];
         const delegateData = { id: delegateDoc.id, ...delegateDoc.data() };
         
-        // Stockage de la session locale pour identifier le pays
         localStorage.setItem('delegate_session', JSON.stringify(delegateData));
         
         toast({ title: "Bienvenue", description: `Délégué de ${country} connecté.` });
@@ -72,7 +71,7 @@ export default function DelegateLogin() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center space-y-4">
-          <Landmark className="mx-auto h-12 w-12 text-secondary" />
+          <Logo className="mx-auto h-20 w-20 text-secondary" />
           <CardTitle className="text-2xl font-bold font-headline">Accès Délégué</CardTitle>
         </CardHeader>
         <form onSubmit={handleLogin}>
