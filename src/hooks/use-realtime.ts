@@ -24,7 +24,7 @@ export function useRealtime() {
         setIsSuspended(docSnap.data().isSuspended === true);
       }
     }, (error) => {
-      // On ne lève l'erreur que si l'utilisateur est censé être connecté
+      // On ne lève l'erreur que si l'utilisateur est connecté et que ce n'est pas juste un délai d'auth
       if (user && error.code !== 'permission-denied') {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: 'sessionState/current',
@@ -50,7 +50,6 @@ export function useRealtime() {
         setCurrentAction(null);
       }
     }, (error) => {
-      // On ne lève l'erreur que si l'utilisateur est censé être connecté
       if (user && error.code !== 'permission-denied') {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: 'actions',

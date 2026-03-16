@@ -133,7 +133,7 @@ export default function PresidentLogin() {
           </TabsContent>
         </Tabs>
       </Card>
-      <p className="mt-8 text-xs text-muted-foreground text-center">Note: Si vous rencontrez des erreurs "Blocked by Client", désactivez AdBlock.</p>
+      <p className="mt-8 text-xs text-muted-foreground text-center">Note: Désactivez AdBlock si vous voyez des erreurs.</p>
     </div>
   );
 }
