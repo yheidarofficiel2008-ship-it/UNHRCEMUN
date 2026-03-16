@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,12 +16,13 @@ import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp,
 import { useRealtime } from '@/hooks/use-realtime';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
+import { SpeakingTimer } from '@/components/SpeakingTimer';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DelegateDashboard() {
   const router = useRouter();
   const { toast } = useToast();
-  const { isSuspended, currentAction } = useRealtime();
+  const { isSuspended, allowResolutions, currentAction } = useRealtime();
   const [delegate, setDelegate] = useState<any>(null);
   const [participationStatus, setParticipationStatus] = useState<string | null>(null);
   
@@ -47,7 +49,7 @@ export default function DelegateDashboard() {
       setMyResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    // Résolutions projetées (plusieurs possibles)
+    // Résolutions projetées
     const qDisplayed = query(collection(db, 'resolutions'), where('is_displayed', '==', true));
     const unsubDisplayed = onSnapshot(qDisplayed, (snap) => {
       setDisplayedResolutions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -92,7 +94,7 @@ export default function DelegateDashboard() {
 
   const submitResolution = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!delegate) return;
+    if (!delegate || !allowResolutions) return;
     try {
       await addDoc(collection(db, 'resolutions'), {
         proposing_country: delegate.country_name,
@@ -135,7 +137,7 @@ export default function DelegateDashboard() {
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1400px] mx-auto w-full">
         <div className="lg:col-span-5 space-y-6">
           <Card className="border-secondary/20 shadow-lg h-fit">
-            <CardHeader>
+            <CardHeader className="pb-4">
               <Badge className="w-fit mb-2 bg-secondary">SESSION ACTIVE</Badge>
               <CardTitle className="text-2xl">{isActive ? currentAction.title : 'En attente...'}</CardTitle>
               <CardDescription>{isActive ? currentAction.description : 'La présidence lancera bientôt une action.'}</CardDescription>
@@ -150,6 +152,20 @@ export default function DelegateDashboard() {
                     totalElapsedSeconds={currentAction.total_elapsed_seconds}
                     durationMinutes={currentAction.duration_minutes}
                   />
+
+                  {/* Sous-compteur orateur */}
+                  <div className="bg-muted/30 p-4 rounded-xl border border-dashed flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      <Timer size={14} /> Temps de Parole Orateur
+                    </div>
+                    <SpeakingTimer 
+                      status={currentAction.speaking_timer_status}
+                      startedAt={currentAction.speaking_timer_started_at}
+                      totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0}
+                      size="sm"
+                    />
+                    <Badge variant="outline" className="text-[10px]">Alloué: {currentAction.time_per_delegate}</Badge>
+                  </div>
                   
                   {currentAction.allow_participation && currentAction.status === 'launched' && (
                     <div className="space-y-4">
@@ -175,9 +191,9 @@ export default function DelegateDashboard() {
                   )}
 
                   {currentAction.status === 'started' && (
-                    <div className="bg-primary/10 p-6 rounded-xl flex flex-col items-center gap-3 text-primary animate-pulse border-2 border-primary/20">
-                      <Clock size={40} />
-                      <span className="font-bold text-lg uppercase tracking-widest">DÉBAT EN COURS</span>
+                    <div className="bg-primary/10 p-4 rounded-xl flex flex-col items-center gap-2 text-primary animate-pulse border-2 border-primary/20">
+                      <Clock size={30} />
+                      <span className="font-bold text-sm uppercase tracking-widest">DÉBAT EN COURS</span>
                     </div>
                   )}
                 </>
@@ -232,23 +248,44 @@ export default function DelegateDashboard() {
             </div>
           )}
 
-          <Card className="shadow-xl">
-            <CardHeader className="bg-secondary/5 border-b mb-6">
+          <Card className={`shadow-xl transition-opacity ${!allowResolutions ? 'opacity-70 grayscale' : ''}`}>
+            <CardHeader className="bg-secondary/5 border-b mb-6 flex flex-row items-center justify-between">
               <CardTitle className="text-2xl font-headline">Rédiger une Résolution</CardTitle>
+              {!allowResolutions && (
+                <Badge variant="destructive" className="gap-1"><Lock size={12} /> ENVOIS BLOQUÉS</Badge>
+              )}
             </CardHeader>
             <form onSubmit={submitResolution}>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="sponsors">Pays Sponsors</Label>
-                  <Input id="sponsors" placeholder="Bénin, Togo, Mali..." value={resolutionForm.sponsors} onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} />
+                  <Input 
+                    id="sponsors" 
+                    placeholder="Bénin, Togo, Mali..." 
+                    disabled={!allowResolutions}
+                    value={resolutionForm.sponsors} 
+                    onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} 
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="content">Texte</Label>
-                  <Textarea id="content" className="min-h-[250px]" required value={resolutionForm.content} onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} />
+                  <Label htmlFor="content">Texte de la Résolution</Label>
+                  <Textarea 
+                    id="content" 
+                    className="min-h-[250px]" 
+                    required 
+                    disabled={!allowResolutions}
+                    placeholder={allowResolutions ? "Rédigez ici votre projet de résolution..." : "La présidence a suspendu la réception des résolutions."}
+                    value={resolutionForm.content} 
+                    onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} 
+                  />
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="w-full h-14 bg-secondary text-lg gap-2">
+                <Button 
+                  type="submit" 
+                  disabled={!allowResolutions}
+                  className="w-full h-14 bg-secondary text-lg gap-2"
+                >
                   <Send size={20} /> Envoyer au Bureau
                 </Button>
               </CardFooter>

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -7,22 +8,25 @@ import { collection, query, onSnapshot, orderBy, limit, doc } from 'firebase/fir
 export function useRealtime() {
   const { firestore: db } = useFirebase();
   const [isSuspended, setIsSuspended] = useState(false);
+  const [allowResolutions, setAllowResolutions] = useState(true);
   const [currentAction, setCurrentAction] = useState<any>(null);
 
   useEffect(() => {
     if (!db) return;
 
-    // Écouter l'état de suspension
+    // Écouter l'état global de la session
     const sessionStateRef = doc(db, 'sessionState', 'current');
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
       if (docSnap.exists()) {
-        setIsSuspended(docSnap.data().isSuspended === true);
+        const data = docSnap.data();
+        setIsSuspended(data.isSuspended === true);
+        setAllowResolutions(data.allowResolutions !== false);
       }
     }, (error) => {
       console.warn("Session state error:", error.message);
     });
 
-    // Écouter l'action la plus récente (sans filtre complexe pour éviter les erreurs d'index)
+    // Écouter l'action la plus récente
     const actionsRef = collection(db, 'actions');
     const q = query(
       actionsRef, 
@@ -48,5 +52,5 @@ export function useRealtime() {
     };
   }, [db]);
 
-  return { isSuspended, currentAction };
+  return { isSuspended, allowResolutions, currentAction };
 }

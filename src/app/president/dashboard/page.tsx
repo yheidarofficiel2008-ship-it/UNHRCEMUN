@@ -1,29 +1,32 @@
+
 "use client"
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Plus, Trash2, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered } from 'lucide-react';
+import { Play, Pause, Square, Plus, Trash2, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { useFirebase } from '@/firebase';
 import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, doc, onSnapshot, query, orderBy, getDocs, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, orderBy, getDocs, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useRealtime } from '@/hooks/use-realtime';
 import { GlobalTimer } from '@/components/GlobalTimer';
+import { SpeakingTimer } from '@/components/SpeakingTimer';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PresidentDashboard() {
   const router = useRouter();
   const { toast } = useToast();
   const { firestore: db, auth, user, isUserLoading } = useFirebase();
-  const { isSuspended, currentAction } = useRealtime();
+  const { isSuspended, allowResolutions, currentAction } = useRealtime();
   
   const [newAction, setNewAction] = useState({
     title: '',
@@ -85,7 +88,11 @@ export default function PresidentDashboard() {
     if (!db) return;
     setInitializing(true);
     const sessionRef = doc(db, 'sessionState', 'current');
-    setDocumentNonBlocking(sessionRef, { isSuspended: false, lastUpdated: new Date().toISOString() }, { merge: true });
+    setDocumentNonBlocking(sessionRef, { 
+      isSuspended: false, 
+      allowResolutions: true,
+      lastUpdated: new Date().toISOString() 
+    }, { merge: true });
     toast({ title: "Base de données initialisée" });
     setInitializing(false);
   };
@@ -94,6 +101,13 @@ export default function PresidentDashboard() {
     if (!db) return;
     const sessionRef = doc(db, 'sessionState', 'current');
     updateDocumentNonBlocking(sessionRef, { isSuspended: !isSuspended, lastUpdated: new Date().toISOString() });
+  };
+
+  const toggleResolutions = (val: boolean) => {
+    if (!db) return;
+    const sessionRef = doc(db, 'sessionState', 'current');
+    updateDocumentNonBlocking(sessionRef, { allowResolutions: val, lastUpdated: new Date().toISOString() });
+    toast({ title: val ? "Résolutions autorisées" : "Résolutions bloquées" });
   };
 
   const createAction = async () => {
@@ -111,6 +125,8 @@ export default function PresidentDashboard() {
         allow_participation: newAction.allowParticipation,
         status: 'launched',
         total_elapsed_seconds: 0,
+        speaking_timer_total_elapsed: 0,
+        speaking_timer_status: 'stopped',
         created_at: serverTimestamp(),
       };
       
@@ -120,6 +136,15 @@ export default function PresidentDashboard() {
     } catch (e) {
       toast({ title: "Erreur", description: "Impossible de créer l'action.", variant: "destructive" });
     }
+  };
+
+  const extendTime = (mins: number) => {
+    if (!db || !currentAction) return;
+    const actionRef = doc(db, 'actions', currentAction.id);
+    updateDocumentNonBlocking(actionRef, { 
+      duration_minutes: increment(mins)
+    });
+    toast({ title: `+${mins} minute(s) ajoutée(s)` });
   };
 
   const startTimer = () => {
@@ -147,6 +172,23 @@ export default function PresidentDashboard() {
     });
   };
 
+  const startSpeakingTimer = () => {
+    if (!db || !currentAction) return;
+    updateDocumentNonBlocking(doc(db, 'actions', currentAction.id), {
+      speaking_timer_status: 'started',
+      speaking_timer_started_at: new Date().toISOString()
+    });
+  };
+
+  const resetSpeakingTimer = () => {
+    if (!db || !currentAction) return;
+    updateDocumentNonBlocking(doc(db, 'actions', currentAction.id), {
+      speaking_timer_status: 'stopped',
+      speaking_timer_started_at: null,
+      speaking_timer_total_elapsed: 0
+    });
+  };
+
   const stopAction = async () => {
     if (!db || !currentAction) return;
     const actionRef = doc(db, 'actions', currentAction.id);
@@ -169,33 +211,6 @@ export default function PresidentDashboard() {
     }
   };
 
-  const addDelegate = () => {
-    if (!db || !newDelegate.country || !newDelegate.password) return;
-    addDocumentNonBlocking(collection(db, 'delegates'), {
-      country_name: newDelegate.country,
-      password: newDelegate.password,
-      created_at: serverTimestamp()
-    });
-    setNewDelegate({ country: '', password: '' });
-  };
-
-  const deleteDelegate = (id: string) => {
-    if (!db) return;
-    deleteDocumentNonBlocking(doc(db, 'delegates', id));
-  };
-
-  const deleteResolution = (id: string) => {
-    if (!db) return;
-    deleteDocumentNonBlocking(doc(db, 'resolutions', id));
-    toast({ title: "Résolution supprimée" });
-  };
-
-  const toggleDisplayResolution = (id: string, currentVal: boolean) => {
-    if (!db) return;
-    updateDocumentNonBlocking(doc(db, 'resolutions', id), { is_displayed: !currentVal });
-    toast({ title: currentVal ? "Masqué" : "Affiché aux délégués" });
-  };
-
   const handleLogout = async () => {
     if (!auth) return;
     await signOut(auth);
@@ -214,7 +229,17 @@ export default function PresidentDashboard() {
           <h1 className="text-xl font-bold font-headline uppercase tracking-widest">Immune UERC - Présidence</h1>
           {isSuspended && <Badge variant="destructive" className="animate-pulse">SÉANCE SUSPENDUE</Badge>}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
+            {allowResolutions ? <MessageSquare size={16} /> : <MessageSquareOff size={16} />}
+            <span className="text-xs font-bold uppercase tracking-tighter">Résolutions</span>
+            <Switch 
+              checked={allowResolutions} 
+              onCheckedChange={toggleResolutions}
+              className="data-[state=checked]:bg-green-500"
+            />
+          </div>
+          <div className="h-6 w-px bg-white/20" />
           <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white" onClick={initDatabase} disabled={initializing}>
             <Database size={16} className="mr-2" /> Init
           </Button>
@@ -249,8 +274,8 @@ export default function PresidentDashboard() {
                       <Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase">Parole</Label>
-                      <Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} />
+                      <Label className="text-[10px] uppercase">Temps de parole</Label>
+                      <Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} placeholder="1:00" />
                     </div>
                   </div>
                   <div className="flex items-center space-x-2 p-2 border rounded-lg bg-muted/30">
@@ -259,17 +284,25 @@ export default function PresidentDashboard() {
                       checked={newAction.allowParticipation} 
                       onCheckedChange={(checked) => setNewAction({...newAction, allowParticipation: !!checked})} 
                     />
-                    <Label htmlFor="participation" className="text-sm cursor-pointer">Participation facultative</Label>
+                    <Label htmlFor="participation" className="text-sm cursor-pointer">Autoriser participation facultative</Label>
                   </div>
-                  <Button className="w-full bg-primary" onClick={createAction}>Lancer</Button>
+                  <Button className="w-full bg-primary" onClick={createAction}>Lancer l'Action</Button>
                 </CardContent>
               </Card>
 
               {currentAction && currentAction.status !== 'completed' && (
                 <Card className="border-primary/20 shadow-lg">
-                  <CardHeader className="bg-primary/5">
-                    <Badge className="w-fit mb-1">{currentAction.status.toUpperCase()}</Badge>
-                    <CardTitle>{currentAction.title}</CardTitle>
+                  <CardHeader className="bg-primary/5 pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <Badge className="mb-1">{currentAction.status.toUpperCase()}</Badge>
+                        <CardTitle className="text-xl">{currentAction.title}</CardTitle>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="h-8" onClick={() => extendTime(1)}>+1m</Button>
+                        <Button size="sm" variant="outline" className="h-8" onClick={() => extendTime(5)}>+5m</Button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent className="p-6 space-y-6">
                     <GlobalTimer 
@@ -283,16 +316,51 @@ export default function PresidentDashboard() {
                     <div className="grid grid-cols-2 gap-3">
                       {(currentAction.status === 'launched' || currentAction.status === 'paused') ? (
                         <Button className="bg-green-600 hover:bg-green-700 h-12 gap-2" onClick={startTimer}>
-                          <Play size={18} fill="currentColor" /> Démarrer
+                          <Play size={18} fill="currentColor" /> Démarrer Débat
                         </Button>
                       ) : (
                         <Button variant="outline" className="border-amber-500 text-amber-600 h-12 gap-2" onClick={pauseTimer}>
-                          <Pause size={18} fill="currentColor" /> Pause
+                          <Pause size={18} fill="currentColor" /> Pause Débat
                         </Button>
                       )}
                       <Button variant="destructive" className="h-12 gap-2" onClick={stopAction}>
-                        <Square size={18} fill="currentColor" /> Arrêter
+                        <Square size={18} fill="currentColor" /> Arrêter Débat
                       </Button>
+                    </div>
+
+                    <div className="pt-4 border-t space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="font-bold text-xs text-muted-foreground uppercase flex items-center gap-2">
+                          <Timer size={14} /> Chronomètre Orateur
+                        </h3>
+                        <Badge variant="outline">{currentAction.time_per_delegate} max</Badge>
+                      </div>
+                      
+                      <SpeakingTimer 
+                        status={currentAction.speaking_timer_status}
+                        startedAt={currentAction.speaking_timer_started_at}
+                        totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0}
+                        size="md"
+                      />
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          onClick={startSpeakingTimer}
+                          disabled={currentAction.speaking_timer_status === 'started'}
+                        >
+                          Lancer Orateur
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="border"
+                          onClick={resetSpeakingTimer}
+                        >
+                          Réinitialiser
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="space-y-3 pt-4 border-t">
@@ -300,7 +368,7 @@ export default function PresidentDashboard() {
                         <span className="flex items-center gap-2"><ListOrdered size={14} /> Liste des Orateurs</span>
                         <Badge variant="secondary">{orateursInscrits.length}</Badge>
                       </h3>
-                      <ScrollArea className="h-[200px] border rounded-xl p-3 bg-muted/10">
+                      <ScrollArea className="h-[180px] border rounded-xl p-3 bg-muted/10">
                         {orateursInscrits.length > 0 ? orateursInscrits.map((p, i) => (
                           <div key={i} className="flex justify-between items-center p-3 mb-2 bg-white border rounded-lg shadow-sm">
                             <span className="font-bold text-sm">{i + 1}. {p.country_name}</span>
@@ -324,7 +392,7 @@ export default function PresidentDashboard() {
                     {delegates.map(d => (
                       <div key={d.id} className="flex justify-between items-center p-3 bg-muted/50 mb-2 rounded-lg">
                         <span className="font-semibold">{d.country_name}</span>
-                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteDelegate(d.id)}><Trash2 size={16} /></Button>
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteDocumentNonBlocking(doc(db!, 'delegates', d.id))}><Trash2 size={16} /></Button>
                       </div>
                     ))}
                   </ScrollArea>
@@ -356,7 +424,7 @@ export default function PresidentDashboard() {
                         variant={res.is_displayed ? "default" : "outline"} 
                         size="sm" 
                         className="gap-2"
-                        onClick={() => toggleDisplayResolution(res.id, res.is_displayed)}
+                        onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { is_displayed: !res.is_displayed })}
                       >
                         {res.is_displayed ? <><EyeOff size={16} /> Masquer</> : <><Eye size={16} /> Afficher</>}
                       </Button>
@@ -366,7 +434,7 @@ export default function PresidentDashboard() {
                       <Button variant="outline" size="sm" className="text-red-600 gap-1" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'rejected' })}>
                         <XCircle size={16} /> Rejeter
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => deleteResolution(res.id)}>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => deleteDocumentNonBlocking(doc(db!, 'resolutions', res.id))}>
                         <Trash2 size={16} />
                       </Button>
                     </div>
