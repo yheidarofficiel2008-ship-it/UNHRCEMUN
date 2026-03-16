@@ -304,7 +304,7 @@ export default function DelegateDashboard() {
               </div>
             )}
             
-            <h1 className={`text-4xl md:text-7xl font-black uppercase tracking-tighter leading-tight border-b-4 md:border-b-8 border-white pb-6 ${activeOverlay.type === 'crisis' ? 'text-white' : ''} break-words`}>
+            <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-tight border-b-4 md:border-b-8 border-white pb-6 break-words">
               {activeOverlay.title}
             </h1>
             
