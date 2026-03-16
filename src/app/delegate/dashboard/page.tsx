@@ -120,6 +120,12 @@ export default function DelegateDashboard() {
 
   const isActive = currentAction && currentAction.status !== 'completed';
 
+  const parseTimePerDelegate = (timeStr: string) => {
+    if (!timeStr) return 60;
+    const [mins, secs] = timeStr.split(':').map(Number);
+    return (mins * 60) + (secs || 0);
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {isSuspended && <SuspensionOverlay />}
@@ -153,18 +159,19 @@ export default function DelegateDashboard() {
                     durationMinutes={currentAction.duration_minutes}
                   />
 
-                  {/* Sous-compteur orateur */}
-                  <div className="bg-muted/30 p-4 rounded-xl border border-dashed flex flex-col items-center gap-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  {/* Sous-compteur orateur discret à rebours */}
+                  <div className="bg-muted/30 p-4 rounded-xl border border-dashed flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                       <Timer size={14} /> Temps de Parole Orateur
                     </div>
                     <SpeakingTimer 
                       status={currentAction.speaking_timer_status}
                       startedAt={currentAction.speaking_timer_started_at}
                       totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0}
+                      limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)}
                       size="sm"
                     />
-                    <Badge variant="outline" className="text-[10px]">Alloué: {currentAction.time_per_delegate}</Badge>
+                    <Badge variant="outline" className="text-[10px] opacity-60">Alloué: {currentAction.time_per_delegate}</Badge>
                   </div>
                   
                   {currentAction.allow_participation && currentAction.status === 'launched' && (

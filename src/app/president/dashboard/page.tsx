@@ -36,7 +36,6 @@ export default function PresidentDashboard() {
     allowParticipation: true
   });
 
-  const [newDelegate, setNewDelegate] = useState({ country: '', password: '' });
   const [delegates, setDelegates] = useState<any[]>([]);
   const [resolutions, setResolutions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
@@ -221,6 +220,13 @@ export default function PresidentDashboard() {
 
   const orateursInscrits = participants.filter(p => p.status === 'participating');
 
+  // Parse time_per_delegate (format "M:SS") to seconds
+  const parseTimePerDelegate = (timeStr: string) => {
+    if (!timeStr) return 60;
+    const [mins, secs] = timeStr.split(':').map(Number);
+    return (mins * 60) + (secs || 0);
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-50">
@@ -333,15 +339,18 @@ export default function PresidentDashboard() {
                         <h3 className="font-bold text-xs text-muted-foreground uppercase flex items-center gap-2">
                           <Timer size={14} /> Chronomètre Orateur
                         </h3>
-                        <Badge variant="outline">{currentAction.time_per_delegate} max</Badge>
+                        <Badge variant="outline">{currentAction.time_per_delegate}</Badge>
                       </div>
                       
-                      <SpeakingTimer 
-                        status={currentAction.speaking_timer_status}
-                        startedAt={currentAction.speaking_timer_started_at}
-                        totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0}
-                        size="md"
-                      />
+                      <div className="flex justify-center py-2">
+                        <SpeakingTimer 
+                          status={currentAction.speaking_timer_status}
+                          startedAt={currentAction.speaking_timer_started_at}
+                          totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0}
+                          limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)}
+                          size="md"
+                        />
+                      </div>
 
                       <div className="grid grid-cols-2 gap-2">
                         <Button 
