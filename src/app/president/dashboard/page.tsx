@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2 } from 'lucide-react';
+import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { useFirebase } from '@/firebase';
 import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, doc, onSnapshot, query, orderBy, getDocs, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, orderBy, getDocs, serverTimestamp, writeBatch, increment, where } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useRealtime } from '@/hooks/use-realtime';
 import { GlobalTimer } from '@/components/GlobalTimer';
@@ -40,6 +40,7 @@ export default function PresidentDashboard() {
   const [delegates, setDelegates] = useState<any[]>([]);
   const [resolutions, setResolutions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [initializing, setInitializing] = useState(false);
 
   useEffect(() => {
@@ -61,9 +62,15 @@ export default function PresidentDashboard() {
       setResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    const messagesRef = collection(db, 'messages');
+    const unsubMessages = onSnapshot(query(messagesRef, orderBy('timestamp', 'desc')), (snapshot) => {
+      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubDel();
       unsubRes();
+      unsubMessages();
     };
   }, [db, user]);
 
@@ -211,6 +218,16 @@ export default function PresidentDashboard() {
     }
   };
 
+  const markMessageAsRead = (messageId: string) => {
+    if (!db) return;
+    updateDocumentNonBlocking(doc(db, 'messages', messageId), { is_read: true });
+  };
+
+  const deleteMessage = (messageId: string) => {
+    if (!db) return;
+    deleteDocumentNonBlocking(doc(db, 'messages', messageId));
+  };
+
   const handleLogout = async () => {
     if (!auth) return;
     await signOut(auth);
@@ -220,6 +237,7 @@ export default function PresidentDashboard() {
   if (isUserLoading) return <div className="min-h-screen flex items-center justify-center">Authentification...</div>;
 
   const orateursInscrits = participants.filter(p => p.status === 'participating');
+  const unreadMessagesCount = messages.filter(m => !m.is_read).length;
 
   const parseTimePerDelegate = (timeStr: string) => {
     if (!timeStr) return 60;
@@ -259,6 +277,7 @@ export default function PresidentDashboard() {
       </header>
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1600px] mx-auto w-full">
+        {/* Colonne Gauche: Actions & Pays */}
         <div className="lg:col-span-4 space-y-6">
           <Tabs defaultValue="actions">
             <TabsList className="w-full">
@@ -418,50 +437,118 @@ export default function PresidentDashboard() {
           </Tabs>
         </div>
 
-        <div className="lg:col-span-8">
-          <Card className="h-full">
-            <CardHeader className="bg-muted/30"><CardTitle className="flex items-center gap-2"><FileText /> Resolutions</CardTitle></CardHeader>
-            <CardContent className="p-6 space-y-6">
-              {resolutions.map(res => (
-                <Card key={res.id} className={`overflow-hidden border-2 ${res.is_displayed ? 'border-primary' : ''}`}>
-                  <div className="bg-muted/50 p-4 flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-primary">{res.proposing_country}</span>
-                      {res.is_displayed && <Badge className="bg-primary"><Monitor className="h-3 w-3 mr-1" /> PROJETÉ</Badge>}
+        {/* Colonne Droite: Résolutions & Messages */}
+        <div className="lg:col-span-8 space-y-6">
+          <Tabs defaultValue="resolutions">
+            <TabsList className="w-full">
+              <TabsTrigger value="resolutions" className="flex-1">Projets de Résolution</TabsTrigger>
+              <TabsTrigger value="messages" className="flex-1 relative">
+                Messages Privés
+                {unreadMessagesCount > 0 && (
+                  <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full animate-pulse">
+                    {unreadMessagesCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="resolutions" className="space-y-6 mt-4">
+              <Card>
+                <CardHeader className="bg-muted/30 flex flex-row items-center justify-between">
+                  <CardTitle className="flex items-center gap-2"><FileText /> Resolutions Soumises</CardTitle>
+                  <Badge variant="outline">{resolutions.length}</Badge>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  {resolutions.map(res => (
+                    <Card key={res.id} className={`overflow-hidden border-2 ${res.is_displayed ? 'border-primary' : ''}`}>
+                      <div className="bg-muted/50 p-4 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-primary">{res.proposing_country}</span>
+                          {res.is_displayed && <Badge className="bg-primary"><Monitor className="h-3 w-3 mr-1" /> PROJETÉ</Badge>}
+                        </div>
+                        <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
+                          {res.status?.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <CardContent className="p-4 space-y-4">
+                        <p className="text-sm italic leading-relaxed">"{res.content}"</p>
+                        <div className="flex gap-2 justify-end pt-2 border-t">
+                          <Button 
+                            variant={res.is_displayed ? "default" : "outline"} 
+                            size="sm" 
+                            className="gap-2"
+                            onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { is_displayed: !res.is_displayed })}
+                          >
+                            {res.is_displayed ? <><EyeOff size={16} /> Masquer</> : <><Eye size={16} /> Afficher</>}
+                          </Button>
+                          <Button variant="outline" size="sm" className="text-green-600 gap-1" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'approved' })}>
+                            <CheckCircle size={16} /> Approuver
+                          </Button>
+                          <Button variant="outline" size="sm" className="text-red-600 gap-1" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'rejected' })}>
+                            <XCircle size={16} /> Rejeter
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => deleteDocumentNonBlocking(doc(db!, 'resolutions', res.id))}>
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {resolutions.length === 0 && (
+                    <div className="text-center py-20 text-muted-foreground italic">Aucune résolution soumise</div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="messages" className="space-y-6 mt-4">
+              <Card>
+                <CardHeader className="bg-muted/30">
+                  <CardTitle className="flex items-center gap-2"><Bell size={18} /> Boîte de réception Privée</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[600px]">
+                    <div className="p-6 space-y-4">
+                      {messages.map(msg => (
+                        <div 
+                          key={msg.id} 
+                          className={`p-4 border-l-4 rounded-r-xl shadow-sm transition-all flex flex-col gap-3 ${
+                            msg.is_read ? 'bg-muted/10 border-muted-foreground/30' : 'bg-secondary/5 border-secondary animate-in slide-in-from-right-2'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-2">
+                              <Badge variant={msg.type === 'privilege' ? 'destructive' : 'secondary'} className="uppercase text-[10px]">
+                                {msg.type === 'privilege' ? 'Point de privilège' : 'Message général'}
+                              </Badge>
+                              <span className="font-bold text-sm">{msg.sender_country}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {!msg.is_read && (
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => markMessageAsRead(msg.id)}>
+                                  <Check size={16} />
+                                </Button>
+                              )}
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteMessage(msg.id)}>
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-sm font-medium leading-relaxed italic">"{msg.content}"</p>
+                          <span className="text-[10px] text-muted-foreground self-end">
+                            {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "À l'instant"}
+                          </span>
+                        </div>
+                      ))}
+                      {messages.length === 0 && (
+                        <div className="text-center py-20 text-muted-foreground italic">Aucun message pour le moment</div>
+                      )}
                     </div>
-                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
-                      {res.status?.toUpperCase()}
-                    </Badge>
-                  </div>
-                  <CardContent className="p-4 space-y-4">
-                    <p className="text-sm italic leading-relaxed">"{res.content}"</p>
-                    <div className="flex gap-2 justify-end pt-2 border-t">
-                      <Button 
-                        variant={res.is_displayed ? "default" : "outline"} 
-                        size="sm" 
-                        className="gap-2"
-                        onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { is_displayed: !res.is_displayed })}
-                      >
-                        {res.is_displayed ? <><EyeOff size={16} /> Masquer</> : <><Eye size={16} /> Afficher</>}
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-green-600 gap-1" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'approved' })}>
-                        <CheckCircle size={16} /> Approuver
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-red-600 gap-1" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'rejected' })}>
-                        <XCircle size={16} /> Rejeter
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => deleteDocumentNonBlocking(doc(db!, 'resolutions', res.id))}>
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {resolutions.length === 0 && (
-                <div className="text-center py-20 text-muted-foreground italic">Aucune résolution soumise</div>
-              )}
-            </CardContent>
-          </Card>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>

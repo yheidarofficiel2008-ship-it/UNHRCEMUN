@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock, Timer, Lock, MessageSquarePlus, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, setDoc, doc } from 'firebase/firestore';
 import { useRealtime } from '@/hooks/use-realtime';
@@ -30,6 +31,12 @@ export default function DelegateDashboard() {
     sponsors: '',
     content: ''
   });
+  const [messageForm, setMessageForm] = useState({
+    type: 'privilege',
+    content: ''
+  });
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+
   const [myResolutions, setMyResolutions] = useState<any[]>([]);
   const [displayedResolutions, setDisplayedResolutions] = useState<any[]>([]);
 
@@ -111,6 +118,27 @@ export default function DelegateDashboard() {
     }
   };
 
+  const submitMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!delegate || !messageForm.content) return;
+    setIsSendingMessage(true);
+    try {
+      await addDoc(collection(db, 'messages'), {
+        sender_country: delegate.country_name,
+        type: messageForm.type,
+        content: messageForm.content,
+        timestamp: serverTimestamp(),
+        is_read: false
+      });
+      setMessageForm({ ...messageForm, content: '' });
+      toast({ title: "Message envoyé à la présidence" });
+    } catch (e) {
+      toast({ title: "Erreur d'envoi", variant: "destructive" });
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('delegate_session');
     router.push('/');
@@ -135,13 +163,52 @@ export default function DelegateDashboard() {
           <Landmark className="h-8 w-8" />
           <h1 className="text-xl font-bold font-headline uppercase tracking-widest">{delegate.country_name}</h1>
         </div>
-        <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}>
-          <LogOut size={20} />
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}>
+            <LogOut size={20} />
+          </Button>
+        </div>
       </header>
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1400px] mx-auto w-full">
-        <div className="lg:col-span-5 space-y-6">
+        {/* Barre latérale gauche */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Message à la présidence - En haut et compact */}
+          <Card className="border-secondary/30 bg-secondary/5">
+            <CardHeader className="py-3 px-4 flex flex-row items-center gap-2">
+              <MessageSquarePlus size={18} className="text-secondary" />
+              <CardTitle className="text-sm font-bold uppercase tracking-tight">Message à la Présidence</CardTitle>
+            </CardHeader>
+            <form onSubmit={submitMessage}>
+              <CardContent className="px-4 pb-3 space-y-3">
+                <Select 
+                  value={messageForm.type} 
+                  onValueChange={(val) => setMessageForm({...messageForm, type: val})}
+                >
+                  <SelectTrigger className="h-8 text-xs bg-white">
+                    <SelectValue placeholder="Type de message" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="privilege">Point de privilège personnel</SelectItem>
+                    <SelectItem value="general">Message général</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Textarea 
+                  placeholder="Votre message..." 
+                  className="min-h-[60px] text-xs resize-none"
+                  value={messageForm.content}
+                  onChange={(e) => setMessageForm({...messageForm, content: e.target.value})}
+                  required
+                />
+              </CardContent>
+              <CardFooter className="px-4 pb-3 pt-0">
+                <Button size="sm" type="submit" className="w-full bg-secondary text-xs h-8" disabled={isSendingMessage}>
+                  {isSendingMessage ? "Envoi..." : "Envoyer"}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+
           <Card className="border-secondary/20 shadow-lg h-fit">
             <CardHeader className="pb-4">
               <Badge className="w-fit mb-2 bg-secondary">SESSION ACTIVE</Badge>
@@ -159,7 +226,6 @@ export default function DelegateDashboard() {
                     durationMinutes={currentAction.duration_minutes}
                   />
 
-                  {/* Sous-compteur orateur discret à rebours */}
                   <div className="bg-muted/30 p-4 rounded-xl border border-dashed flex flex-col items-center gap-3">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                       <Timer size={14} /> Temps de Parole Orateur
@@ -230,7 +296,8 @@ export default function DelegateDashboard() {
           </Card>
         </div>
 
-        <div className="lg:col-span-7 space-y-6">
+        {/* Colonne centrale/droite */}
+        <div className="lg:col-span-8 space-y-6">
           {displayedResolutions.length > 0 && (
             <div className="space-y-6">
               {displayedResolutions.map((res) => (

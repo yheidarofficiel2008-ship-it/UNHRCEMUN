@@ -1,295 +1,86 @@
+
 {
   "entities": {
     "Delegate": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Delegate",
       "type": "object",
-      "description": "Represents a delegate participating in the Model United Nations session, including their authentication details for simplified login.",
+      "description": "Represents a delegate participating in the Model United Nations session.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Delegate entity."
-        },
-        "countryName": {
-          "type": "string",
-          "description": "The name of the country represented by the delegate. This is used for delegate authentication."
-        },
-        "passwordHash": {
-          "type": "string",
-          "description": "A cryptographically hashed password used for the delegate's simplified authentication. IMPORTANT: This must be a one-way hash (e.g., bcrypt, Argon2) and NEVER the raw password. The raw password is not stored for security reasons."
-        }
+        "id": { "type": "string" },
+        "countryName": { "type": "string" },
+        "passwordHash": { "type": "string" }
       },
-      "required": [
-        "id",
-        "countryName",
-        "passwordHash"
-      ]
+      "required": ["id", "countryName", "passwordHash"]
     },
     "Action": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Action",
       "type": "object",
-      "description": "Defines an action or agenda item within the Model United Nations session, created by the President.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Action entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name or title of the action."
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of the action."
-        },
-        "globalDurationMinutes": {
-          "type": "number",
-          "description": "The total duration of the action in minutes, used for the global timer."
-        },
-        "speakingTimePerDelegateMinutes": {
-          "type": "number",
-          "description": "The allotted speaking time per delegate in minutes, primarily for display purposes."
-        },
-        "allowDelegateParticipation": {
-          "type": "boolean",
-          "description": "Indicates whether delegates are allowed to declare their participation for this specific action."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the action (e.g., 'pending', 'launched_for_participation', 'active_timer', 'completed')."
-        },
-        "startTime": {
-          "type": "string",
-          "description": "The date and time when the action's global timer was officially started by the President.",
-          "format": "date-time"
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "status": { "type": "string" }
       },
-      "required": [
-        "id",
-        "name",
-        "description",
-        "globalDurationMinutes",
-        "speakingTimePerDelegateMinutes",
-        "allowDelegateParticipation",
-        "status"
-      ]
+      "required": ["id", "name", "status"]
     },
     "Participation": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Participation",
       "type": "object",
-      "description": "Records a delegate's decision to participate or pass on a specific action.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Participation entity."
-        },
-        "actionId": {
-          "type": "string",
-          "description": "Reference to the Action for which the delegate is making a choice. (Relationship: Action 1:N Participation)"
-        },
-        "delegateId": {
-          "type": "string",
-          "description": "Reference to the Delegate making the participation choice. (Relationship: Delegate 1:N Participation)"
-        },
-        "isParticipating": {
-          "type": "boolean",
-          "description": "True if the delegate chose to participate, false if they chose to pass."
-        },
-        "submissionTime": {
-          "type": "string",
-          "description": "The date and time when the delegate submitted their participation choice.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "actionId",
-        "delegateId",
-        "isParticipating",
-        "submissionTime"
-      ]
+        "id": { "type": "string" },
+        "actionId": { "type": "string" },
+        "delegateId": { "type": "string" }
+      }
     },
     "Resolution": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Resolution",
       "type": "object",
-      "description": "Represents a resolution proposed by a delegate, awaiting review and decision by the President.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Resolution entity."
-        },
-        "delegateId": {
-          "type": "string",
-          "description": "Reference to the Delegate who proposed this resolution. (Relationship: Delegate 1:N Resolution)"
-        },
-        "sponsors": {
-          "type": "string",
-          "description": "A text field listing other countries or delegates sponsoring the resolution."
-        },
-        "content": {
-          "type": "string",
-          "description": "The full text content of the proposed resolution."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the resolution (e.g., 'pending', 'approved', 'rejected', 'modification_requested')."
-        },
-        "submissionTime": {
-          "type": "string",
-          "description": "The date and time when the resolution was submitted by the delegate.",
-          "format": "date-time"
-        },
-        "presidentNotes": {
-          "type": "string",
-          "description": "Optional notes from the President regarding the resolution, such as reasons for rejection or requested modifications."
-        }
-      },
-      "required": [
-        "id",
-        "delegateId",
-        "sponsors",
-        "content",
-        "status",
-        "submissionTime"
-      ]
+        "id": { "type": "string" },
+        "content": { "type": "string" },
+        "status": { "type": "string" }
+      }
     },
-    "SessionState": {
+    "Message": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "SessionState",
+      "title": "Message",
       "type": "object",
-      "description": "Manages global state information for the MUN session, such as whether the session is currently suspended. This entity is expected to have only one record.",
+      "description": "Un message privé envoyé par un délégué à la présidence.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the SessionState entity. Expected to be a fixed value (e.g., 'current') to ensure a single global state record."
-        },
-        "isSuspended": {
-          "type": "boolean",
-          "description": "Indicates if the entire MUN session is currently suspended (true) or active (false)."
-        },
-        "suspensionMessage": {
-          "type": "string",
-          "description": "An optional message to display to all users when the session is suspended."
-        },
-        "lastUpdated": {
-          "type": "string",
-          "description": "The date and time when this session state record was last updated.",
-          "format": "date-time"
-        }
+        "id": { "type": "string" },
+        "senderCountry": { "type": "string" },
+        "type": { "type": "string", "enum": ["privilege", "general"] },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "isRead": { "type": "boolean" }
       },
-      "required": [
-        "id",
-        "isSuspended",
-        "lastUpdated"
-      ]
+      "required": ["id", "senderCountry", "type", "content", "timestamp"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "anonymous"]
   },
   "firestore": {
     "structure": [
       {
         "path": "/delegates/{delegateId}",
-        "definition": {
-          "entityName": "Delegate",
-          "schema": {
-            "$ref": "#/backend/entities/Delegate"
-          },
-          "description": "Stores delegate accounts with their unique ID, country name, and password hash for custom authentication. Delegate's 'id' will be used as their Firebase Auth UID after successful custom login. Only the system/President can manage these, while delegates can read their own data (excluding password hash in rules for direct client access).",
-          "params": [
-            {
-              "name": "delegateId",
-              "description": "The unique identifier of the Delegate."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/roles_president/{presidentUid}",
-        "definition": {
-          "entityName": "PresidentRole",
-          "schema": {
-            "$ref": "#/backend/entities/PresidentRole"
-          },
-          "description": "A collection used for Database Access Control (DBAC). The existence of a document with a user's Firebase Auth UID signifies they are a President. Only the system should write to this collection; rules will perform an 'exists()' check. (Note: The 'PresidentRole' entity is assumed to be defined within '/backend/entities' for this structure).",
-          "params": [
-            {
-              "name": "presidentUid",
-              "description": "The Firebase Authentication UID of the President user."
-            }
-          ]
-        }
+        "definition": { "entityName": "Delegate", "schema": { "$ref": "#/backend/entities/Delegate" } }
       },
       {
         "path": "/actions/{actionId}",
-        "definition": {
-          "entityName": "Action",
-          "schema": {
-            "$ref": "#/backend/entities/Action"
-          },
-          "description": "Main collection for Model United Nations actions or agenda items. Created and managed by the President. Delegates have read-only access to all actions.",
-          "params": [
-            {
-              "name": "actionId",
-              "description": "The unique identifier of the Action."
-            }
-          ]
-        }
+        "definition": { "entityName": "Action", "schema": { "$ref": "#/backend/entities/Action" } }
       },
       {
-        "path": "/actions/{actionId}/participations/{participationId}",
+        "path": "/messages/{messageId}",
         "definition": {
-          "entityName": "Participation",
-          "schema": {
-            "$ref": "#/backend/entities/Participation"
-          },
-          "description": "Records a delegate's participation choice for a specific action. Includes denormalized 'actionId' and 'delegateId' for authorization independence. Delegates can create/update their own participation; President can read all participations for an action.",
-          "params": [
-            {
-              "name": "actionId",
-              "description": "The unique identifier of the parent Action."
-            },
-            {
-              "name": "participationId",
-              "description": "The unique identifier of the Participation record."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/resolutions/{resolutionId}",
-        "definition": {
-          "entityName": "Resolution",
-          "schema": {
-            "$ref": "#/backend/entities/Resolution"
-          },
-          "description": "Stores resolutions proposed by delegates. Includes denormalized 'delegateId' for authorization independence. Delegates can create/manage their own resolutions; President can read/manage all resolutions.",
-          "params": [
-            {
-              "name": "resolutionId",
-              "description": "The unique identifier of the Resolution."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/sessionState/current",
-        "definition": {
-          "entityName": "SessionState",
-          "schema": {
-            "$ref": "#/backend/entities/SessionState"
-          },
-          "description": "A singleton document representing the global state of the MUN session. The document ID is 'current'. Only the President can modify this state; all users can read it."
+          "entityName": "Message",
+          "schema": { "$ref": "#/backend/entities/Message" },
+          "description": "Messages privés pour la présidence."
         }
       }
-    ],
-    "reasoning": "The Firestore structure for Immune UERC is designed with a strong emphasis on Authorization Independence and Query Accessibility Patterns (QAPs), ensuring security, scalability, and debuggability. The core principle is to avoid hierarchical authorization dependencies by denormalizing crucial authorization context directly into the documents.\n\n**Authorization Independence via Denormalization:**\n1.  **Delegate Authentication:** Delegates use a custom authentication flow where their `countryName` and `passwordHash` (stored in `/delegates/{delegateId}`) are used by a backend service (e.g., Cloud Function) to mint a custom Firebase Auth token. Upon successful login, `request.auth.uid` for a delegate will be set to their `delegateId`. This `delegateId` is then denormalized into `Participation` and `Resolution` documents, eliminating the need for `get()` calls in security rules to check ownership.\n2.  **Participation (under Actions):** Each `Participation` document includes `actionId` and `delegateId`. Rules for delegate participation only need to check `request.auth.uid == resource.data.delegateId` and that the `actionId` in the path matches `resource.data.actionId`. No parent `Action` document needs to be fetched for `Participation` authorization.\n3.  **Resolutions (Top-Level):** `Resolution` documents are stored in a top-level collection `/resolutions/{resolutionId}` and include the `delegateId` field. Delegate authorization is achieved by checking `request.auth.uid == resource.data.delegateId`. This allows for efficient querying and independent authorization without `get()` calls.\n4.  **Global Roles (President):** The President's role is established by the existence of their Firebase `uid` in the `/roles_president/{presidentUid}` collection. This is checked using an `exists()` rule, which is performant and atomic, not relying on data within other collections.\n5.  **SessionState:** The global session state (`/sessionState/current`) does not have nested authorization dependencies. Write access is controlled by the President role; read access is global.\n\n**Query Accessibility Patterns (QAPs - Rules are not Filters):**\n1.  **`/delegates/{delegateId}`:** President can `list` all delegates for management. Delegates can only `get` their own specific `delegateId` document where `delegateId == request.auth.uid`. Listing all delegates is not permitted for individual delegates, adhering to the 'rules are not filters' principle for private data.\n2.  **`/actions/{actionId}`:** All actions are public for reading by delegates and fully manageable by the President. Both Presidents and Delegates can `list` all documents in this collection without additional filtering, as the entire collection shares the same security posture.\n3.  **`/actions/{actionId}/participations/{participationId}`:** Presidents can `list` all participations for a given `actionId`. Delegates can only `get` or write their own `participationId` for a specific `actionId`, where `resource.data.delegateId == request.auth.uid`. If a delegate needs to list all their past participations across actions, a collection group query on `participations` would be used, filtered by `delegateId == request.auth.uid`, which is explicitly supported by QAPs.\n4.  **`/resolutions/{resolutionId}`:** Presidents can `list` all resolutions. Delegates can `list` their own resolutions by querying on `delegateId == request.auth.uid`. This allows for efficient, secure querying without requiring the database to filter out results after fetching, which is a key aspect of QAPs.\n5.  **`/sessionState/current`:** This is a singleton document, so `list` operations are not applicable. All users can `get` this document, and only the President can update it.\n6.  **`/roles_president/{presidentUid}`:** This collection is used purely for authorization checks and is not intended for user-facing `list` operations.\n\nThis design leverages structural segregation and explicit denormalization to create a robust and understandable security model, making Firestore rules simpler to write, test, and maintain."
+    ]
   }
 }

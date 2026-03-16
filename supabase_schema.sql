@@ -1,62 +1,70 @@
 
--- Migration for Immune UERC (MUN HR Council)
+-- Schéma SQL pour migration Supabase (MUN HR Council)
 
--- 1. Table Delegates
-CREATE TABLE IF NOT EXISTS delegates (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    country_name TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+-- Table des délégués
+CREATE TABLE delegates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  country_name TEXT NOT NULL UNIQUE,
+  password TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. Table Actions (Agenda Items)
-CREATE TABLE IF NOT EXISTS actions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title TEXT NOT NULL,
-    description TEXT,
-    duration_minutes INTEGER NOT NULL DEFAULT 15,
-    time_per_delegate TEXT DEFAULT '01:00',
-    allow_participation BOOLEAN DEFAULT TRUE,
-    status TEXT NOT NULL CHECK (status IN ('launched', 'started', 'paused', 'completed')),
-    started_at TIMESTAMPTZ,
-    paused_at TIMESTAMPTZ,
-    total_elapsed_seconds INTEGER DEFAULT 0,
-    speaking_timer_status TEXT DEFAULT 'stopped',
-    speaking_timer_started_at TIMESTAMPTZ,
-    speaking_timer_total_elapsed INTEGER DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+-- Table des actions/débats
+CREATE TABLE actions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  duration_minutes INTEGER NOT NULL,
+  time_per_delegate TEXT DEFAULT '1:00',
+  description TEXT,
+  allow_participation BOOLEAN DEFAULT TRUE,
+  status TEXT DEFAULT 'launched', -- 'launched', 'started', 'paused', 'completed'
+  started_at TIMESTAMP WITH TIME ZONE,
+  paused_at TIMESTAMP WITH TIME ZONE,
+  total_elapsed_seconds INTEGER DEFAULT 0,
+  speaking_timer_status TEXT DEFAULT 'stopped',
+  speaking_timer_started_at TIMESTAMP WITH TIME ZONE,
+  speaking_timer_total_elapsed INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. Table Participations (Speaker List)
-CREATE TABLE IF NOT EXISTS participations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    action_id UUID REFERENCES actions(id) ON DELETE CASCADE,
-    delegate_id UUID REFERENCES delegates(id) ON DELETE CASCADE,
-    country_name TEXT NOT NULL,
-    status TEXT DEFAULT 'participating',
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+-- Table des participations (liste des orateurs)
+CREATE TABLE participations (
+  id TEXT PRIMARY KEY, -- Concaténation action_id + delegate_id
+  action_id UUID REFERENCES actions(id) ON DELETE CASCADE,
+  delegate_id UUID REFERENCES delegates(id) ON DELETE CASCADE,
+  country_name TEXT NOT NULL,
+  status TEXT NOT NULL, -- 'participating', 'passing'
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. Table Resolutions
-CREATE TABLE IF NOT EXISTS resolutions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    proposing_country TEXT NOT NULL,
-    sponsors TEXT,
-    content TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-    is_displayed BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+-- Table des résolutions
+CREATE TABLE resolutions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  proposing_country TEXT NOT NULL,
+  sponsors TEXT,
+  content TEXT NOT NULL,
+  status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
+  is_displayed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. Table Session State (Singleton)
-CREATE TABLE IF NOT EXISTS session_state (
-    id TEXT PRIMARY KEY DEFAULT 'current',
-    is_suspended BOOLEAN DEFAULT FALSE,
-    allow_resolutions BOOLEAN DEFAULT TRUE,
-    last_updated TIMESTAMPTZ DEFAULT NOW()
+-- Table des messages privés à la présidence
+CREATE TABLE messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sender_country TEXT NOT NULL,
+  type TEXT NOT NULL, -- 'privilege', 'general'
+  content TEXT NOT NULL,
+  timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  is_read BOOLEAN DEFAULT FALSE
 );
 
--- Insert default session state
-INSERT INTO session_state (id, is_suspended, allow_resolutions) 
-VALUES ('current', FALSE, TRUE)
-ON CONFLICT (id) DO NOTHING;
+-- État global de la session
+CREATE TABLE session_state (
+  id TEXT PRIMARY KEY DEFAULT 'current',
+  is_suspended BOOLEAN DEFAULT FALSE,
+  allow_resolutions BOOLEAN DEFAULT TRUE,
+  last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Insertion initiale de l'état
+INSERT INTO session_state (id, is_suspended, allow_resolutions) VALUES ('current', FALSE, TRUE) ON CONFLICT DO NOTHING;
