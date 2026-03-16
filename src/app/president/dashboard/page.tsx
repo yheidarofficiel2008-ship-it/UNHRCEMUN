@@ -1,9 +1,9 @@
 
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, Info, UserPlus } from 'lucide-react';
+import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,12 +18,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useFirebase } from '@/firebase';
 import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, doc, onSnapshot, query, orderBy, getDocs, serverTimestamp, writeBatch, increment, where } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, orderBy, serverTimestamp, increment } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useRealtime } from '@/hooks/use-realtime';
 import { GlobalTimer } from '@/components/GlobalTimer';
 import { SpeakingTimer } from '@/components/SpeakingTimer';
 import { useToast } from '@/hooks/use-toast';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, Cell } from 'recharts';
 
 export default function PresidentDashboard() {
   const router = useRouter();
@@ -54,6 +55,7 @@ export default function PresidentDashboard() {
   const [delegates, setDelegates] = useState<any[]>([]);
   const [resolutions, setResolutions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
+  const [allParticipations, setAllParticipations] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [initializing, setInitializing] = useState(false);
 
@@ -81,10 +83,16 @@ export default function PresidentDashboard() {
       setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    const partRef = collection(db, 'participations');
+    const unsubPartAll = onSnapshot(partRef, (snapshot) => {
+      setAllParticipations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubDel();
       unsubRes();
       unsubMessages();
+      unsubPartAll();
     };
   }, [db, user]);
 
@@ -104,6 +112,21 @@ export default function PresidentDashboard() {
 
     return () => unsubPart();
   }, [db, currentAction?.id]);
+
+  const statsData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    delegates.forEach(d => {
+      counts[d.country_name] = 0;
+    });
+    allParticipations.forEach(p => {
+      if (p.status === 'participating' && counts[p.country_name] !== undefined) {
+        counts[p.country_name]++;
+      }
+    });
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [allParticipations, delegates]);
 
   const initDatabase = () => {
     if (!db) return;
@@ -254,23 +277,8 @@ export default function PresidentDashboard() {
   const stopAction = async () => {
     if (!db || !currentAction) return;
     const actionRef = doc(db, 'actions', currentAction.id);
-    
     updateDocumentNonBlocking(actionRef, { status: 'completed' });
-
-    try {
-      const q = query(collection(db, 'participations'));
-      const snap = await getDocs(q);
-      const batch = writeBatch(db);
-      snap.docs.forEach(doc => {
-        if (doc.data().action_id === currentAction.id) {
-          batch.delete(doc.ref);
-        }
-      });
-      await batch.commit();
-      toast({ title: "Action terminée" });
-    } catch (e) {
-      console.error(e);
-    }
+    toast({ title: "Action terminée" });
   };
 
   const markMessageAsRead = (messageId: string) => {
@@ -411,6 +419,7 @@ export default function PresidentDashboard() {
             <TabsList className="w-full">
               <TabsTrigger value="actions" className="flex-1">Actions</TabsTrigger>
               <TabsTrigger value="delegates" className="flex-1">Pays</TabsTrigger>
+              <TabsTrigger value="stats" className="flex-1">Stats</TabsTrigger>
             </TabsList>
             
             <TabsContent value="actions" className="space-y-6 mt-4">
@@ -591,6 +600,55 @@ export default function PresidentDashboard() {
                     ))}
                     {delegates.length === 0 && <p className="text-xs text-center text-muted-foreground italic py-4">Aucun pays enregistré.</p>}
                   </ScrollArea>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="stats" className="space-y-6 mt-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-2">
+                  <BarChart3 size={18} className="text-primary" />
+                  <CardTitle className="text-lg">Participations aux Débats</CardTitle>
+                </CardHeader>
+                <CardContent className="h-[400px] pt-4">
+                  {statsData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={statsData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                        <XAxis type="number" hide />
+                        <YAxis 
+                          dataKey="name" 
+                          type="category" 
+                          width={100} 
+                          fontSize={10} 
+                          tick={{ fill: 'currentColor' }} 
+                        />
+                        <RechartsTooltip 
+                          cursor={{ fill: 'transparent' }}
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              return (
+                                <div className="bg-popover border p-2 rounded-lg shadow-xl text-xs">
+                                  <p className="font-bold">{payload[0].payload.name}</p>
+                                  <p className="text-primary">{payload[0].value} participation(s)</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                          {statsData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'hsl(var(--secondary))'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground italic gap-2">
+                      <BarChart3 size={40} className="opacity-20" />
+                      <p>Aucune donnée de participation enregistrée.</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

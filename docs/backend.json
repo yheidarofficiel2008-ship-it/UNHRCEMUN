@@ -48,6 +48,18 @@
         "is_read": { "type": "boolean" },
         "timestamp": { "type": "string", "format": "date-time" }
       }
+    },
+    "Participation": {
+      "title": "Participation",
+      "type": "object",
+      "description": "Enregistrement d'un pays sur une liste d'orateurs.",
+      "properties": {
+        "action_id": { "type": "string" },
+        "delegate_id": { "type": "string" },
+        "country_name": { "type": "string" },
+        "status": { "type": "string", "enum": ["participating", "passing"] },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -58,6 +70,7 @@
     "/actions/{id}": { "schema": "Action", "description": "Actions et débats en cours." },
     "/resolutions/{id}": { "schema": "Resolution", "description": "Projets de résolutions soumis." },
     "/messages/{id}": { "schema": "Message", "description": "Messages privés délégués -> présidence." },
+    "/participations/{id}": { "schema": "Participation", "description": "Historique des participations aux débats." },
     "/sessionState/current": { "schema": "object", "description": "Paramètres globaux de la session." }
   }
 }
