@@ -34,7 +34,7 @@ export default function PresidentLogin() {
     } catch (error: any) {
       toast({
         title: "Erreur d'authentification",
-        description: "Identifiants incorrects ou bloqueur de publicité actif.",
+        description: "Identifiants incorrects ou bloqueur de scripts actif.",
         variant: "destructive"
       });
       setLoading(false);
@@ -133,7 +133,7 @@ export default function PresidentLogin() {
           </TabsContent>
         </Tabs>
       </Card>
-      <p className="mt-8 text-xs text-muted-foreground text-center">Note: Désactivez AdBlock si vous rencontrez des erreurs de permission.</p>
+      <p className="mt-8 text-xs text-muted-foreground text-center">Note: Désactivez vos extensions de blocage si vous rencontrez des erreurs.</p>
     </div>
   );
 }

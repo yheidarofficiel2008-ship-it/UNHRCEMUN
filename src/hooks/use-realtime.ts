@@ -12,12 +12,10 @@ export function useRealtime() {
   const [currentAction, setCurrentAction] = useState<any>(null);
 
   useEffect(() => {
-    // On attend que les services soient prêts
     if (!db) return;
 
-    // Écouter l'état global de la session
+    // Écouter l'état global de la session (lecture publique)
     const sessionStateRef = doc(db, 'sessionState', 'current');
-    
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
       if (docSnap.exists()) {
         setIsSuspended(docSnap.data().isSuspended === true);
@@ -25,7 +23,7 @@ export function useRealtime() {
         setIsSuspended(false);
       }
     }, (error) => {
-      // Propagation de l'erreur uniquement si authentifié
+      // Propagation seulement si authentifié et erreur réelle
       if (!isUserLoading && user) {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: 'sessionState/current',
@@ -34,7 +32,7 @@ export function useRealtime() {
       }
     });
 
-    // Écouter l'action actuelle
+    // Écouter l'action actuelle (lecture publique)
     const actionsRef = collection(db, 'actions');
     const q = query(
       actionsRef, 
