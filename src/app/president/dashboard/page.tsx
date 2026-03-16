@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Plus, List, CheckCircle2, XCircle, FileText, Sparkles, LogOut, Users, Settings as SettingsIcon, Trash2, Database } from 'lucide-react';
+import { Play, Pause, Plus, List, CheckCircle2, XCircle, FileText, Sparkles, LogOut, Users, Settings as SettingsIcon, Trash2, Database, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
