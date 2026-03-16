@@ -100,7 +100,7 @@ export default function PresidentLogin() {
                   <Label htmlFor="login-password">Mot de passe</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="login-password" chips-ui-input="true" className="pl-10" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                    <Input id="login-password" type="password" className="pl-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
                   </div>
                 </div>
               </CardContent>
