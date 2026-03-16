@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus } from 'lucide-react';
+import { Play, Pause, Square, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -56,6 +56,7 @@ export default function PresidentDashboard() {
   const [resolutions, setResolutions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
   const [allParticipations, setAllParticipations] = useState<any[]>([]);
+  const [allActions, setAllActions] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [initializing, setInitializing] = useState(false);
 
@@ -88,11 +89,17 @@ export default function PresidentDashboard() {
       setAllParticipations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    const actionsHistoryRef = collection(db, 'actions');
+    const unsubActionsAll = onSnapshot(query(actionsHistoryRef, orderBy('created_at', 'desc')), (snapshot) => {
+      setAllActions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubDel();
       unsubRes();
       unsubMessages();
       unsubPartAll();
+      unsubActionsAll();
     };
   }, [db, user]);
 
@@ -289,6 +296,12 @@ export default function PresidentDashboard() {
   const deleteMessage = (messageId: string) => {
     if (!db) return;
     deleteDocumentNonBlocking(doc(db, 'messages', messageId));
+  };
+
+  const handleDeleteAction = (actionId: string) => {
+    if (!db) return;
+    deleteDocumentNonBlocking(doc(db, 'actions', actionId));
+    toast({ title: "Action supprimée de l'historique" });
   };
 
   const handleLogout = async () => {
@@ -610,7 +623,7 @@ export default function PresidentDashboard() {
                   <BarChart3 size={18} className="text-primary" />
                   <CardTitle className="text-lg">Participations aux Débats</CardTitle>
                 </CardHeader>
-                <CardContent className="h-[400px] pt-4">
+                <CardContent className="h-[300px] pt-4">
                   {statsData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={statsData} layout="vertical" margin={{ left: 20, right: 20 }}>
@@ -649,6 +662,43 @@ export default function PresidentDashboard() {
                       <p>Aucune donnée de participation enregistrée.</p>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-2">
+                  <History size={18} className="text-muted-foreground" />
+                  <CardTitle className="text-lg">Historique des Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="px-4">
+                  <ScrollArea className="h-[300px]">
+                    <div className="space-y-3">
+                      {allActions.map(action => (
+                        <div key={action.id} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg border text-xs">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-bold">{action.title}</span>
+                            <div className="flex gap-2">
+                              <Badge variant="outline" className="text-[10px]">{action.status}</Badge>
+                              <span className="text-muted-foreground">
+                                {action.created_at?.toDate ? action.created_at.toDate().toLocaleDateString() : 'Date inconnue'}
+                              </span>
+                            </div>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:bg-destructive/10 h-8 w-8"
+                            onClick={() => handleDeleteAction(action.id)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      ))}
+                      {allActions.length === 0 && (
+                        <p className="text-center py-10 text-muted-foreground italic">Aucun historique disponible.</p>
+                      )}
+                    </div>
+                  </ScrollArea>
                 </CardContent>
               </Card>
             </TabsContent>
