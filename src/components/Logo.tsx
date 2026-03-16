@@ -9,13 +9,13 @@ interface LogoProps {
 }
 
 /**
- * Composant Logo utilisant l'asset EMUN.svg fourni par l'utilisateur.
- * L'asset doit être présent dans le dossier public/ pour être accessible via /EMUN.svg.
+ * Composant Logo utilisant l'asset mun.png fourni par l'utilisateur.
+ * L'asset doit être présent dans le dossier public/ pour être accessible via /mun.png.
  */
 export function Logo({ className }: LogoProps) {
   return (
     <img 
-      src="/EMUN.svg" 
+      src="/mun.png" 
       alt="EMUN UNHRC Logo" 
       className={cn("h-auto w-auto object-contain", className)}
     />
