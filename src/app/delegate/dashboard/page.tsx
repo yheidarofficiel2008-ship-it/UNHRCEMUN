@@ -587,7 +587,7 @@ export default function DelegateDashboard() {
                     <Label htmlFor="spokesperson" className="font-bold">Porte-parole</Label>
                     <Input 
                       id="spokesperson" 
-                      placeholder="Nom du délégué" 
+                      placeholder="Nom du pays" 
                       disabled={!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis'}
                       value={resolutionForm.spokesperson} 
                       onChange={e => setResolutionForm({...resolutionForm, spokesperson: e.target.value})} 
