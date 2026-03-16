@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Plus, Trash2, Database, Landmark, LogOut, FileText, Sparkles, AlertCircle, ListOrdered } from 'lucide-react';
+import { Play, Pause, Square, Plus, Trash2, Database, Landmark, LogOut, FileText, Monitor, Eye, EyeOff, CheckCircle, XCircle, ListOrdered } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,6 @@ import { collection, doc, onSnapshot, query, orderBy, getDocs, serverTimestamp, 
 import { signOut } from 'firebase/auth';
 import { useRealtime } from '@/hooks/use-realtime';
 import { GlobalTimer } from '@/components/GlobalTimer';
-import { aiResolutionSummarizer } from '@/ai/flows/ai-resolution-summarizer';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PresidentDashboard() {
@@ -38,7 +37,6 @@ export default function PresidentDashboard() {
   const [delegates, setDelegates] = useState<any[]>([]);
   const [resolutions, setResolutions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
-  const [aiAnalysis, setAiAnalysis] = useState<Record<string, any>>({});
   const [initializing, setInitializing] = useState(false);
 
   useEffect(() => {
@@ -117,7 +115,7 @@ export default function PresidentDashboard() {
       };
       
       await addDocumentNonBlocking(collection(db, 'actions'), actionData);
-      toast({ title: "Action lancée", description: "L'action est maintenant visible pour les délégués." });
+      toast({ title: "Action lancée" });
       setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
     } catch (e) {
       toast({ title: "Erreur", description: "Impossible de créer l'action.", variant: "destructive" });
@@ -165,7 +163,7 @@ export default function PresidentDashboard() {
         }
       });
       await batch.commit();
-      toast({ title: "Action terminée", description: "Liste des orateurs réinitialisée." });
+      toast({ title: "Action terminée" });
     } catch (e) {
       console.error(e);
     }
@@ -186,14 +184,16 @@ export default function PresidentDashboard() {
     deleteDocumentNonBlocking(doc(db, 'delegates', id));
   };
 
-  const analyzeResolution = async (res: any) => {
-    setAiAnalysis(prev => ({ ...prev, [res.id]: { loading: true } }));
-    try {
-      const summary = await aiResolutionSummarizer({ resolutionText: res.content });
-      setAiAnalysis(prev => ({ ...prev, [res.id]: { ...summary, loading: false } }));
-    } catch (e) {
-      setAiAnalysis(prev => ({ ...prev, [res.id]: { error: true, loading: false } }));
-    }
+  const deleteResolution = (id: string) => {
+    if (!db) return;
+    deleteDocumentNonBlocking(doc(db, 'resolutions', id));
+    toast({ title: "Résolution supprimée" });
+  };
+
+  const toggleDisplayResolution = (id: string, currentVal: boolean) => {
+    if (!db) return;
+    updateDocumentNonBlocking(doc(db, 'resolutions', id), { is_displayed: !currentVal });
+    toast({ title: currentVal ? "Masqué" : "Affiché aux délégués" });
   };
 
   const handleLogout = async () => {
@@ -339,31 +339,43 @@ export default function PresidentDashboard() {
             <CardHeader className="bg-muted/30"><CardTitle className="flex items-center gap-2"><FileText /> Resolutions</CardTitle></CardHeader>
             <CardContent className="p-6 space-y-6">
               {resolutions.map(res => (
-                <Card key={res.id} className="overflow-hidden border-2">
+                <Card key={res.id} className={`overflow-hidden border-2 ${res.is_displayed ? 'border-primary' : ''}`}>
                   <div className="bg-muted/50 p-4 flex justify-between items-center">
-                    <span className="font-bold text-primary">{res.proposing_country}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-primary">{res.proposing_country}</span>
+                      {res.is_displayed && <Badge className="bg-primary"><Monitor className="h-3 w-3 mr-1" /> PROJETÉ</Badge>}
+                    </div>
                     <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
                       {res.status?.toUpperCase()}
                     </Badge>
                   </div>
                   <CardContent className="p-4 space-y-4">
                     <p className="text-sm italic leading-relaxed">"{res.content}"</p>
-                    {aiAnalysis[res.id] && !aiAnalysis[res.id].loading && (
-                      <div className="bg-accent/5 p-4 rounded-xl border-l-4 border-accent text-sm">
-                        <div className="flex items-center gap-2 font-bold text-accent mb-2"><Sparkles size={16} /> Résumé IA</div>
-                        <p className="mb-3">{aiAnalysis[res.id].summary}</p>
-                      </div>
-                    )}
                     <div className="flex gap-2 justify-end pt-2 border-t">
-                      <Button variant="outline" size="sm" onClick={() => analyzeResolution(res)} disabled={aiAnalysis[res.id]?.loading}>
-                        {aiAnalysis[res.id]?.loading ? "Analyse..." : "Analyse IA"}
+                      <Button 
+                        variant={res.is_displayed ? "default" : "outline"} 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={() => toggleDisplayResolution(res.id, res.is_displayed)}
+                      >
+                        {res.is_displayed ? <><EyeOff size={16} /> Masquer</> : <><Eye size={16} /> Afficher</>}
                       </Button>
-                      <Button variant="outline" size="sm" className="text-green-600" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'approved' })}>Approuver</Button>
-                      <Button variant="outline" size="sm" className="text-red-600" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'rejected' })}>Rejeter</Button>
+                      <Button variant="outline" size="sm" className="text-green-600 gap-1" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'approved' })}>
+                        <CheckCircle size={16} /> Approuver
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-red-600 gap-1" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'rejected' })}>
+                        <XCircle size={16} /> Rejeter
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => deleteResolution(res.id)}>
+                        <Trash2 size={16} />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
+              {resolutions.length === 0 && (
+                <div className="text-center py-20 text-muted-foreground italic">Aucune résolution soumise</div>
+              )}
             </CardContent>
           </Card>
         </div>

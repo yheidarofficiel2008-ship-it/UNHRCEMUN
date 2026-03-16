@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, AlertCircle, Clock } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, Monitor, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,7 @@ export default function DelegateDashboard() {
     content: ''
   });
   const [myResolutions, setMyResolutions] = useState<any[]>([]);
+  const [displayedResolution, setDisplayedResolution] = useState<any>(null);
 
   useEffect(() => {
     const session = localStorage.getItem('delegate_session');
@@ -39,13 +40,27 @@ export default function DelegateDashboard() {
     const del = JSON.parse(session);
     setDelegate(del);
 
+    // Mes résolutions
     const resRef = collection(db, 'resolutions');
     const q = query(resRef, where('proposing_country', '==', del.country_name), orderBy('created_at', 'desc'));
     const unsubRes = onSnapshot(q, (snapshot) => {
       setMyResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    return () => unsubRes();
+    // Résolution projetée (is_displayed == true)
+    const qDisplayed = query(collection(db, 'resolutions'), where('is_displayed', '==', true));
+    const unsubDisplayed = onSnapshot(qDisplayed, (snap) => {
+      if (!snap.empty) {
+        setDisplayedResolution({ id: snap.docs[0].id, ...snap.docs[0].data() });
+      } else {
+        setDisplayedResolution(null);
+      }
+    });
+
+    return () => {
+      unsubRes();
+      unsubDisplayed();
+    };
   }, [router]);
 
   useEffect(() => {
@@ -88,6 +103,7 @@ export default function DelegateDashboard() {
         sponsors: resolutionForm.sponsors,
         content: resolutionForm.content,
         status: 'pending',
+        is_displayed: false,
         created_at: serverTimestamp()
       });
       setResolutionForm({ sponsors: '', content: '' });
@@ -175,10 +191,10 @@ export default function DelegateDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><FileText /> Mes Propositions</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg"><FileText size={18} /> Mes Propositions</CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[250px]">
+              <ScrollArea className="h-[200px]">
                 <div className="space-y-4">
                   {myResolutions.map(res => (
                     <div key={res.id} className="p-4 border rounded-xl bg-muted/20">
@@ -188,13 +204,34 @@ export default function DelegateDashboard() {
                       <p className="text-xs mt-2 italic line-clamp-2">"{res.content}"</p>
                     </div>
                   ))}
+                  {myResolutions.length === 0 && <p className="text-xs text-center text-muted-foreground italic py-4">Aucun projet envoyé.</p>}
                 </div>
               </ScrollArea>
             </CardContent>
           </Card>
         </div>
 
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-7 space-y-6">
+          {displayedResolution && (
+            <Card className="border-primary border-2 bg-primary/5 shadow-2xl animate-in fade-in zoom-in duration-300">
+              <CardHeader className="flex flex-row items-center justify-between border-b border-primary/20 pb-4">
+                <div className="space-y-1">
+                  <Badge className="gap-1 mb-2"><Monitor size={12} /> EN DISCUSSION</Badge>
+                  <CardTitle className="text-xl text-primary">{displayedResolution.proposing_country}</CardTitle>
+                </div>
+                <Badge variant={displayedResolution.status === 'approved' ? 'default' : displayedResolution.status === 'rejected' ? 'destructive' : 'secondary'} className="text-sm px-4 py-1">
+                  {displayedResolution.status.toUpperCase()}
+                </Badge>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <p className="text-lg italic leading-relaxed font-serif">"{displayedResolution.content}"</p>
+                {displayedResolution.sponsors && (
+                  <p className="mt-4 text-sm text-muted-foreground font-semibold">Sponsors: {displayedResolution.sponsors}</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="shadow-xl">
             <CardHeader className="bg-secondary/5 border-b mb-6">
               <CardTitle className="text-2xl font-headline">Rédiger une Résolution</CardTitle>
