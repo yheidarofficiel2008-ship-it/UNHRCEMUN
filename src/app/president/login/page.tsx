@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/lib/supabase';
+import { auth } from '@/lib/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PresidentLogin() {
@@ -21,20 +22,16 @@ export default function PresidentLogin() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push('/president/dashboard');
+    } catch (error: any) {
       toast({
         title: "Erreur d'authentification",
         description: error.message,
         variant: "destructive"
       });
       setLoading(false);
-    } else {
-      router.push('/president/dashboard');
     }
   };
 

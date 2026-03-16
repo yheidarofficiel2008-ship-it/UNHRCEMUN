@@ -12,7 +12,9 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/lib/supabase';
+import { db, auth } from '@/lib/firebase';
+import { collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy, where, getDocs, getDoc, serverTimestamp } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import { useRealtime } from '@/hooks/use-realtime';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
@@ -37,71 +39,75 @@ export default function PresidentDashboard() {
   const [aiAnalysis, setAiAnalysis] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    const fetchInitial = async () => {
-      const { data: res } = await supabase.from('resolutions').select('*').order('created_at', { ascending: false });
-      if (res) setResolutions(res);
+    // Listen to resolutions
+    const resolutionsRef = collection(db, 'resolutions');
+    const qRes = query(resolutionsRef, orderBy('created_at', 'desc'));
+    const unsubRes = onSnapshot(qRes, (snapshot) => {
+      const resData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setResolutions(resData);
+    });
 
-      if (currentAction?.id) {
-        const { data: part } = await supabase
-          .from('participations')
-          .select('*, delegates(country_name)')
-          .eq('action_id', currentAction.id);
-        if (part) setParticipants(part);
-      }
-    };
-    fetchInitial();
-
-    // Subscribe to resolutions
-    const resSub = supabase.channel('dashboard_res').on('postgres_changes', { event: '*', table: 'resolutions' }, payload => {
-      setResolutions(prev => {
-        if (payload.eventType === 'INSERT') return [payload.new, ...prev];
-        return prev.map(r => r.id === payload.new.id ? payload.new : r);
+    // Listen to participations for current action
+    let unsubPart = () => {};
+    if (currentAction?.id) {
+      const partRef = collection(db, 'participations');
+      const qPart = query(partRef, where('action_id', '==', currentAction.id));
+      unsubPart = onSnapshot(qPart, async (snapshot) => {
+        const parts = await Promise.all(snapshot.docs.map(async (pDoc) => {
+          const data = pDoc.data();
+          const delegateRef = doc(db, 'delegates', data.delegate_id);
+          const delegateSnap = await getDoc(delegateRef);
+          return {
+            id: pDoc.id,
+            ...data,
+            delegates: delegateSnap.exists() ? delegateSnap.data() : { country_name: 'Inconnu' }
+          };
+        }));
+        setParticipants(parts);
       });
-    }).subscribe();
-
-    // Subscribe to participations
-    const partSub = supabase.channel('dashboard_part').on('postgres_changes', { event: '*', table: 'participations' }, payload => {
-       fetchInitial(); // Refresh to get country names
-    }).subscribe();
+    }
 
     return () => {
-      supabase.removeChannel(resSub);
-      supabase.removeChannel(partSub);
+      unsubRes();
+      unsubPart();
     };
-  }, [currentAction]);
+  }, [currentAction?.id]);
 
   const toggleSuspension = async () => {
-    await supabase.from('settings').update({ value: !isSuspended }).eq('key', 'session_suspended');
+    const settingsRef = doc(db, 'settings', 'session_suspended');
+    await updateDoc(settingsRef, { value: !isSuspended });
   };
 
   const createAction = async () => {
-    const { data, error } = await supabase.from('actions').insert({
-      title: newAction.title,
-      duration_minutes: newAction.duration,
-      time_per_delegate: newAction.timePerDelegate,
-      description: newAction.description,
-      allow_participation: newAction.allowParticipation,
-      status: 'launched'
-    }).select().single();
-
-    if (error) {
-       toast({ title: "Erreur", description: "Impossible de créer l'action", variant: "destructive" });
-    } else {
-       toast({ title: "Succès", description: "Action lancée !" });
-       setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
+    try {
+      await addDoc(collection(db, 'actions'), {
+        title: newAction.title,
+        duration_minutes: newAction.duration,
+        time_per_delegate: newAction.timePerDelegate,
+        description: newAction.description,
+        allow_participation: newAction.allowParticipation,
+        status: 'launched',
+        created_at: serverTimestamp()
+      });
+      toast({ title: "Succès", description: "Action lancée !" });
+      setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
+    } catch (e) {
+      toast({ title: "Erreur", description: "Impossible de créer l'action", variant: "destructive" });
     }
   };
 
   const startAction = async () => {
     if (!currentAction) return;
-    await supabase.from('actions').update({ 
+    const actionRef = doc(db, 'actions', currentAction.id);
+    await updateDoc(actionRef, { 
       status: 'started', 
       started_at: new Date().toISOString() 
-    }).eq('id', currentAction.id);
+    });
   };
 
   const updateResolution = async (id: string, status: string) => {
-    await supabase.from('resolutions').update({ status }).eq('id', id);
+    const resRef = doc(db, 'resolutions', id);
+    await updateDoc(resRef, { status });
     toast({ title: "Statut mis à jour", description: `La résolution est maintenant : ${status}` });
   };
 
@@ -116,7 +122,7 @@ export default function PresidentDashboard() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOut(auth);
     router.push('/');
   };
 

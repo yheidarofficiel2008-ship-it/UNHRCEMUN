@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DelegateLogin() {
@@ -21,23 +22,34 @@ export default function DelegateLogin() {
     e.preventDefault();
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from('delegates')
-      .select('*')
-      .eq('country_name', country)
-      .eq('password', password)
-      .single();
+    try {
+      const q = query(
+        collection(db, 'delegates'), 
+        where('country_name', '==', country), 
+        where('password', '==', password)
+      );
+      const querySnapshot = await getDocs(q);
 
-    if (error || !data) {
+      if (querySnapshot.empty) {
+        toast({
+          title: "Erreur de connexion",
+          description: "Nom du pays ou mot de passe incorrect.",
+          variant: "destructive"
+        });
+        setLoading(false);
+      } else {
+        const delegateDoc = querySnapshot.docs[0];
+        const delegateData = { id: delegateDoc.id, ...delegateDoc.data() };
+        localStorage.setItem('delegate_session', JSON.stringify(delegateData));
+        router.push('/delegate/dashboard');
+      }
+    } catch (error: any) {
       toast({
-        title: "Erreur de connexion",
-        description: "Nom du pays ou mot de passe incorrect.",
+        title: "Erreur",
+        description: "Un problème est survenu lors de la connexion.",
         variant: "destructive"
       });
       setLoading(false);
-    } else {
-      localStorage.setItem('delegate_session', JSON.stringify(data));
-      router.push('/delegate/dashboard');
     }
   };
 

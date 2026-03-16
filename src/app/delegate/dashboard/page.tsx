@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, setDoc, doc } from 'firebase/firestore';
 import { useRealtime } from '@/hooks/use-realtime';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
@@ -38,46 +39,38 @@ export default function DelegateDashboard() {
     const del = JSON.parse(session);
     setDelegate(del);
 
-    const fetchMyRes = async () => {
-      const { data } = await supabase
-        .from('resolutions')
-        .select('*')
-        .eq('proposing_country', del.country_name)
-        .order('created_at', { ascending: false });
-      if (data) setMyResolutions(data);
-    };
-    fetchMyRes();
+    // Listen to my resolutions
+    const resRef = collection(db, 'resolutions');
+    const q = query(
+      resRef, 
+      where('proposing_country', '==', del.country_name), 
+      orderBy('created_at', 'desc')
+    );
 
-    // Subscribe to status changes of my resolutions
-    const resSub = supabase.channel('delegate_res').on('postgres_changes', { 
-      event: 'UPDATE', 
-      table: 'resolutions', 
-      filter: `proposing_country=eq.${del.country_name}` 
-    }, payload => {
-      setMyResolutions(prev => prev.map(r => r.id === payload.new.id ? payload.new : r));
-      toast({ title: "Notification de Présidence", description: `Le statut de votre résolution a changé : ${payload.new.status}` });
-    }).subscribe();
+    const unsubRes = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMyResolutions(data);
+    });
 
-    return () => {
-      supabase.removeChannel(resSub);
-    };
+    return () => unsubRes();
   }, []);
 
   const handleParticipation = async (status: 'participating' | 'passing') => {
     if (!currentAction || !delegate) return;
     
-    const { error } = await supabase.from('participations').upsert({
-      action_id: currentAction.id,
-      delegate_id: delegate.id,
-      status: status,
-      updated_at: new Date().toISOString()
-    });
-
-    if (error) {
-      toast({ title: "Erreur", description: "Impossible d'enregistrer votre choix.", variant: "destructive" });
-    } else {
+    try {
+      // Use a composite ID for participation: actionId_delegateId
+      const participationId = `${currentAction.id}_${delegate.id}`;
+      await setDoc(doc(db, 'participations', participationId), {
+        action_id: currentAction.id,
+        delegate_id: delegate.id,
+        status: status,
+        updated_at: serverTimestamp()
+      });
       setParticipationStatus(status);
       toast({ title: "Choix enregistré", description: status === 'participating' ? "Vous participez à l'action." : "Vous passez votre tour." });
+    } catch (e) {
+      toast({ title: "Erreur", description: "Impossible d'enregistrer votre choix.", variant: "destructive" });
     }
   };
 
@@ -85,18 +78,18 @@ export default function DelegateDashboard() {
     e.preventDefault();
     if (!delegate) return;
 
-    const { data, error } = await supabase.from('resolutions').insert({
-      proposing_country: delegate.country_name,
-      sponsors: resolutionForm.sponsors,
-      content: resolutionForm.content
-    }).select().single();
-
-    if (error) {
-      toast({ title: "Erreur", description: "Échec de la soumission.", variant: "destructive" });
-    } else {
-      setMyResolutions([data, ...myResolutions]);
+    try {
+      await addDoc(collection(db, 'resolutions'), {
+        proposing_country: delegate.country_name,
+        sponsors: resolutionForm.sponsors,
+        content: resolutionForm.content,
+        status: 'pending',
+        created_at: serverTimestamp()
+      });
       setResolutionForm({ sponsors: '', content: '' });
       toast({ title: "Soumis avec succès", description: "Votre résolution est en attente de validation." });
+    } catch (e) {
+      toast({ title: "Erreur", description: "Échec de la soumission.", variant: "destructive" });
     }
   };
 
@@ -181,7 +174,9 @@ export default function DelegateDashboard() {
                         }>
                           {res.status.replace('_', ' ').toUpperCase()}
                         </Badge>
-                        <span className="text-[10px] text-muted-foreground">{new Date(res.created_at).toLocaleDateString()}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {res.created_at?.toDate ? res.created_at.toDate().toLocaleDateString() : ''}
+                        </span>
                       </div>
                       <p className="text-sm font-semibold truncate mb-1">Sponsors: {res.sponsors || 'N/A'}</p>
                       <p className="text-xs text-muted-foreground line-clamp-2 italic">"{res.content}"</p>
