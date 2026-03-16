@@ -3,11 +3,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert, Plus, Trash2, Key, Home, AlertCircle } from 'lucide-react';
+import { ShieldAlert, Plus, Trash2, Key, Home, AlertCircle, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useFirebase, useCollection } from '@/firebase';
 import { useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, serverTimestamp, doc } from 'firebase/firestore';
@@ -74,7 +75,7 @@ export default function AdminPage() {
           <CardHeader className="text-center">
             <ShieldAlert size={40} className="mx-auto text-destructive mb-4" />
             <CardTitle className="text-2xl font-black uppercase tracking-tighter">Accès Restreint</CardTitle>
-            <CardDescription>Veuillez entrer la clé de sécurité MUN-OS pour continuer.</CardDescription>
+            <CardDescription>Veuillez entrer la clé de sécurité MUN-X26 pour continuer.</CardDescription>
           </CardHeader>
           <form onSubmit={checkKey}>
             <CardContent className="space-y-4">
