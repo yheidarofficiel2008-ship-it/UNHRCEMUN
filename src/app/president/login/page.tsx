@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from 'react';
@@ -134,7 +133,7 @@ export default function PresidentLogin() {
           </TabsContent>
         </Tabs>
       </Card>
-      <p className="mt-8 text-xs text-muted-foreground">Note: Désactivez AdBlock si vous rencontrez des erreurs de permission.</p>
+      <p className="mt-8 text-xs text-muted-foreground text-center">Note: Désactivez AdBlock si vous rencontrez des erreurs de permission.</p>
     </div>
   );
 }

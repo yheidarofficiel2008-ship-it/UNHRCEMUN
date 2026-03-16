@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -81,7 +80,8 @@ export default function PresidentDashboard() {
     const unsubPart = onSnapshot(partRef, async (snapshot) => {
       const parts = await Promise.all(snapshot.docs.map(async (pDoc) => {
         const data = pDoc.data();
-        const delegateSnap = await getDoc(doc(db!, 'delegates', data.delegate_id || data.delegateId));
+        const delegateId = data.delegate_id || data.delegateId;
+        const delegateSnap = await getDoc(doc(db!, 'delegates', delegateId));
         return {
           id: pDoc.id,
           ...data,

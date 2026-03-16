@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -13,9 +12,10 @@ export function useRealtime() {
   const [currentAction, setCurrentAction] = useState<any>(null);
 
   useEffect(() => {
-    if (!db || isUserLoading) return;
+    // Si la DB n'est pas prête, on attend
+    if (!db) return;
 
-    // Écouter l'état global de la session
+    // Écouter l'état global de la session (lecture publique dans les règles)
     const sessionStateRef = doc(db, 'sessionState', 'current');
     
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
@@ -25,7 +25,8 @@ export function useRealtime() {
         setIsSuspended(false);
       }
     }, (error) => {
-      if (user) {
+      // On ne loggue l'erreur de permission que si l'utilisateur est censé être connecté
+      if (!isUserLoading && user) {
         const permissionError = new FirestorePermissionError({
           path: 'sessionState/current',
           operation: 'get'
@@ -51,7 +52,7 @@ export function useRealtime() {
         setCurrentAction(null);
       }
     }, (error) => {
-      if (user) {
+      if (!isUserLoading && user) {
         const permissionError = new FirestorePermissionError({
           path: 'actions',
           operation: 'list'
