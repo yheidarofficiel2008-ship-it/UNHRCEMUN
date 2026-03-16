@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Plus, List, CheckCircle2, XCircle, FileText, Sparkles, LogOut, Users, Settings as SettingsIcon, Trash2, Database, Landmark } from 'lucide-react';
+import { Play, Plus, Trash2, Database, Landmark, LogOut, FileText, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -53,19 +51,16 @@ export default function PresidentDashboard() {
     const unsubDel = onSnapshot(query(delRef, orderBy('country_name', 'asc')), (snap) => {
       setDelegates(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }, async (err) => {
-      const permissionError = new FirestorePermissionError({ path: 'delegates', operation: 'list' });
-      errorEmitter.emit('permission-error', permissionError);
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'delegates', operation: 'list' }));
     });
 
     // Listen to resolutions
     const resolutionsRef = collection(db, 'resolutions');
     const qRes = query(resolutionsRef, orderBy('created_at', 'desc'));
     const unsubRes = onSnapshot(qRes, (snapshot) => {
-      const resData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setResolutions(resData);
+      setResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, async (err) => {
-      const permissionError = new FirestorePermissionError({ path: 'resolutions', operation: 'list' });
-      errorEmitter.emit('permission-error', permissionError);
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'resolutions', operation: 'list' }));
     });
 
     // Listen to participations for current action
@@ -76,8 +71,7 @@ export default function PresidentDashboard() {
       unsubPart = onSnapshot(qPart, async (snapshot) => {
         const parts = await Promise.all(snapshot.docs.map(async (pDoc) => {
           const data = pDoc.data();
-          const delegateRef = doc(db, 'delegates', data.delegate_id);
-          const delegateSnap = await getDoc(delegateRef);
+          const delegateSnap = await getDoc(doc(db, 'delegates', data.delegate_id));
           return {
             id: pDoc.id,
             ...data,
@@ -98,96 +92,107 @@ export default function PresidentDashboard() {
 
   const initDatabase = async () => {
     setInitializing(true);
-    try {
-      // Create initial session state
-      await setDoc(doc(db, 'sessionState', 'current'), { 
-        isSuspended: false,
-        lastUpdated: new Date().toISOString()
-      }, { merge: true });
-      
-      // Create a test action
-      await addDoc(collection(db, 'actions'), {
-        title: "Session d'Ouverture",
-        duration_minutes: 10,
-        time_per_delegate: "1:00",
-        description: "Bienvenue au conseil.",
-        allow_participation: true,
-        status: 'launched',
-        created_at: serverTimestamp()
-      });
-
-      toast({ title: "Base de données prête", description: "Les documents initiaux ont été créés." });
-    } catch (e: any) {
-      toast({ title: "Erreur d'initialisation", description: e.message, variant: "destructive" });
-    } finally {
-      setInitializing(false);
-    }
-  };
-
-  const toggleSuspension = async () => {
     const sessionRef = doc(db, 'sessionState', 'current');
-    try {
-      await setDoc(sessionRef, { 
-        isSuspended: !isSuspended,
-        lastUpdated: new Date().toISOString()
-      }, { merge: true });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: "Impossible de modifier l'état de la séance.", variant: "destructive" });
-    }
+    const actionCol = collection(db, 'actions');
+
+    const initialState = { 
+      isSuspended: false,
+      lastUpdated: new Date().toISOString()
+    };
+
+    setDoc(sessionRef, initialState, { merge: true }).catch(async () => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: sessionRef.path, operation: 'write', requestResourceData: initialState }));
+    });
+    
+    const initialAction = {
+      title: "Session d'Ouverture",
+      duration_minutes: 10,
+      time_per_delegate: "1:00",
+      description: "Bienvenue au conseil.",
+      allow_participation: true,
+      status: 'launched',
+      created_at: serverTimestamp()
+    };
+
+    addDoc(actionCol, initialAction).catch(async () => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: actionCol.path, operation: 'create', requestResourceData: initialAction }));
+    });
+
+    toast({ title: "Initialisation envoyée" });
+    setInitializing(false);
   };
 
-  const createAction = async () => {
-    if (!newAction.title) return;
-    try {
-      await addDoc(collection(db, 'actions'), {
-        title: newAction.title,
-        duration_minutes: newAction.duration,
-        time_per_delegate: newAction.timePerDelegate,
-        description: newAction.description,
-        allow_participation: newAction.allowParticipation,
-        status: 'launched',
-        created_at: serverTimestamp()
-      });
-      toast({ title: "Succès", description: "Action lancée !" });
-      setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
-    } catch (e) {
-      toast({ title: "Erreur", description: "Impossible de créer l'action", variant: "destructive" });
-    }
-  };
-
-  const startAction = async () => {
-    if (!currentAction) return;
-    const actionRef = doc(db, 'actions', currentAction.id);
-    await updateDoc(actionRef, { 
-      status: 'started', 
-      started_at: new Date().toISOString() 
+  const toggleSuspension = () => {
+    const sessionRef = doc(db, 'sessionState', 'current');
+    const update = { isSuspended: !isSuspended, lastUpdated: new Date().toISOString() };
+    
+    setDoc(sessionRef, update, { merge: true }).catch(async () => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: sessionRef.path, operation: 'update', requestResourceData: update }));
     });
   };
 
-  const addDelegate = async () => {
-    if (!newDelegate.country || !newDelegate.password) return;
-    try {
-      await addDoc(collection(db, 'delegates'), {
-        country_name: newDelegate.country,
-        password: newDelegate.password,
-        created_at: serverTimestamp()
+  const createAction = () => {
+    if (!newAction.title) return;
+    const actionData = {
+      title: newAction.title,
+      duration_minutes: newAction.duration,
+      time_per_delegate: newAction.timePerDelegate,
+      description: newAction.description,
+      allow_participation: newAction.allowParticipation,
+      status: 'launched',
+      created_at: serverTimestamp()
+    };
+
+    addDoc(collection(db, 'actions'), actionData)
+      .then(() => {
+        toast({ title: "Action lancée !" });
+        setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
+      })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'actions', operation: 'create', requestResourceData: actionData }));
       });
-      setNewDelegate({ country: '', password: '' });
-      toast({ title: "Délégué ajouté", description: `${newDelegate.country} peut maintenant se connecter.` });
-    } catch (e) {
-      toast({ title: "Erreur", description: "Impossible d'ajouter le délégué.", variant: "destructive" });
-    }
   };
 
-  const deleteDelegate = async (id: string) => {
-    await deleteDoc(doc(db, 'delegates', id));
-    toast({ title: "Supprimé", description: "Délégué retiré." });
+  const startAction = () => {
+    if (!currentAction) return;
+    const actionRef = doc(db, 'actions', currentAction.id);
+    const update = { status: 'started', started_at: new Date().toISOString() };
+    
+    updateDoc(actionRef, update).catch(async () => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: actionRef.path, operation: 'update', requestResourceData: update }));
+    });
   };
 
-  const updateResolution = async (id: string, status: string) => {
+  const addDelegate = () => {
+    if (!newDelegate.country || !newDelegate.password) return;
+    const delegateData = {
+      country_name: newDelegate.country,
+      password: newDelegate.password,
+      created_at: serverTimestamp()
+    };
+
+    addDoc(collection(db, 'delegates'), delegateData)
+      .then(() => {
+        toast({ title: "Délégué ajouté" });
+        setNewDelegate({ country: '', password: '' });
+      })
+      .catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'delegates', operation: 'create', requestResourceData: delegateData }));
+      });
+  };
+
+  const deleteDelegate = (id: string) => {
+    const docRef = doc(db, 'delegates', id);
+    deleteDoc(docRef).catch(async () => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: docRef.path, operation: 'delete' }));
+    });
+  };
+
+  const updateResolution = (id: string, status: string) => {
     const resRef = doc(db, 'resolutions', id);
-    await updateDoc(resRef, { status });
-    toast({ title: "Statut mis à jour", description: `La résolution est maintenant : ${status}` });
+    updateDoc(resRef, { status }).catch(async () => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: resRef.path, operation: 'update', requestResourceData: { status } }));
+    });
   };
 
   const analyzeResolution = async (res: any) => {
@@ -206,7 +211,7 @@ export default function PresidentDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {isSuspended && <SuspensionOverlay />}
       
       <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-20">
@@ -215,30 +220,19 @@ export default function PresidentDashboard() {
           <h1 className="text-xl font-bold font-headline uppercase tracking-widest">Immune UERC - Présidence</h1>
         </div>
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-            onClick={initDatabase}
-            disabled={initializing}
-          >
+          <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white" onClick={initDatabase} disabled={initializing}>
             <Database size={16} className="mr-2" /> Initialiser DB
           </Button>
-          <Button 
-            variant={isSuspended ? "destructive" : "outline"} 
-            className={`${isSuspended ? 'bg-white text-destructive hover:bg-white/90' : 'bg-destructive text-white border-none hover:bg-destructive/90'}`}
-            onClick={toggleSuspension}
-          >
+          <Button variant={isSuspended ? "destructive" : "outline"} onClick={toggleSuspension}>
             {isSuspended ? "Reprendre la séance" : "Suspendre la séance"}
           </Button>
-          <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}>
+          <Button variant="ghost" onClick={handleLogout}>
             <LogOut size={20} />
           </Button>
         </div>
       </header>
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1600px] mx-auto w-full">
-        {/* Left Column */}
         <div className="lg:col-span-4 space-y-6">
           <Tabs defaultValue="actions">
             <TabsList className="w-full">
@@ -248,25 +242,15 @@ export default function PresidentDashboard() {
             
             <TabsContent value="actions" className="space-y-6 mt-4">
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Plus className="text-primary" size={20} /> Nouvelle Action
-                  </CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-lg">Nouvelle Action</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>Nom de l'Action</Label>
-                    <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="ex: Débat Général" />
+                    <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Durée (min)</Label>
-                      <Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Temps par délégué</Label>
-                      <Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} placeholder="1:00" />
-                    </div>
+                    <Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} />
+                    <Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} />
                   </div>
                   <Button className="w-full bg-primary" onClick={createAction}>Lancer l'Action</Button>
                 </CardContent>
@@ -274,8 +258,8 @@ export default function PresidentDashboard() {
 
               {currentAction && (
                 <Card className="border-primary/20 shadow-lg">
-                  <CardHeader className="pb-2">
-                    <Badge className="w-fit mb-2 bg-accent">{currentAction.status === 'launched' ? 'PRÊT' : currentAction.status === 'started' ? 'EN COURS' : 'TERMINÉ'}</Badge>
+                  <CardHeader>
+                    <Badge className="w-fit mb-2">{currentAction.status.toUpperCase()}</Badge>
                     <CardTitle>{currentAction.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -288,16 +272,12 @@ export default function PresidentDashboard() {
                     <div className="space-y-3">
                       <h3 className="font-bold text-sm text-muted-foreground uppercase">Participants ({participants.filter(p => p.status === 'participating').length})</h3>
                       <ScrollArea className="h-[150px] border rounded-md p-2">
-                        {participants.length === 0 ? (
-                          <p className="text-center text-xs text-muted-foreground py-4">Aucune réponse pour le moment.</p>
-                        ) : (
-                          participants.map((p, i) => (
-                            <div key={i} className="flex justify-between items-center p-2 border-b last:border-0">
-                              <span>{p.delegates?.country_name}</span>
-                              <Badge variant={p.status === 'participating' ? 'default' : 'secondary'}>{p.status === 'participating' ? 'Présent' : 'Passe'}</Badge>
-                            </div>
-                          ))
-                        )}
+                        {participants.map((p, i) => (
+                          <div key={i} className="flex justify-between items-center p-2 border-b">
+                            <span>{p.delegates?.country_name}</span>
+                            <Badge variant={p.status === 'participating' ? 'default' : 'secondary'}>{p.status}</Badge>
+                          </div>
+                        ))}
                       </ScrollArea>
                     </div>
                   </CardContent>
@@ -307,42 +287,24 @@ export default function PresidentDashboard() {
 
             <TabsContent value="delegates" className="space-y-6 mt-4">
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Ajouter un Pays</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-lg">Ajouter un Pays</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Nom du Pays</Label>
-                    <Input value={newDelegate.country} onChange={e => setNewDelegate({...newDelegate, country: e.target.value})} placeholder="France" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Mot de passe</Label>
-                    <Input value={newDelegate.password} onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} placeholder="123456" />
-                  </div>
+                  <Input value={newDelegate.country} onChange={e => setNewDelegate({...newDelegate, country: e.target.value})} placeholder="Pays" />
+                  <Input value={newDelegate.password} onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} placeholder="Pass" />
                   <Button className="w-full" onClick={addDelegate}>Créer le compte</Button>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Liste des Pays ({delegates.length})</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-lg">Liste des Pays</CardTitle></CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[300px]">
-                    <div className="space-y-2">
-                      {delegates.map(d => (
-                        <div key={d.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                          <div>
-                            <p className="font-bold">{d.country_name}</p>
-                            <p className="text-xs text-muted-foreground">Pass: {d.password}</p>
-                          </div>
-                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteDelegate(d.id)}>
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                      ))}
-                      {delegates.length === 0 && <p className="text-center text-sm text-muted-foreground py-10">Aucun délégué enregistré.</p>}
-                    </div>
+                    {delegates.map(d => (
+                      <div key={d.id} className="flex justify-between items-center p-3 bg-muted/50 mb-2 rounded-lg">
+                        <span>{d.country_name}</span>
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteDelegate(d.id)}><Trash2 size={16} /></Button>
+                      </div>
+                    ))}
                   </ScrollArea>
                 </CardContent>
               </Card>
@@ -350,41 +312,26 @@ export default function PresidentDashboard() {
           </Tabs>
         </div>
 
-        {/* Right Column: Resolutions */}
         <div className="lg:col-span-8">
           <Card>
-            <CardHeader className="bg-muted/30">
-              <CardTitle className="flex items-center gap-2">
-                <FileText size={20} /> Propositions de Résolutions
-              </CardTitle>
-            </CardHeader>
+            <CardHeader className="bg-muted/30"><CardTitle>Propositions de Résolutions</CardTitle></CardHeader>
             <CardContent className="p-6 space-y-6">
-              {resolutions.length === 0 && <p className="text-center text-muted-foreground py-10 italic">Aucune résolution reçue.</p>}
               {resolutions.map(res => (
                 <Card key={res.id} className="overflow-hidden border-2">
                   <div className="bg-muted/50 p-4 flex justify-between items-center">
                     <span className="font-bold text-primary">{res.proposing_country}</span>
-                    <Badge className={res.status === 'approved' ? 'bg-green-600' : res.status === 'rejected' ? 'bg-red-600' : 'bg-blue-600'}>
-                      {res.status.toUpperCase()}
-                    </Badge>
+                    <Badge>{res.status.toUpperCase()}</Badge>
                   </div>
                   <CardContent className="p-4 space-y-4">
-                    <p className="text-sm italic border-l-4 pl-4 border-primary/20">{res.content}</p>
-                    
+                    <p className="text-sm italic">{res.content}</p>
                     {aiAnalysis[res.id] && !aiAnalysis[res.id].loading && (
-                      <div className="bg-accent/5 p-3 rounded border text-sm space-y-2">
-                        <div className="flex items-center gap-2 font-bold text-accent"><Sparkles size={16} /> Analyse IA</div>
+                      <div className="bg-accent/5 p-3 rounded border text-sm">
+                        <p className="font-bold text-accent mb-2">Analyse IA</p>
                         <p>{aiAnalysis[res.id].summary}</p>
-                        <ul className="list-disc list-inside text-xs opacity-80">
-                          {aiAnalysis[res.id].keyPoints.map((kp: string, i: number) => <li key={i}>{kp}</li>)}
-                        </ul>
                       </div>
                     )}
-
                     <div className="flex gap-2 justify-end">
-                      <Button variant="outline" size="sm" onClick={() => analyzeResolution(res)} disabled={aiAnalysis[res.id]?.loading}>
-                        {aiAnalysis[res.id]?.loading ? "Analyse..." : "Analyse IA"}
-                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => analyzeResolution(res)} disabled={aiAnalysis[res.id]?.loading}>Analyse IA</Button>
                       <Button variant="outline" size="sm" className="text-green-600" onClick={() => updateResolution(res.id, 'approved')}>Approuver</Button>
                       <Button variant="outline" size="sm" className="text-red-600" onClick={() => updateResolution(res.id, 'rejected')}>Rejeter</Button>
                     </div>

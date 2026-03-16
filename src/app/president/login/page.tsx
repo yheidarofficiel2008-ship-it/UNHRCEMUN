@@ -12,6 +12,8 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'fire
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function PresidentLogin() {
   const [email, setEmail] = useState('');
@@ -26,12 +28,12 @@ export default function PresidentLogin() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast({ title: "Connexion réussie", description: "Bienvenue, Monsieur le Président." });
+      toast({ title: "Connexion réussie", description: "Bienvenue." });
       router.push('/president/dashboard');
     } catch (error: any) {
       toast({
         title: "Erreur d'authentification",
-        description: "Identifiants incorrects ou compte inexistant.",
+        description: "Identifiants incorrects.",
         variant: "destructive"
       });
       setLoading(false);
@@ -46,14 +48,25 @@ export default function PresidentLogin() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Enregistrer le rôle de président dans Firestore pour activer les règles de sécurité
-      await setDoc(doc(db, 'roles_president', user.uid), {
+      const roleDoc = doc(db, 'roles_president', user.uid);
+      const roleData = {
         email: user.email,
         role: 'president',
         createdAt: serverTimestamp()
+      };
+
+      // Important: ne pas await setDoc si on veut suivre le pattern non-bloquant, 
+      // mais ici c'est critique pour la suite de la navigation.
+      await setDoc(roleDoc, roleData).catch((err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: roleDoc.path,
+          operation: 'create',
+          requestResourceData: roleData
+        }));
+        throw err;
       });
 
-      toast({ title: "Compte créé", description: "Votre rôle de président a été activé." });
+      toast({ title: "Compte créé", description: "Rôle président activé." });
       router.push('/president/dashboard');
     } catch (error: any) {
       toast({
@@ -71,51 +84,36 @@ export default function PresidentLogin() {
         <CardHeader className="text-center space-y-4">
           <Shield className="mx-auto h-12 w-12 text-primary" />
           <CardTitle className="text-2xl font-bold font-headline">Portail Président</CardTitle>
-          <CardDescription>Accès réservé au bureau de la présidence Immune UERC</CardDescription>
+          <CardDescription>Accès réservé Immune UERC</CardDescription>
         </CardHeader>
         
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2 px-6 bg-transparent">
-            <TabsTrigger value="login" className="data-[state=active]:border-b-2 border-primary rounded-none">Connexion</TabsTrigger>
-            <TabsTrigger value="signup" className="data-[state=active]:border-b-2 border-primary rounded-none">Initialiser</TabsTrigger>
+            <TabsTrigger value="login">Connexion</TabsTrigger>
+            <TabsTrigger value="signup">Initialiser</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
             <form onSubmit={handleLogin}>
               <CardContent className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email-login">Email de la Présidence</Label>
+                  <Label>Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="email-login" 
-                      type="email" 
-                      className="pl-10"
-                      placeholder="president@immune-uerc.org"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                    <Input className="pl-10" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-login">Mot de passe</Label>
+                  <Label>Mot de passe</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="password-login" 
-                      type="password" 
-                      className="pl-10"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
+                    <Input className="pl-10" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                   </div>
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={loading}>
-                  {loading ? "Chargement..." : <><LogIn className="mr-2 h-4 w-4" /> Accéder au Panel</>}
+                <Button type="submit" className="w-full bg-primary" disabled={loading}>
+                  {loading ? "Chargement..." : <><LogIn className="mr-2 h-4 w-4" /> Accéder</>}
                 </Button>
               </CardFooter>
             </form>
@@ -124,42 +122,18 @@ export default function PresidentLogin() {
           <TabsContent value="signup">
             <form onSubmit={handleSignUp}>
               <CardContent className="space-y-4 pt-4">
-                <p className="text-xs text-muted-foreground mb-4 italic">
-                  Utilisez cet onglet pour créer le compte président. Cela activera vos droits d'administration.
-                </p>
                 <div className="space-y-2">
-                  <Label htmlFor="email-signup">Email souhaité</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="email-signup" 
-                      type="email" 
-                      className="pl-10"
-                      placeholder="votre-email@mun.org"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
+                  <Label>Email</Label>
+                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-signup">Définir un mot de passe</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="password-signup" 
-                      type="password" 
-                      className="pl-10"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
+                  <Label>Mot de passe</Label>
+                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" variant="outline" className="w-full border-primary text-primary hover:bg-primary/5" disabled={loading}>
-                  {loading ? "Création..." : <><UserPlus className="mr-2 h-4 w-4" /> Créer le compte Président</>}
+                <Button type="submit" variant="outline" className="w-full border-primary text-primary" disabled={loading}>
+                  {loading ? "Création..." : <><UserPlus className="mr-2 h-4 w-4" /> Créer le compte</>}
                 </Button>
               </CardFooter>
             </form>
