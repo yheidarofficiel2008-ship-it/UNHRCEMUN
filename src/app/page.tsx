@@ -26,7 +26,7 @@ export default function MUNOSHome() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-start p-6 pt-12">
       <div className="max-w-5xl w-full space-y-12">
         <div className="space-y-4 text-center">
-          <Badge variant="outline" className="px-4 py-1 border-primary text-primary font-black uppercase tracking-[0.3em]">System Engine</Badge>
+          <Badge variant="outline" className="px-4 py-1 border-primary text-primary font-black uppercase tracking-[0.3em]">MUN Operating System</Badge>
           <h1 className="text-7xl font-black tracking-tighter text-primary font-headline uppercase">
             MUN-OS
           </h1>
@@ -85,8 +85,8 @@ export default function MUNOSHome() {
         </div>
       </div>
       
-      <footer className="mt-auto py-8 text-[10px] text-muted-foreground uppercase tracking-[0.5em] opacity-30">
-        MUN Operating System v2.0
+      <footer className="mt-auto py-8 text-[10px] text-muted-foreground uppercase tracking-[0.5em] opacity-30 text-center">
+        Système créé par Youssef Heidar
       </footer>
     </div>
   );

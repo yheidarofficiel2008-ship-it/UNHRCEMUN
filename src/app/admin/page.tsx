@@ -48,6 +48,7 @@ export default function AdminPage() {
 
   const checkKey = (e: React.FormEvent) => {
     e.preventDefault();
+    // La clé reste MUN-X26 en interne
     if (securityKey === 'MUN-X26') {
       setIsAuthorized(true);
       toast({ title: "Accès Autorisé", description: "Bienvenue dans le panneau d'administration." });
@@ -88,7 +89,7 @@ export default function AdminPage() {
           <CardHeader className="text-center">
             <ShieldAlert size={40} className="mx-auto text-destructive mb-4" />
             <CardTitle className="text-2xl font-black uppercase tracking-tighter">Accès Restreint</CardTitle>
-            <CardDescription>Veuillez entrer la clé de sécurité MUN-X26 pour continuer.</CardDescription>
+            <CardDescription>Veuillez entrer la clé de sécurité pour continuer.</CardDescription>
           </CardHeader>
           <form onSubmit={checkKey}>
             <CardContent className="space-y-4">
@@ -99,6 +100,7 @@ export default function AdminPage() {
                   <Input 
                     id="key" 
                     type="password" 
+                    placeholder="Entrez la clé"
                     className="pl-10 h-12 font-mono" 
                     value={securityKey} 
                     onChange={(e) => setSecurityKey(e.target.value)} 
