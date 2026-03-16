@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useFirebase } from '@/firebase';
-import { collection, query, where, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
 
 export function useRealtime() {
   const { firestore: db } = useFirebase();
@@ -22,24 +22,24 @@ export function useRealtime() {
       console.warn("Session state error:", error.message);
     });
 
-    // Écouter l'action actuelle
+    // Écouter l'action la plus récente (sans filtre complexe pour éviter les erreurs d'index)
     const actionsRef = collection(db, 'actions');
     const q = query(
       actionsRef, 
-      where('status', 'in', ['launched', 'started', 'paused', 'completed']), 
       orderBy('created_at', 'desc'), 
       limit(1)
     );
 
     const unsubActions = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
-        const actionData = snapshot.docs[0].data();
-        setCurrentAction({ id: snapshot.docs[0].id, ...actionData });
+        const actionDoc = snapshot.docs[0];
+        const actionData = actionDoc.data();
+        setCurrentAction({ id: actionDoc.id, ...actionData });
       } else {
         setCurrentAction(null);
       }
     }, (error) => {
-      console.warn("Actions listener error:", error.message);
+      console.error("Actions listener error:", error);
     });
 
     return () => {

@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, Plus, Trash2, Database, Landmark, LogOut, FileText, Sparkles, AlertCircle, CheckSquare, ListOrdered } from 'lucide-react';
+import { Play, Pause, Square, Plus, Trash2, Database, Landmark, LogOut, FileText, Sparkles, AlertCircle, ListOrdered } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useFirebase } from '@/firebase';
 import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, doc, onSnapshot, query, orderBy, getDocs, deleteDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, orderBy, getDocs, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useRealtime } from '@/hooks/use-realtime';
 import { GlobalTimer } from '@/components/GlobalTimer';
@@ -53,13 +53,12 @@ export default function PresidentDashboard() {
     const delRef = collection(db, 'delegates');
     const unsubDel = onSnapshot(query(delRef, orderBy('country_name', 'asc')), (snap) => {
       setDelegates(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, (err) => console.warn("Erreur delegates:", err));
+    });
 
     const resolutionsRef = collection(db, 'resolutions');
-    const qRes = query(resolutionsRef, orderBy('created_at', 'desc'));
-    const unsubRes = onSnapshot(qRes, (snapshot) => {
+    const unsubRes = onSnapshot(query(resolutionsRef, orderBy('created_at', 'desc')), (snapshot) => {
       setResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (err) => console.warn("Erreur resolutions:", err));
+    });
 
     return () => {
       unsubDel();
@@ -74,13 +73,12 @@ export default function PresidentDashboard() {
     }
 
     const partRef = collection(db, 'participations');
-    const qPart = query(partRef, orderBy('updated_at', 'asc'));
-    const unsubPart = onSnapshot(qPart, (snapshot) => {
+    const unsubPart = onSnapshot(query(partRef, orderBy('updated_at', 'asc')), (snapshot) => {
       const parts = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter((p: any) => p.action_id === currentAction.id);
       setParticipants(parts);
-    }, (err) => console.warn("Erreur participations:", err));
+    });
 
     return () => unsubPart();
   }, [db, currentAction?.id]);
@@ -90,7 +88,7 @@ export default function PresidentDashboard() {
     setInitializing(true);
     const sessionRef = doc(db, 'sessionState', 'current');
     setDocumentNonBlocking(sessionRef, { isSuspended: false, lastUpdated: new Date().toISOString() }, { merge: true });
-    toast({ title: "Base de données réinitialisée" });
+    toast({ title: "Base de données initialisée" });
     setInitializing(false);
   };
 
@@ -98,24 +96,32 @@ export default function PresidentDashboard() {
     if (!db) return;
     const sessionRef = doc(db, 'sessionState', 'current');
     updateDocumentNonBlocking(sessionRef, { isSuspended: !isSuspended, lastUpdated: new Date().toISOString() });
-    toast({ title: !isSuspended ? "Séance Suspendue" : "Séance Reprise" });
   };
 
-  const createAction = () => {
-    if (!db || !newAction.title) return;
-    const actionData = {
-      title: newAction.title,
-      duration_minutes: newAction.duration,
-      time_per_delegate: newAction.timePerDelegate,
-      description: newAction.description,
-      allow_participation: newAction.allowParticipation,
-      status: 'launched',
-      total_elapsed_seconds: 0,
-      created_at: serverTimestamp()
-    };
-    addDocumentNonBlocking(collection(db, 'actions'), actionData);
-    toast({ title: "Nouvelle action lancée" });
-    setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
+  const createAction = async () => {
+    if (!db || !newAction.title) {
+      toast({ title: "Erreur", description: "Veuillez donner un titre à l'action.", variant: "destructive" });
+      return;
+    }
+    
+    try {
+      const actionData = {
+        title: newAction.title,
+        duration_minutes: Number(newAction.duration),
+        time_per_delegate: newAction.timePerDelegate,
+        description: newAction.description || "Action en cours",
+        allow_participation: newAction.allowParticipation,
+        status: 'launched',
+        total_elapsed_seconds: 0,
+        created_at: serverTimestamp(),
+      };
+      
+      await addDocumentNonBlocking(collection(db, 'actions'), actionData);
+      toast({ title: "Action lancée", description: "L'action est maintenant visible pour les délégués." });
+      setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
+    } catch (e) {
+      toast({ title: "Erreur", description: "Impossible de créer l'action.", variant: "destructive" });
+    }
   };
 
   const startTimer = () => {
@@ -138,7 +144,8 @@ export default function PresidentDashboard() {
     updateDocumentNonBlocking(actionRef, { 
       status: 'paused', 
       total_elapsed_seconds: totalElapsed,
-      paused_at: new Date().toISOString()
+      paused_at: new Date().toISOString(),
+      started_at: null
     });
   };
 
@@ -146,10 +153,8 @@ export default function PresidentDashboard() {
     if (!db || !currentAction) return;
     const actionRef = doc(db, 'actions', currentAction.id);
     
-    // 1. Marquer comme complété
     updateDocumentNonBlocking(actionRef, { status: 'completed' });
 
-    // 2. Supprimer les participations pour cette action (nettoyage)
     try {
       const q = query(collection(db, 'participations'));
       const snap = await getDocs(q);
@@ -160,9 +165,9 @@ export default function PresidentDashboard() {
         }
       });
       await batch.commit();
-      toast({ title: "Action terminée", description: "La liste des orateurs a été réinitialisée." });
+      toast({ title: "Action terminée", description: "Liste des orateurs réinitialisée." });
     } catch (e) {
-      console.error("Erreur nettoyage participations:", e);
+      console.error(e);
     }
   };
 
@@ -211,10 +216,10 @@ export default function PresidentDashboard() {
         </div>
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white" onClick={initDatabase} disabled={initializing}>
-            <Database size={16} className="mr-2" /> Initialiser
+            <Database size={16} className="mr-2" /> Init
           </Button>
           <Button variant={isSuspended ? "destructive" : "outline"} onClick={toggleSuspension}>
-            {isSuspended ? "Reprendre la Séance" : "Suspendre"}
+            {isSuspended ? "Reprendre" : "Suspendre"}
           </Button>
           <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}>
             <LogOut size={20} />
@@ -244,7 +249,7 @@ export default function PresidentDashboard() {
                       <Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase">Temps Parole</Label>
+                      <Label className="text-[10px] uppercase">Parole</Label>
                       <Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} />
                     </div>
                   </div>
@@ -254,18 +259,18 @@ export default function PresidentDashboard() {
                       checked={newAction.allowParticipation} 
                       onCheckedChange={(checked) => setNewAction({...newAction, allowParticipation: !!checked})} 
                     />
-                    <Label htmlFor="participation" className="text-sm cursor-pointer">Autoriser la participation facultative</Label>
+                    <Label htmlFor="participation" className="text-sm cursor-pointer">Participation facultative</Label>
                   </div>
-                  <Button className="w-full bg-primary" onClick={createAction}>Lancer l'Action</Button>
+                  <Button className="w-full bg-primary" onClick={createAction}>Lancer</Button>
                 </CardContent>
               </Card>
 
               {currentAction && currentAction.status !== 'completed' && (
-                <Card className="border-primary/20 shadow-lg overflow-hidden">
-                  <div className="bg-primary/5 p-4 border-b">
-                    <Badge className="mb-2 uppercase">{currentAction.status}</Badge>
-                    <CardTitle className="text-xl">{currentAction.title}</CardTitle>
-                  </div>
+                <Card className="border-primary/20 shadow-lg">
+                  <CardHeader className="bg-primary/5">
+                    <Badge className="w-fit mb-1">{currentAction.status.toUpperCase()}</Badge>
+                    <CardTitle>{currentAction.title}</CardTitle>
+                  </CardHeader>
                   <CardContent className="p-6 space-y-6">
                     <GlobalTimer 
                       status={currentAction.status}
@@ -281,7 +286,7 @@ export default function PresidentDashboard() {
                           <Play size={18} fill="currentColor" /> Démarrer
                         </Button>
                       ) : (
-                        <Button variant="outline" className="border-amber-500 text-amber-600 hover:bg-amber-50 h-12 gap-2" onClick={pauseTimer}>
+                        <Button variant="outline" className="border-amber-500 text-amber-600 h-12 gap-2" onClick={pauseTimer}>
                           <Pause size={18} fill="currentColor" /> Pause
                         </Button>
                       )}
@@ -297,12 +302,12 @@ export default function PresidentDashboard() {
                       </h3>
                       <ScrollArea className="h-[200px] border rounded-xl p-3 bg-muted/10">
                         {orateursInscrits.length > 0 ? orateursInscrits.map((p, i) => (
-                          <div key={i} className="flex justify-between items-center p-3 mb-2 bg-white border rounded-lg shadow-sm last:mb-0">
+                          <div key={i} className="flex justify-between items-center p-3 mb-2 bg-white border rounded-lg shadow-sm">
                             <span className="font-bold text-sm">{i + 1}. {p.country_name}</span>
                             <Badge className="bg-green-500">Prêt</Badge>
                           </div>
                         )) : (
-                          <div className="text-center py-10 text-muted-foreground text-xs italic">Aucun orateur inscrit</div>
+                          <div className="text-center py-10 text-muted-foreground text-xs italic">Aucun orateur</div>
                         )}
                       </ScrollArea>
                     </div>
@@ -313,24 +318,12 @@ export default function PresidentDashboard() {
 
             <TabsContent value="delegates" className="space-y-6 mt-4">
               <Card>
-                <CardHeader><CardTitle className="text-lg">Ajouter un Pays</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <Input value={newDelegate.country} onChange={e => setNewDelegate({...newDelegate, country: e.target.value})} placeholder="Nom du Pays" />
-                  <Input value={newDelegate.password} onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} placeholder="Mot de passe" />
-                  <Button className="w-full" onClick={addDelegate}>Créer le compte</Button>
-                </CardContent>
-              </Card>
-
-              <Card>
                 <CardHeader><CardTitle className="text-lg">Délégués ({delegates.length})</CardTitle></CardHeader>
                 <CardContent>
-                  <ScrollArea className="h-[300px]">
+                  <ScrollArea className="h-[400px]">
                     {delegates.map(d => (
                       <div key={d.id} className="flex justify-between items-center p-3 bg-muted/50 mb-2 rounded-lg">
-                        <div className="flex flex-col">
-                          <span className="font-semibold">{d.country_name}</span>
-                          <span className="text-[10px] text-muted-foreground font-mono">ID: {d.id.substring(0,8)} | Pass: {d.password}</span>
-                        </div>
+                        <span className="font-semibold">{d.country_name}</span>
                         <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteDelegate(d.id)}><Trash2 size={16} /></Button>
                       </div>
                     ))}
@@ -343,45 +336,34 @@ export default function PresidentDashboard() {
 
         <div className="lg:col-span-8">
           <Card className="h-full">
-            <CardHeader className="bg-muted/30"><CardTitle className="flex items-center gap-2"><FileText /> Propositions de Résolutions</CardTitle></CardHeader>
+            <CardHeader className="bg-muted/30"><CardTitle className="flex items-center gap-2"><FileText /> Resolutions</CardTitle></CardHeader>
             <CardContent className="p-6 space-y-6">
               {resolutions.map(res => (
-                <Card key={res.id} className="overflow-hidden border-2 hover:border-primary/30 transition-colors">
-                  <div className="bg-muted/50 p-4 flex justify-between items-center border-b">
+                <Card key={res.id} className="overflow-hidden border-2">
+                  <div className="bg-muted/50 p-4 flex justify-between items-center">
                     <span className="font-bold text-primary">{res.proposing_country}</span>
                     <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
                       {res.status?.toUpperCase()}
                     </Badge>
                   </div>
                   <CardContent className="p-4 space-y-4">
-                    <p className="text-sm italic whitespace-pre-wrap leading-relaxed">"{res.content}"</p>
+                    <p className="text-sm italic leading-relaxed">"{res.content}"</p>
                     {aiAnalysis[res.id] && !aiAnalysis[res.id].loading && (
-                      <div className="bg-accent/5 p-4 rounded-xl border-l-4 border-accent text-sm animate-in fade-in slide-in-from-left-2">
+                      <div className="bg-accent/5 p-4 rounded-xl border-l-4 border-accent text-sm">
                         <div className="flex items-center gap-2 font-bold text-accent mb-2"><Sparkles size={16} /> Résumé IA</div>
-                        <p className="mb-3 font-medium">{aiAnalysis[res.id].summary}</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {aiAnalysis[res.id].keyPoints?.map((pt: string, i: number) => (
-                            <div key={i} className="text-xs bg-white/50 p-2 rounded">• {pt}</div>
-                          ))}
-                        </div>
+                        <p className="mb-3">{aiAnalysis[res.id].summary}</p>
                       </div>
                     )}
                     <div className="flex gap-2 justify-end pt-2 border-t">
                       <Button variant="outline" size="sm" onClick={() => analyzeResolution(res)} disabled={aiAnalysis[res.id]?.loading}>
-                        {aiAnalysis[res.id]?.loading ? "Analyse..." : <><Sparkles size={14} className="mr-2" /> Analyse IA</>}
+                        {aiAnalysis[res.id]?.loading ? "Analyse..." : "Analyse IA"}
                       </Button>
-                      <Button variant="outline" size="sm" className="text-green-600 hover:bg-green-50" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'approved' })}>Approuver</Button>
-                      <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'rejected' })}>Rejeter</Button>
+                      <Button variant="outline" size="sm" className="text-green-600" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'approved' })}>Approuver</Button>
+                      <Button variant="outline" size="sm" className="text-red-600" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'rejected' })}>Rejeter</Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
-              {resolutions.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-30">
-                  <AlertCircle size={60} className="mb-4" />
-                  <p>Aucune proposition soumise</p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

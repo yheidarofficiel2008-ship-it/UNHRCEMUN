@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, setDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, setDoc, doc } from 'firebase/firestore';
 import { useRealtime } from '@/hooks/use-realtime';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
@@ -48,7 +48,6 @@ export default function DelegateDashboard() {
     return () => unsubRes();
   }, [router]);
 
-  // Écouter mon état de participation pour l'action actuelle
   useEffect(() => {
     if (!currentAction || !delegate) return;
     const partId = `${currentAction.id}_${delegate.id}`;
@@ -105,6 +104,8 @@ export default function DelegateDashboard() {
 
   if (!delegate) return null;
 
+  const isActive = currentAction && currentAction.status !== 'completed';
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {isSuspended && <SuspensionOverlay />}
@@ -112,7 +113,7 @@ export default function DelegateDashboard() {
       <header className="bg-secondary text-white p-4 shadow-md flex justify-between items-center z-20">
         <div className="flex items-center gap-4">
           <Landmark className="h-8 w-8" />
-          <h1 className="text-xl font-bold font-headline uppercase tracking-widest">{delegate.country_name} - Délégué</h1>
+          <h1 className="text-xl font-bold font-headline uppercase tracking-widest">{delegate.country_name}</h1>
         </div>
         <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}>
           <LogOut size={20} />
@@ -124,11 +125,11 @@ export default function DelegateDashboard() {
           <Card className="border-secondary/20 shadow-lg h-fit">
             <CardHeader>
               <Badge className="w-fit mb-2 bg-secondary">SESSION ACTIVE</Badge>
-              <CardTitle className="text-2xl">{currentAction?.title || 'En attente...'}</CardTitle>
-              <CardDescription>{currentAction?.description || 'La présidence lancera bientôt une action.'}</CardDescription>
+              <CardTitle className="text-2xl">{isActive ? currentAction.title : 'En attente...'}</CardTitle>
+              <CardDescription>{isActive ? currentAction.description : 'La présidence lancera bientôt une action.'}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {currentAction && (
+              {isActive && (
                 <>
                   <GlobalTimer 
                     status={currentAction.status}
@@ -140,7 +141,7 @@ export default function DelegateDashboard() {
                   
                   {currentAction.allow_participation && currentAction.status === 'launched' && (
                     <div className="space-y-4">
-                      <p className="text-sm font-semibold text-center text-muted-foreground uppercase">Inscription sur la liste des orateurs</p>
+                      <p className="text-sm font-semibold text-center text-muted-foreground uppercase">Inscription liste orateurs</p>
                       <div className="grid grid-cols-2 gap-4">
                         <Button 
                           size="lg" 
@@ -152,7 +153,7 @@ export default function DelegateDashboard() {
                         <Button 
                           size="lg" 
                           variant="outline" 
-                          className={`h-20 text-lg gap-2 ${participationStatus === 'passing' ? 'border-destructive text-destructive' : 'border-secondary text-secondary'}`}
+                          className={`h-20 text-lg gap-2 ${participationStatus === 'passing' ? 'border-destructive text-destructive' : 'border-secondary'}`}
                           onClick={() => handleParticipation('passing')}
                         >
                           <XCircle /> Passer
@@ -167,12 +168,6 @@ export default function DelegateDashboard() {
                       <span className="font-bold text-lg uppercase tracking-widest">DÉBAT EN COURS</span>
                     </div>
                   )}
-
-                  {!currentAction.allow_participation && currentAction.status !== 'completed' && (
-                    <div className="bg-muted p-4 rounded-lg flex items-center gap-3 text-muted-foreground italic">
-                      <AlertCircle size={20} /> Aucune inscription requise pour cette phase.
-                    </div>
-                  )}
                 </>
               )}
             </CardContent>
@@ -183,17 +178,14 @@ export default function DelegateDashboard() {
               <CardTitle className="flex items-center gap-2"><FileText /> Mes Propositions</CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[300px] pr-4">
+              <ScrollArea className="h-[250px]">
                 <div className="space-y-4">
                   {myResolutions.map(res => (
                     <div key={res.id} className="p-4 border rounded-xl bg-muted/20">
-                      <div className="flex justify-between items-start mb-2">
-                        <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
-                          {res.status.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <p className="text-sm font-semibold mb-1">Co-proposants: {res.sponsors || 'Aucun'}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-3 italic">"{res.content}"</p>
+                      <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
+                        {res.status.toUpperCase()}
+                      </Badge>
+                      <p className="text-xs mt-2 italic line-clamp-2">"{res.content}"</p>
                     </div>
                   ))}
                 </div>
@@ -206,32 +198,19 @@ export default function DelegateDashboard() {
           <Card className="shadow-xl">
             <CardHeader className="bg-secondary/5 border-b mb-6">
               <CardTitle className="text-2xl font-headline">Rédiger une Résolution</CardTitle>
-              <CardDescription>Envoyez votre proposition pour étude par le bureau.</CardDescription>
             </CardHeader>
             <form onSubmit={submitResolution}>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="sponsors">Pays Sponsors (Séparez par des virgules)</Label>
-                  <Input 
-                    id="sponsors" 
-                    placeholder="Ex: Brésil, Inde, Japon..." 
-                    value={resolutionForm.sponsors}
-                    onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})}
-                  />
+                  <Label htmlFor="sponsors">Pays Sponsors</Label>
+                  <Input id="sponsors" placeholder="Bénin, Togo, Mali..." value={resolutionForm.sponsors} onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="content">Texte de la Résolution</Label>
-                  <Textarea 
-                    id="content" 
-                    className="min-h-[300px] font-body text-base leading-relaxed" 
-                    placeholder="Votre texte ici..." 
-                    required
-                    value={resolutionForm.content}
-                    onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})}
-                  />
+                  <Label htmlFor="content">Texte</Label>
+                  <Textarea id="content" className="min-h-[250px]" required value={resolutionForm.content} onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} />
                 </div>
               </CardContent>
-              <CardFooter className="bg-muted/30 pt-6">
+              <CardFooter>
                 <Button type="submit" className="w-full h-14 bg-secondary text-lg gap-2">
                   <Send size={20} /> Envoyer au Bureau
                 </Button>

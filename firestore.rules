@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Ouverture totale pour le développement du prototype
+    // Ouverture totale pour le prototype afin d'éviter tout blocage de permission
     match /{document=**} {
       allow read, write: if true;
     }
