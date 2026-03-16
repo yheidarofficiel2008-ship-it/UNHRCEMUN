@@ -16,7 +16,7 @@ export function useRealtime() {
     // On attend que l'utilisateur soit connecté et que le SDK soit prêt
     if (!db || isUserLoading || !user) return;
 
-    // Écouter l'état global de la session (singleton)
+    // Écouter l'état global de la session
     const sessionStateRef = doc(db, 'sessionState', 'current');
     
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
@@ -26,7 +26,6 @@ export function useRealtime() {
         setIsSuspended(false);
       }
     }, (error) => {
-      // On ne crée l'erreur que si l'utilisateur est authentifié pour éviter les faux positifs au chargement
       if (user) {
         const permissionError = new FirestorePermissionError({
           path: 'sessionState/current',

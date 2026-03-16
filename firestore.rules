@@ -3,10 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * MODEL UNITED NATIONS (MUN) SESSION SECURITY RULES
-     */
-
     function isSignedIn() {
       return request.auth != null;
     }
@@ -19,18 +15,19 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // --- COLLECTION RULES ---
+    // --- RÈGLES DES COLLECTIONS ---
 
     match /delegates/{delegateId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn(); 
-      allow create, update, delete: if isPresident();
+      // Les délégués et le président peuvent voir la liste (pour le login et la gestion)
+      allow read: if isSignedIn();
+      // Seul le président gère les délégués
+      allow write: if isPresident();
     }
 
     match /roles_president/{presidentUid} {
-      allow get: if isOwner(presidentUid);
-      allow create: if isOwner(presidentUid);
-      allow list, update, delete: if false;
+      // Un président peut créer et voir son propre document de rôle
+      allow get, create, update: if isOwner(presidentUid);
+      allow list, delete: if false;
     }
 
     match /actions/{actionId} {
@@ -40,8 +37,7 @@ service cloud.firestore {
       allow write: if isPresident();
 
       match /participations/{participationId} {
-        allow get: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
-        allow list: if isPresident() || (isSignedIn() && request.query.limit <= 100);
+        allow read: if isSignedIn();
         allow create: if isSignedIn() && request.resource.data.delegateId == request.auth.uid;
         allow update: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
         allow delete: if isPresident();
@@ -57,11 +53,10 @@ service cloud.firestore {
 
     match /sessionState/current {
       allow read: if isSignedIn();
-      allow create, update: if isPresident();
-      allow delete: if false;
+      allow write: if isPresident();
     }
 
-    // Règle de repli sécurisée
+    // Règle de repli
     match /{document=**} {
       allow read: if isSignedIn();
       allow write: if isPresident();

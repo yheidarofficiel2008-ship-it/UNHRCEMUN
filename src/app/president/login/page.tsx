@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Lock, Mail, UserPlus, LogIn } from 'lucide-react';
+import { Shield, Lock, Mail, UserPlus, LogIn, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
@@ -74,7 +75,7 @@ export default function PresidentLogin() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-2xl border-t-4 border-primary">
         <CardHeader className="text-center space-y-4">
-          <Shield className="mx-auto h-12 w-12 text-primary" />
+          <Landmark className="mx-auto h-12 w-12 text-primary" />
           <CardTitle className="text-2xl font-bold font-headline">Portail Président</CardTitle>
           <CardDescription>Accès réservé Immune UERC</CardDescription>
         </CardHeader>
