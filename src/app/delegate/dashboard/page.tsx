@@ -114,18 +114,42 @@ export default function DelegateDashboard() {
     const end = textarea.selectionEnd;
     const text = textarea.value;
     const selectedText = text.substring(start, end);
-    const before = text.substring(0, start);
-    const after = text.substring(end);
-
+    
     const openTag = `<${tag}>`;
     const closeTag = `</${tag}>`;
     
-    const newText = before + openTag + selectedText + closeTag + after;
+    let newText;
+    let newSelectionStart;
+    let newSelectionEnd;
+
+    // 1. Vérifier si la sélection est EXACTEMENT entourée par les balises
+    if (selectedText.startsWith(openTag) && selectedText.endsWith(closeTag)) {
+      const unwrapped = selectedText.substring(openTag.length, selectedText.length - closeTag.length);
+      newText = text.substring(0, start) + unwrapped + text.substring(end);
+      newSelectionStart = start;
+      newSelectionEnd = start + unwrapped.length;
+    } 
+    // 2. Vérifier si le texte entourant la sélection contient les balises
+    else if (
+      text.substring(start - openTag.length, start) === openTag &&
+      text.substring(end, end + closeTag.length) === closeTag
+    ) {
+      newText = text.substring(0, start - openTag.length) + selectedText + text.substring(end + closeTag.length);
+      newSelectionStart = start - openTag.length;
+      newSelectionEnd = end - openTag.length;
+    }
+    // 3. Sinon, ajouter les balises (comportement par défaut)
+    else {
+      newText = text.substring(0, start) + openTag + selectedText + closeTag + text.substring(end);
+      newSelectionStart = start + openTag.length;
+      newSelectionEnd = end + openTag.length;
+    }
+
     setResolutionForm({ ...resolutionForm, content: newText });
     
     setTimeout(() => {
       textarea.focus();
-      textarea.setSelectionRange(start + openTag.length, end + openTag.length);
+      textarea.setSelectionRange(newSelectionStart, newSelectionEnd);
     }, 0);
   };
 
@@ -263,7 +287,7 @@ export default function DelegateDashboard() {
                         )}
                       </div>
                       <div 
-                        className="text-muted-foreground whitespace-pre-wrap line-clamp-4 prose prose-sm max-w-none"
+                        className="text-foreground whitespace-pre-wrap prose prose-sm max-w-none"
                         dangerouslySetInnerHTML={{ __html: item.content }}
                       />
                     </div>

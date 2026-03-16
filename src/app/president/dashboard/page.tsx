@@ -535,7 +535,7 @@ export default function PresidentDashboard() {
                               </Button>
                             </div>
                           </div>
-                          <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">"{msg.content}"</p>
+                          <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                           <span className="text-[10px] text-muted-foreground self-end">
                             {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "À l'instant"}
                           </span>
