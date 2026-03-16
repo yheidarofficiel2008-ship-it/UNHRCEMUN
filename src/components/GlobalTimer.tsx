@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from 'react';
-import { Clock, Pause, Play } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Clock, Pause } from 'lucide-react';
 
 interface GlobalTimerProps {
   status: 'launched' | 'started' | 'paused' | 'completed';
@@ -13,10 +13,34 @@ interface GlobalTimerProps {
 
 export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, durationMinutes }: GlobalTimerProps) {
   const [timeLeft, setTimeLeft] = useState<number>(durationMinutes * 60);
+  const hasPlayedAlarm = useRef(false);
+
+  const playAlarm = () => {
+    try {
+      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const playBeep = (time: number) => {
+        const osc = context.createOscillator();
+        const gain = context.createGain();
+        osc.connect(gain);
+        gain.connect(context.destination);
+        osc.frequency.value = 523.25; // C5
+        gain.gain.setValueAtTime(0.1, time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.8);
+        osc.start(time);
+        osc.stop(time + 0.8);
+      };
+      playBeep(context.currentTime);
+      playBeep(context.currentTime + 0.5);
+      playBeep(context.currentTime + 1.0);
+    } catch (e) {
+      console.warn("Audio Context non supporté ou bloqué par le navigateur.");
+    }
+  };
 
   useEffect(() => {
     if (status === 'launched') {
       setTimeLeft(durationMinutes * 60);
+      hasPlayedAlarm.current = false;
       return;
     }
 
@@ -35,7 +59,14 @@ export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, 
       }
 
       const remaining = (durationMinutes * 60) - elapsed;
-      setTimeLeft(remaining > 0 ? remaining : 0);
+      const finalRemaining = remaining > 0 ? remaining : 0;
+      
+      setTimeLeft(finalRemaining);
+
+      if (finalRemaining === 0 && !hasPlayedAlarm.current && status === 'started') {
+        playAlarm();
+        hasPlayedAlarm.current = true;
+      }
     }, 1000);
 
     return () => clearInterval(interval);

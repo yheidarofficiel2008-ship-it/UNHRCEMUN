@@ -1,7 +1,6 @@
-
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,10 +14,33 @@ interface SpeakingTimerProps {
 
 export function SpeakingTimer({ status, startedAt, totalElapsedSeconds, limitSeconds, size = 'md' }: SpeakingTimerProps) {
   const [timeLeft, setTimeLeft] = useState<number>(limitSeconds);
+  const hasPlayedAlarm = useRef(false);
+
+  const playAlarm = () => {
+    try {
+      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const playBeep = (time: number) => {
+        const osc = context.createOscillator();
+        const gain = context.createGain();
+        osc.connect(gain);
+        gain.connect(context.destination);
+        osc.frequency.value = 880; // A5
+        gain.gain.setValueAtTime(0.1, time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.4);
+        osc.start(time);
+        osc.stop(time + 0.4);
+      };
+      playBeep(context.currentTime);
+      playBeep(context.currentTime + 0.3);
+    } catch (e) {
+      console.warn("Audio bloqué.");
+    }
+  };
 
   useEffect(() => {
     if (status === 'stopped') {
       setTimeLeft(limitSeconds);
+      hasPlayedAlarm.current = false;
       return;
     }
 
@@ -31,7 +53,14 @@ export function SpeakingTimer({ status, startedAt, totalElapsedSeconds, limitSec
       }
       
       const remaining = limitSeconds - currentElapsed;
-      setTimeLeft(remaining > 0 ? remaining : 0);
+      const finalRemaining = remaining > 0 ? remaining : 0;
+      
+      setTimeLeft(finalRemaining);
+
+      if (finalRemaining === 0 && !hasPlayedAlarm.current && status === 'started') {
+        playAlarm();
+        hasPlayedAlarm.current = true;
+      }
     }, 1000);
 
     return () => clearInterval(interval);
