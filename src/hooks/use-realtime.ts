@@ -12,10 +12,10 @@ export function useRealtime() {
   const [currentAction, setCurrentAction] = useState<any>(null);
 
   useEffect(() => {
-    // Si la DB n'est pas prête, on attend
+    // On attend que les services soient prêts
     if (!db) return;
 
-    // Écouter l'état global de la session (lecture publique dans les règles)
+    // Écouter l'état global de la session
     const sessionStateRef = doc(db, 'sessionState', 'current');
     
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
@@ -25,13 +25,12 @@ export function useRealtime() {
         setIsSuspended(false);
       }
     }, (error) => {
-      // On ne loggue l'erreur de permission que si l'utilisateur est censé être connecté
+      // Propagation de l'erreur uniquement si authentifié
       if (!isUserLoading && user) {
-        const permissionError = new FirestorePermissionError({
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: 'sessionState/current',
           operation: 'get'
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        }));
       }
     });
 
@@ -53,11 +52,10 @@ export function useRealtime() {
       }
     }, (error) => {
       if (!isUserLoading && user) {
-        const permissionError = new FirestorePermissionError({
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
           path: 'actions',
           operation: 'list'
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        }));
       }
     });
 

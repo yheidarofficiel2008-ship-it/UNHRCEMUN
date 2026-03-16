@@ -20,6 +20,7 @@ service cloud.firestore {
       allow write: if isPresident();
     }
 
+    // Permettre la lecture publique des actions pour éviter les erreurs de snapshot au démarrage
     match /actions/{actionId} {
       allow read: if true;
       allow write: if isPresident();
@@ -30,6 +31,7 @@ service cloud.firestore {
       }
     }
 
+    // Les délégués sont publics en lecture pour permettre aux pays de se trouver
     match /delegates/{delegateId} {
       allow read: if true;
       allow write: if isPresident();

@@ -315,7 +315,7 @@ export default function PresidentDashboard() {
               {resolutions.map(res => (
                 <Card key={res.id} className="overflow-hidden border-2">
                   <div className="bg-muted/50 p-4 flex justify-between items-center">
-                    <span className="font-bold text-primary">{res.proposing_country}</span>
+                    <span className="font-bold text-primary">{res.proposing_country || res.proposingCountry}</span>
                     <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
                       {res.status?.toUpperCase() || 'PENDING'}
                     </Badge>
