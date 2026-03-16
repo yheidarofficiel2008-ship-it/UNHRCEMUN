@@ -480,7 +480,7 @@ export default function DelegateDashboard() {
                   </CardHeader>
                   <CardContent className="pt-8">
                     <div 
-                      className="text-2xl leading-relaxed font-serif text-center px-4 whitespace-pre-wrap prose prose-2xl max-w-none"
+                      className="text-2xl leading-relaxed font-serif text-left px-4 whitespace-pre-wrap prose prose-2xl max-w-none"
                       dangerouslySetInnerHTML={{ __html: res.content }}
                     />
                     {res.sponsors && (

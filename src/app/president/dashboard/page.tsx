@@ -135,20 +135,6 @@ export default function PresidentDashboard() {
       .sort((a, b) => b.count - a.count);
   }, [allParticipations, delegates]);
 
-  const initDatabase = () => {
-    if (!db) return;
-    setInitializing(true);
-    const sessionRef = doc(db, 'sessionState', 'current');
-    setDocumentNonBlocking(sessionRef, { 
-      isSuspended: false, 
-      allowResolutions: true,
-      lastUpdated: new Date().toISOString(),
-      activeOverlay: { type: 'none' }
-    }, { merge: true });
-    toast({ title: "Session synchronisée et réinitialisée" });
-    setInitializing(false);
-  };
-
   const toggleSuspension = () => {
     if (!db) return;
     const sessionRef = doc(db, 'sessionState', 'current');
@@ -412,19 +398,6 @@ export default function PresidentDashboard() {
             />
           </div>
           <div className="h-6 w-px bg-white/20" />
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white" onClick={initDatabase} disabled={initializing}>
-                  <Database size={16} className="mr-2" /> Init
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[200px] text-xs">
-                <p>Initialise ou réinitialise l'état global de la séance (suspension, résolutions, overlays).</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
 
           <Button variant="destructive" onClick={toggleSuspension}>
             {isSuspended ? "Reprendre" : "Suspendre"}
