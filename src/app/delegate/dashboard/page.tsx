@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -55,7 +54,6 @@ export default function DelegateDashboard() {
     const qRes = query(resRef, where('proposing_country', '==', del.country_name));
     const unsubRes = onSnapshot(qRes, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), _type: 'resolution' }));
-      // Tri manuel pour éviter l'exigence d'index composite complexe
       setMyResolutions(data.sort((a: any, b: any) => (b.created_at?.seconds || 0) - (a.created_at?.seconds || 0)));
     });
 
@@ -188,7 +186,7 @@ export default function DelegateDashboard() {
       </header>
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1400px] mx-auto w-full">
-        {/* Barre latérale gauche */}
+        {/* Colonne latérale GAUCHE (Plus petite) */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="border-secondary/30 bg-secondary/5">
             <CardHeader className="py-3 px-4 flex flex-row items-center gap-2">
@@ -225,77 +223,12 @@ export default function DelegateDashboard() {
             </form>
           </Card>
 
-          <Card className="border-secondary/20 shadow-lg h-fit">
-            <CardHeader className="pb-4">
-              <Badge className="w-fit mb-2 bg-secondary">SESSION ACTIVE</Badge>
-              <CardTitle className="text-2xl">{isActive ? currentAction.title : 'En attente...'}</CardTitle>
-              <CardDescription>{isActive ? currentAction.description : 'La présidence lancera bientôt une action.'}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {isActive && (
-                <>
-                  <GlobalTimer 
-                    status={currentAction.status}
-                    startedAt={currentAction.started_at}
-                    pausedAt={currentAction.paused_at}
-                    totalElapsedSeconds={currentAction.total_elapsed_seconds}
-                    durationMinutes={currentAction.duration_minutes}
-                  />
-
-                  <div className="bg-muted/30 p-4 rounded-xl border border-dashed flex flex-col items-center gap-3">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                      <Timer size={14} /> Temps de Parole Orateur
-                    </div>
-                    <SpeakingTimer 
-                      status={currentAction.speaking_timer_status}
-                      startedAt={currentAction.speaking_timer_started_at}
-                      totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0}
-                      limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)}
-                      size="sm"
-                    />
-                    <Badge variant="outline" className="text-[10px] opacity-60">Alloué: {currentAction.time_per_delegate}</Badge>
-                  </div>
-                  
-                  {currentAction.allow_participation && currentAction.status === 'launched' && (
-                    <div className="space-y-4">
-                      <p className="text-sm font-semibold text-center text-muted-foreground uppercase">Inscription liste orateurs</p>
-                      <div className="grid grid-cols-2 gap-4">
-                        <Button 
-                          size="lg" 
-                          className={`h-20 text-lg gap-2 ${participationStatus === 'participating' ? 'bg-green-600' : 'bg-primary'}`}
-                          onClick={() => handleParticipation('participating')}
-                        >
-                          <CheckCircle2 /> Participer
-                        </Button>
-                        <Button 
-                          size="lg" 
-                          variant="outline" 
-                          className={`h-20 text-lg gap-2 ${participationStatus === 'passing' ? 'border-destructive text-destructive' : 'border-secondary'}`}
-                          onClick={() => handleParticipation('passing')}
-                        >
-                          <XCircle /> Passer
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {currentAction.status === 'started' && (
-                    <div className="bg-primary/10 p-4 rounded-xl flex flex-col items-center gap-2 text-primary animate-pulse border-2 border-primary/20">
-                      <Clock size={30} />
-                      <span className="font-bold text-sm uppercase tracking-widest">DÉBAT EN COURS</span>
-                    </div>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg"><Send size={18} /> Mes Envois</CardTitle>
             </CardHeader>
             <CardContent className="px-4">
-              <ScrollArea className="h-[300px]">
+              <ScrollArea className="h-[400px]">
                 <div className="space-y-3">
                   {myEnvois.map(item => (
                     <div key={item.id} className="p-3 border rounded-lg bg-muted/10 text-xs">
@@ -323,25 +256,103 @@ export default function DelegateDashboard() {
           </Card>
         </div>
 
-        {/* Colonne centrale/droite */}
+        {/* Colonne CENTRALE (Principale) */}
         <div className="lg:col-span-8 space-y-6">
+          {/* SESSION ACTIVE - PLACE PRINCIPALE */}
+          <Card className="border-secondary/20 shadow-xl overflow-hidden">
+            <CardHeader className="bg-secondary/5 border-b pb-4">
+              <div className="flex justify-between items-center">
+                <Badge className="bg-secondary">SÉANCE EN COURS</Badge>
+                {isActive && <Badge variant="outline" className="text-[10px] opacity-60">Alloué par orateur: {currentAction.time_per_delegate}</Badge>}
+              </div>
+              <CardTitle className="text-3xl font-headline mt-2">{isActive ? currentAction.title : 'En attente d\'une action...'}</CardTitle>
+              {isActive && <CardDescription className="text-lg">{currentAction.description}</CardDescription>}
+            </CardHeader>
+            <CardContent className="p-8 space-y-8">
+              {isActive ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <GlobalTimer 
+                      status={currentAction.status}
+                      startedAt={currentAction.started_at}
+                      pausedAt={currentAction.paused_at}
+                      totalElapsedSeconds={currentAction.total_elapsed_seconds}
+                      durationMinutes={currentAction.duration_minutes}
+                    />
+                    
+                    <div className="bg-muted/30 p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-4">
+                      <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                        <Timer size={18} /> Chrono Orateur
+                      </div>
+                      <SpeakingTimer 
+                        status={currentAction.speaking_timer_status}
+                        startedAt={currentAction.speaking_timer_started_at}
+                        totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0}
+                        limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)}
+                        size="lg"
+                      />
+                    </div>
+                  </div>
+                  
+                  {currentAction.allow_participation && currentAction.status === 'launched' && (
+                    <div className="pt-6 border-t">
+                      <p className="text-sm font-bold text-center text-muted-foreground uppercase mb-4 tracking-tighter">Souhaitez-vous vous inscrire sur la liste des orateurs ?</p>
+                      <div className="grid grid-cols-2 gap-6 max-w-md mx-auto">
+                        <Button 
+                          size="lg" 
+                          className={`h-24 text-xl gap-3 shadow-lg transition-transform hover:scale-105 ${participationStatus === 'participating' ? 'bg-green-600' : 'bg-primary'}`}
+                          onClick={() => handleParticipation('participating')}
+                        >
+                          <CheckCircle2 size={28} /> Participer
+                        </Button>
+                        <Button 
+                          size="lg" 
+                          variant="outline" 
+                          className={`h-24 text-xl gap-3 border-2 transition-transform hover:scale-105 ${participationStatus === 'passing' ? 'border-destructive text-destructive' : 'border-secondary text-secondary'}`}
+                          onClick={() => handleParticipation('passing')}
+                        >
+                          <XCircle size={28} /> Passer
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentAction.status === 'started' && (
+                    <div className="bg-primary/5 p-4 rounded-xl flex items-center justify-center gap-3 text-primary animate-pulse border border-primary/20">
+                      <Clock size={20} />
+                      <span className="font-black text-sm uppercase tracking-[0.2em]">DÉBAT OUVERT - LA PAROLE EST AUX DÉLÉGUÉS</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="py-20 text-center space-y-4">
+                  <Monitor size={60} className="mx-auto text-muted-foreground/30" />
+                  <p className="text-muted-foreground italic">Le Bureau de la Présidence n'a pas encore lancé d'action de débat.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* RÉSOLUTIONS PROJETÉES */}
           {displayedResolutions.length > 0 && (
             <div className="space-y-6">
               {displayedResolutions.map((res) => (
-                <Card key={res.id} className="border-primary border-2 bg-primary/5 shadow-2xl animate-in fade-in zoom-in duration-300">
+                <Card key={res.id} className="border-primary border-4 bg-primary/5 shadow-2xl animate-in fade-in zoom-in duration-500">
                   <CardHeader className="flex flex-row items-center justify-between border-b border-primary/20 pb-4">
                     <div className="space-y-1">
-                      <Badge className="gap-1 mb-2"><Monitor size={12} /> EN DISCUSSION</Badge>
-                      <CardTitle className="text-xl text-primary">{res.proposing_country}</CardTitle>
+                      <Badge className="gap-1 mb-2 bg-primary"><Monitor size={12} /> PROJETÉ AU COMITÉ</Badge>
+                      <CardTitle className="text-2xl text-primary">{res.proposing_country}</CardTitle>
                     </div>
-                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="text-sm px-4 py-1">
+                    <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="text-lg px-6 py-2">
                       {res.status.toUpperCase()}
                     </Badge>
                   </CardHeader>
-                  <CardContent className="pt-6">
-                    <p className="text-lg italic leading-relaxed font-serif">"{res.content}"</p>
+                  <CardContent className="pt-8">
+                    <p className="text-2xl italic leading-relaxed font-serif text-center px-4">"{res.content}"</p>
                     {res.sponsors && (
-                      <p className="mt-4 text-sm text-muted-foreground font-semibold">Sponsors: {res.sponsors}</p>
+                      <div className="mt-8 pt-4 border-t border-primary/10 flex justify-center">
+                        <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Sponsors: <span className="text-primary">{res.sponsors}</span></p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -349,33 +360,34 @@ export default function DelegateDashboard() {
             </div>
           )}
 
-          <Card className={`shadow-xl transition-opacity ${!allowResolutions ? 'opacity-70 grayscale' : ''}`}>
+          {/* RÉDACTION DE RÉSOLUTION */}
+          <Card className={`shadow-xl transition-all ${!allowResolutions ? 'opacity-70 grayscale pointer-events-none' : 'hover:shadow-2xl'}`}>
             <CardHeader className="bg-secondary/5 border-b mb-6 flex flex-row items-center justify-between">
-              <CardTitle className="text-2xl font-headline">Rédiger une Résolution</CardTitle>
+              <CardTitle className="text-2xl font-headline">Soumettre une Résolution</CardTitle>
               {!allowResolutions && (
-                <Badge variant="destructive" className="gap-1"><Lock size={12} /> ENVOIS BLOQUÉS</Badge>
+                <Badge variant="destructive" className="gap-1"><Lock size={12} /> ENVOIS SUSPENDUS PAR LA PRÉSIDENCE</Badge>
               )}
             </CardHeader>
             <form onSubmit={submitResolution}>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="sponsors">Pays Sponsors</Label>
+                  <Label htmlFor="sponsors" className="font-bold">Pays Sponsors</Label>
                   <Input 
                     id="sponsors" 
-                    placeholder="Bénin, Togo, Mali..." 
+                    placeholder="Listez les pays qui soutiennent votre texte (ex: France, Japon, Brésil...)" 
                     disabled={!allowResolutions}
                     value={resolutionForm.sponsors} 
                     onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="content">Texte de la Résolution</Label>
+                  <Label htmlFor="content" className="font-bold">Texte de la Résolution</Label>
                   <Textarea 
                     id="content" 
-                    className="min-h-[250px]" 
+                    className="min-h-[200px] text-lg leading-relaxed" 
                     required 
                     disabled={!allowResolutions}
-                    placeholder={allowResolutions ? "Rédigez ici votre projet de résolution..." : "La présidence a suspendu la réception des résolutions."}
+                    placeholder={allowResolutions ? "Rédigez ici le contenu de votre projet de résolution..." : "L'envoi de résolutions est actuellement désactivé."}
                     value={resolutionForm.content} 
                     onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} 
                   />
@@ -385,9 +397,9 @@ export default function DelegateDashboard() {
                 <Button 
                   type="submit" 
                   disabled={!allowResolutions}
-                  className="w-full h-14 bg-secondary text-lg gap-2"
+                  className="w-full h-16 bg-secondary text-xl font-bold gap-3 shadow-lg"
                 >
-                  <Send size={20} /> Envoyer au Bureau
+                  <Send size={24} /> Transmettre au Bureau
                 </Button>
               </CardFooter>
             </form>
