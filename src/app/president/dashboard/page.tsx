@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Plus, Trash2, Database, Landmark, LogOut, FileText, Sparkles, AlertCircle } from 'lucide-react';
+import { Play, Pause, Square, Plus, Trash2, Database, Landmark, LogOut, FileText, Sparkles, AlertCircle, CheckSquare, ListOrdered } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useFirebase } from '@/firebase';
 import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, doc, onSnapshot, query, orderBy, getDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, orderBy, getDocs, deleteDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useRealtime } from '@/hooks/use-realtime';
 import { GlobalTimer } from '@/components/GlobalTimer';
@@ -67,20 +68,17 @@ export default function PresidentDashboard() {
   }, [db, user]);
 
   useEffect(() => {
-    if (!db || !currentAction?.id) return;
+    if (!db || !currentAction?.id) {
+      setParticipants([]);
+      return;
+    }
 
-    const partRef = collection(db, 'actions', currentAction.id, 'participations');
-    const unsubPart = onSnapshot(partRef, async (snapshot) => {
-      const parts = await Promise.all(snapshot.docs.map(async (pDoc) => {
-        const data = pDoc.data();
-        const delegateId = data.delegate_id || data.delegateId;
-        const delegateSnap = await getDoc(doc(db!, 'delegates', delegateId));
-        return {
-          id: pDoc.id,
-          ...data,
-          delegate: delegateSnap.exists() ? delegateSnap.data() : { country_name: 'Inconnu' }
-        };
-      }));
+    const partRef = collection(db, 'participations');
+    const qPart = query(partRef, orderBy('updated_at', 'asc'));
+    const unsubPart = onSnapshot(qPart, (snapshot) => {
+      const parts = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter((p: any) => p.action_id === currentAction.id);
       setParticipants(parts);
     }, (err) => console.warn("Erreur participations:", err));
 
@@ -90,35 +88,16 @@ export default function PresidentDashboard() {
   const initDatabase = () => {
     if (!db) return;
     setInitializing(true);
-    
     const sessionRef = doc(db, 'sessionState', 'current');
-    const initialState = { 
-      isSuspended: false,
-      lastUpdated: new Date().toISOString()
-    };
-    setDocumentNonBlocking(sessionRef, initialState, { merge: true });
-
-    const actionCol = collection(db, 'actions');
-    const initialAction = {
-      title: "Session d'Ouverture",
-      duration_minutes: 10,
-      time_per_delegate: "1:00",
-      description: "Bienvenue au conseil.",
-      allow_participation: true,
-      status: 'launched',
-      created_at: serverTimestamp()
-    };
-    addDocumentNonBlocking(actionCol, initialAction);
-
-    toast({ title: "Base de données initialisée" });
+    setDocumentNonBlocking(sessionRef, { isSuspended: false, lastUpdated: new Date().toISOString() }, { merge: true });
+    toast({ title: "Base de données réinitialisée" });
     setInitializing(false);
   };
 
   const toggleSuspension = () => {
     if (!db) return;
     const sessionRef = doc(db, 'sessionState', 'current');
-    const update = { isSuspended: !isSuspended, lastUpdated: new Date().toISOString() };
-    setDocumentNonBlocking(sessionRef, update, { merge: true });
+    updateDocumentNonBlocking(sessionRef, { isSuspended: !isSuspended, lastUpdated: new Date().toISOString() });
     toast({ title: !isSuspended ? "Séance Suspendue" : "Séance Reprise" });
   };
 
@@ -131,44 +110,75 @@ export default function PresidentDashboard() {
       description: newAction.description,
       allow_participation: newAction.allowParticipation,
       status: 'launched',
+      total_elapsed_seconds: 0,
       created_at: serverTimestamp()
     };
-
     addDocumentNonBlocking(collection(db, 'actions'), actionData);
-    toast({ title: "Action lancée avec succès" });
+    toast({ title: "Nouvelle action lancée" });
     setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
   };
 
-  const startAction = () => {
+  const startTimer = () => {
     if (!db || !currentAction) return;
     const actionRef = doc(db, 'actions', currentAction.id);
-    const update = { status: 'started', started_at: new Date().toISOString() };
-    updateDocumentNonBlocking(actionRef, update);
+    updateDocumentNonBlocking(actionRef, { 
+      status: 'started', 
+      started_at: new Date().toISOString() 
+    });
+  };
+
+  const pauseTimer = () => {
+    if (!db || !currentAction || !currentAction.started_at) return;
+    const actionRef = doc(db, 'actions', currentAction.id);
+    const now = new Date().getTime();
+    const start = new Date(currentAction.started_at).getTime();
+    const elapsedSinceStart = Math.floor((now - start) / 1000);
+    const totalElapsed = (currentAction.total_elapsed_seconds || 0) + elapsedSinceStart;
+
+    updateDocumentNonBlocking(actionRef, { 
+      status: 'paused', 
+      total_elapsed_seconds: totalElapsed,
+      paused_at: new Date().toISOString()
+    });
+  };
+
+  const stopAction = async () => {
+    if (!db || !currentAction) return;
+    const actionRef = doc(db, 'actions', currentAction.id);
+    
+    // 1. Marquer comme complété
+    updateDocumentNonBlocking(actionRef, { status: 'completed' });
+
+    // 2. Supprimer les participations pour cette action (nettoyage)
+    try {
+      const q = query(collection(db, 'participations'));
+      const snap = await getDocs(q);
+      const batch = writeBatch(db);
+      snap.docs.forEach(doc => {
+        if (doc.data().action_id === currentAction.id) {
+          batch.delete(doc.ref);
+        }
+      });
+      await batch.commit();
+      toast({ title: "Action terminée", description: "La liste des orateurs a été réinitialisée." });
+    } catch (e) {
+      console.error("Erreur nettoyage participations:", e);
+    }
   };
 
   const addDelegate = () => {
     if (!db || !newDelegate.country || !newDelegate.password) return;
-    const delegateData = {
+    addDocumentNonBlocking(collection(db, 'delegates'), {
       country_name: newDelegate.country,
       password: newDelegate.password,
       created_at: serverTimestamp()
-    };
-
-    addDocumentNonBlocking(collection(db, 'delegates'), delegateData);
-    toast({ title: "Délégué enregistré" });
+    });
     setNewDelegate({ country: '', password: '' });
   };
 
   const deleteDelegate = (id: string) => {
     if (!db) return;
-    const docRef = doc(db, 'delegates', id);
-    deleteDocumentNonBlocking(docRef);
-  };
-
-  const updateResolution = (id: string, status: string) => {
-    if (!db) return;
-    const resRef = doc(db, 'resolutions', id);
-    updateDocumentNonBlocking(resRef, { status });
+    deleteDocumentNonBlocking(doc(db, 'delegates', id));
   };
 
   const analyzeResolution = async (res: any) => {
@@ -189,10 +199,10 @@ export default function PresidentDashboard() {
 
   if (isUserLoading) return <div className="min-h-screen flex items-center justify-center">Authentification...</div>;
 
+  const orateursInscrits = participants.filter(p => p.status === 'participating');
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Pas de SuspensionOverlay ici pour le Président pour qu'il puisse reprendre la séance */}
-      
       <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-50">
         <div className="flex items-center gap-4">
           <Landmark className="h-8 w-8" />
@@ -201,10 +211,10 @@ export default function PresidentDashboard() {
         </div>
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white" onClick={initDatabase} disabled={initializing}>
-            <Database size={16} className="mr-2" /> Initialiser DB
+            <Database size={16} className="mr-2" /> Initialiser
           </Button>
-          <Button variant={isSuspended ? "destructive" : "outline"} onClick={toggleSuspension} className={isSuspended ? "bg-red-600 hover:bg-red-700" : ""}>
-            {isSuspended ? "Reprendre la Séance" : "Suspendre la Séance"}
+          <Button variant={isSuspended ? "destructive" : "outline"} onClick={toggleSuspension}>
+            {isSuspended ? "Reprendre la Séance" : "Suspendre"}
           </Button>
           <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}>
             <LogOut size={20} />
@@ -216,7 +226,7 @@ export default function PresidentDashboard() {
         <div className="lg:col-span-4 space-y-6">
           <Tabs defaultValue="actions">
             <TabsList className="w-full">
-              <TabsTrigger value="actions" className="flex-1">Débat</TabsTrigger>
+              <TabsTrigger value="actions" className="flex-1">Actions</TabsTrigger>
               <TabsTrigger value="delegates" className="flex-1">Pays</TabsTrigger>
             </TabsList>
             
@@ -225,7 +235,7 @@ export default function PresidentDashboard() {
                 <CardHeader><CardTitle className="text-lg">Nouvelle Action</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Nom de l'Action</Label>
+                    <Label>Titre</Label>
                     <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="Ex: Débat Général" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -238,36 +248,62 @@ export default function PresidentDashboard() {
                       <Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} />
                     </div>
                   </div>
-                  <Button className="w-full bg-primary" onClick={createAction}>Lancer</Button>
+                  <div className="flex items-center space-x-2 p-2 border rounded-lg bg-muted/30">
+                    <Checkbox 
+                      id="participation" 
+                      checked={newAction.allowParticipation} 
+                      onCheckedChange={(checked) => setNewAction({...newAction, allowParticipation: !!checked})} 
+                    />
+                    <Label htmlFor="participation" className="text-sm cursor-pointer">Autoriser la participation facultative</Label>
+                  </div>
+                  <Button className="w-full bg-primary" onClick={createAction}>Lancer l'Action</Button>
                 </CardContent>
               </Card>
 
-              {currentAction && (
-                <Card className="border-primary/20 shadow-lg">
-                  <CardHeader>
-                    <Badge className="w-fit mb-2">{currentAction.status?.toUpperCase() || 'SESSION'}</Badge>
-                    <CardTitle>{currentAction.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <GlobalTimer startedAt={currentAction.started_at} durationMinutes={currentAction.duration_minutes} />
-                    {currentAction.status === 'launched' && (
-                      <Button className="w-full h-16 text-xl gap-3" onClick={startAction}>
-                        <Play fill="currentColor" /> Démarrer le Chrono
+              {currentAction && currentAction.status !== 'completed' && (
+                <Card className="border-primary/20 shadow-lg overflow-hidden">
+                  <div className="bg-primary/5 p-4 border-b">
+                    <Badge className="mb-2 uppercase">{currentAction.status}</Badge>
+                    <CardTitle className="text-xl">{currentAction.title}</CardTitle>
+                  </div>
+                  <CardContent className="p-6 space-y-6">
+                    <GlobalTimer 
+                      status={currentAction.status}
+                      startedAt={currentAction.started_at}
+                      pausedAt={currentAction.paused_at}
+                      totalElapsedSeconds={currentAction.total_elapsed_seconds}
+                      durationMinutes={currentAction.duration_minutes}
+                    />
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      {(currentAction.status === 'launched' || currentAction.status === 'paused') ? (
+                        <Button className="bg-green-600 hover:bg-green-700 h-12 gap-2" onClick={startTimer}>
+                          <Play size={18} fill="currentColor" /> Démarrer
+                        </Button>
+                      ) : (
+                        <Button variant="outline" className="border-amber-500 text-amber-600 hover:bg-amber-50 h-12 gap-2" onClick={pauseTimer}>
+                          <Pause size={18} fill="currentColor" /> Pause
+                        </Button>
+                      )}
+                      <Button variant="destructive" className="h-12 gap-2" onClick={stopAction}>
+                        <Square size={18} fill="currentColor" /> Arrêter
                       </Button>
-                    )}
-                    <div className="space-y-3">
-                      <h3 className="font-bold text-sm text-muted-foreground uppercase flex items-center gap-2">
-                        <Plus size={14} /> Liste des Orateurs ({participants.filter(p => p.status === 'participating' || p.isParticipating).length})
+                    </div>
+
+                    <div className="space-y-3 pt-4 border-t">
+                      <h3 className="font-bold text-sm text-muted-foreground uppercase flex items-center justify-between">
+                        <span className="flex items-center gap-2"><ListOrdered size={14} /> Liste des Orateurs</span>
+                        <Badge variant="secondary">{orateursInscrits.length}</Badge>
                       </h3>
-                      <ScrollArea className="h-[200px] border rounded-md p-2">
-                        {participants.map((p, i) => (
-                          <div key={i} className="flex justify-between items-center p-2 border-b last:border-0">
-                            <span className="font-medium">{p.delegate?.country_name || 'Pays Inconnu'}</span>
-                            <Badge variant={(p.status === 'participating' || p.isParticipating) ? 'default' : 'secondary'}>
-                              {(p.status === 'participating' || p.isParticipating) ? 'Inscrit' : 'Passé'}
-                            </Badge>
+                      <ScrollArea className="h-[200px] border rounded-xl p-3 bg-muted/10">
+                        {orateursInscrits.length > 0 ? orateursInscrits.map((p, i) => (
+                          <div key={i} className="flex justify-between items-center p-3 mb-2 bg-white border rounded-lg shadow-sm last:mb-0">
+                            <span className="font-bold text-sm">{i + 1}. {p.country_name}</span>
+                            <Badge className="bg-green-500">Prêt</Badge>
                           </div>
-                        ))}
+                        )) : (
+                          <div className="text-center py-10 text-muted-foreground text-xs italic">Aucun orateur inscrit</div>
+                        )}
                       </ScrollArea>
                     </div>
                   </CardContent>
@@ -286,7 +322,7 @@ export default function PresidentDashboard() {
               </Card>
 
               <Card>
-                <CardHeader><CardTitle className="text-lg">Délégués enregistrés</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">Délégués ({delegates.length})</CardTitle></CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[300px]">
                     {delegates.map(d => (
@@ -306,50 +342,44 @@ export default function PresidentDashboard() {
         </div>
 
         <div className="lg:col-span-8">
-          <Card>
+          <Card className="h-full">
             <CardHeader className="bg-muted/30"><CardTitle className="flex items-center gap-2"><FileText /> Propositions de Résolutions</CardTitle></CardHeader>
             <CardContent className="p-6 space-y-6">
               {resolutions.map(res => (
                 <Card key={res.id} className="overflow-hidden border-2 hover:border-primary/30 transition-colors">
-                  <div className="bg-muted/50 p-4 flex justify-between items-center">
-                    <span className="font-bold text-primary">{res.proposing_country || res.proposingCountry}</span>
+                  <div className="bg-muted/50 p-4 flex justify-between items-center border-b">
+                    <span className="font-bold text-primary">{res.proposing_country}</span>
                     <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
-                      {res.status?.toUpperCase() || 'PENDING'}
+                      {res.status?.toUpperCase()}
                     </Badge>
                   </div>
                   <CardContent className="p-4 space-y-4">
                     <p className="text-sm italic whitespace-pre-wrap leading-relaxed">"{res.content}"</p>
-                    
                     {aiAnalysis[res.id] && !aiAnalysis[res.id].loading && (
                       <div className="bg-accent/5 p-4 rounded-xl border-l-4 border-accent text-sm animate-in fade-in slide-in-from-left-2">
-                        <div className="flex items-center gap-2 font-bold text-accent mb-2">
-                          <Sparkles size={16} /> Résumé IA du Président
-                        </div>
-                        <p className="mb-3 font-medium text-foreground/80">{aiAnalysis[res.id].summary}</p>
+                        <div className="flex items-center gap-2 font-bold text-accent mb-2"><Sparkles size={16} /> Résumé IA</div>
+                        <p className="mb-3 font-medium">{aiAnalysis[res.id].summary}</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {aiAnalysis[res.id].keyPoints?.map((pt: string, i: number) => (
-                            <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground bg-white/50 p-2 rounded">
-                              <span className="text-accent">•</span> {pt}
-                            </div>
+                            <div key={i} className="text-xs bg-white/50 p-2 rounded">• {pt}</div>
                           ))}
                         </div>
                       </div>
                     )}
-
-                    <div className="flex gap-2 justify-end pt-2">
+                    <div className="flex gap-2 justify-end pt-2 border-t">
                       <Button variant="outline" size="sm" onClick={() => analyzeResolution(res)} disabled={aiAnalysis[res.id]?.loading}>
-                        {aiAnalysis[res.id]?.loading ? "Analyse en cours..." : <><Sparkles size={14} className="mr-2" /> Analyse IA</>}
+                        {aiAnalysis[res.id]?.loading ? "Analyse..." : <><Sparkles size={14} className="mr-2" /> Analyse IA</>}
                       </Button>
-                      <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => updateResolution(res.id, 'approved')}>Approuver</Button>
-                      <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => updateResolution(res.id, 'rejected')}>Rejeter</Button>
+                      <Button variant="outline" size="sm" className="text-green-600 hover:bg-green-50" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'approved' })}>Approuver</Button>
+                      <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50" onClick={() => updateDocumentNonBlocking(doc(db!, 'resolutions', res.id), { status: 'rejected' })}>Rejeter</Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
               {resolutions.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                  <AlertCircle size={40} className="mb-4 opacity-20" />
-                  <p>Aucune résolution soumise pour le moment.</p>
+                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-30">
+                  <AlertCircle size={60} className="mb-4" />
+                  <p>Aucune proposition soumise</p>
                 </div>
               )}
             </CardContent>

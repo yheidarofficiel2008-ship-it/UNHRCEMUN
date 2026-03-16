@@ -1,53 +1,51 @@
--- Schema for Immune UERC - Human Rights Council MUN Simulation
+-- Schéma SQL pour migration future vers Supabase (PostgreSQL)
 
--- 1. Delegates table
+-- Table des délégués
 CREATE TABLE delegates (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    country_name TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  country_name TEXT NOT NULL UNIQUE,
+  password TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. Actions (Agenda items)
+-- Table des actions/agenda
 CREATE TABLE actions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title TEXT NOT NULL,
-    description TEXT,
-    duration_minutes INTEGER DEFAULT 15,
-    time_per_delegate TEXT DEFAULT '1:00',
-    allow_participation BOOLEAN DEFAULT TRUE,
-    status TEXT DEFAULT 'pending', -- pending, launched, started, completed
-    started_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  description TEXT,
+  duration_minutes INTEGER DEFAULT 15,
+  time_per_delegate TEXT DEFAULT '1:00',
+  allow_participation BOOLEAN DEFAULT TRUE,
+  status TEXT DEFAULT 'launched', -- launched, started, paused, completed
+  started_at TIMESTAMP WITH TIME ZONE,
+  paused_at TIMESTAMP WITH TIME ZONE,
+  total_elapsed_seconds INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. Participations (Orators list)
+-- Table des participations (liée à une action)
 CREATE TABLE participations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    action_id UUID REFERENCES actions(id) ON DELETE CASCADE,
-    delegate_id UUID REFERENCES delegates(id) ON DELETE CASCADE,
-    status TEXT DEFAULT 'participating', -- participating, passing
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(action_id, delegate_id)
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  action_id UUID REFERENCES actions(id) ON DELETE CASCADE,
+  delegate_id UUID REFERENCES delegates(id) ON DELETE CASCADE,
+  status TEXT NOT NULL, -- participating, passing
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. Resolutions
+-- Table des résolutions
 CREATE TABLE resolutions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    proposing_country TEXT NOT NULL,
-    sponsors TEXT,
-    content TEXT NOT NULL,
-    status TEXT DEFAULT 'pending', -- pending, approved, rejected
-    feedback TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  proposing_country TEXT NOT NULL,
+  sponsors TEXT,
+  content TEXT NOT NULL,
+  status TEXT DEFAULT 'pending', -- pending, approved, rejected
+  feedback TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. Global Session State (Singleton)
+-- État global de la session
 CREATE TABLE session_state (
-    id TEXT PRIMARY KEY DEFAULT 'current',
-    is_suspended BOOLEAN DEFAULT FALSE,
-    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  id TEXT PRIMARY KEY DEFAULT 'current',
+  is_suspended BOOLEAN DEFAULT FALSE,
+  last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Initial session state
-INSERT INTO session_state (id, is_suspended) VALUES ('current', FALSE);

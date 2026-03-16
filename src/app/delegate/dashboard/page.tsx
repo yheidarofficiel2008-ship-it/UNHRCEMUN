@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, AlertCircle } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, Landmark, LogOut, FileText, AlertCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, setDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, setDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useRealtime } from '@/hooks/use-realtime';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
@@ -39,45 +39,50 @@ export default function DelegateDashboard() {
     const del = JSON.parse(session);
     setDelegate(del);
 
-    // Listen to my resolutions
     const resRef = collection(db, 'resolutions');
-    const q = query(
-      resRef, 
-      where('proposing_country', '==', del.country_name), 
-      orderBy('created_at', 'desc')
-    );
-
+    const q = query(resRef, where('proposing_country', '==', del.country_name), orderBy('created_at', 'desc'));
     const unsubRes = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setMyResolutions(data);
+      setMyResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
     return () => unsubRes();
-  }, []);
+  }, [router]);
+
+  // Écouter mon état de participation pour l'action actuelle
+  useEffect(() => {
+    if (!currentAction || !delegate) return;
+    const partId = `${currentAction.id}_${delegate.id}`;
+    const unsub = onSnapshot(doc(db, 'participations', partId), (snap) => {
+      if (snap.exists()) {
+        setParticipationStatus(snap.data().status);
+      } else {
+        setParticipationStatus(null);
+      }
+    });
+    return () => unsub();
+  }, [currentAction, delegate]);
 
   const handleParticipation = async (status: 'participating' | 'passing') => {
     if (!currentAction || !delegate) return;
     
     try {
-      // Use a composite ID for participation: actionId_delegateId
       const participationId = `${currentAction.id}_${delegate.id}`;
       await setDoc(doc(db, 'participations', participationId), {
         action_id: currentAction.id,
         delegate_id: delegate.id,
+        country_name: delegate.country_name,
         status: status,
         updated_at: serverTimestamp()
       });
-      setParticipationStatus(status);
-      toast({ title: "Choix enregistré", description: status === 'participating' ? "Vous participez à l'action." : "Vous passez votre tour." });
+      toast({ title: "Choix enregistré" });
     } catch (e) {
-      toast({ title: "Erreur", description: "Impossible d'enregistrer votre choix.", variant: "destructive" });
+      toast({ title: "Erreur", description: "Échec de l'enregistrement.", variant: "destructive" });
     }
   };
 
   const submitResolution = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!delegate) return;
-
     try {
       await addDoc(collection(db, 'resolutions'), {
         proposing_country: delegate.country_name,
@@ -87,9 +92,9 @@ export default function DelegateDashboard() {
         created_at: serverTimestamp()
       });
       setResolutionForm({ sponsors: '', content: '' });
-      toast({ title: "Soumis avec succès", description: "Votre résolution est en attente de validation." });
+      toast({ title: "Soumis avec succès" });
     } catch (e) {
-      toast({ title: "Erreur", description: "Échec de la soumission.", variant: "destructive" });
+      toast({ title: "Erreur lors de l'envoi.", variant: "destructive" });
     }
   };
 
@@ -115,42 +120,57 @@ export default function DelegateDashboard() {
       </header>
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1400px] mx-auto w-full">
-        {/* Left: Action Status */}
         <div className="lg:col-span-5 space-y-6">
           <Card className="border-secondary/20 shadow-lg h-fit">
             <CardHeader>
               <Badge className="w-fit mb-2 bg-secondary">SESSION ACTIVE</Badge>
-              <CardTitle className="text-2xl">{currentAction?.title || 'Attente d\'action'}</CardTitle>
-              <CardDescription>{currentAction?.description || 'La présidence n\'a pas encore lancé d\'action.'}</CardDescription>
+              <CardTitle className="text-2xl">{currentAction?.title || 'En attente...'}</CardTitle>
+              <CardDescription>{currentAction?.description || 'La présidence lancera bientôt une action.'}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {currentAction && (
                 <>
-                  <GlobalTimer startedAt={currentAction.started_at} durationMinutes={currentAction.duration_minutes} />
+                  <GlobalTimer 
+                    status={currentAction.status}
+                    startedAt={currentAction.started_at}
+                    pausedAt={currentAction.paused_at}
+                    totalElapsedSeconds={currentAction.total_elapsed_seconds}
+                    durationMinutes={currentAction.duration_minutes}
+                  />
                   
                   {currentAction.allow_participation && currentAction.status === 'launched' && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <Button 
-                        size="lg" 
-                        className={`h-20 text-lg gap-2 ${participationStatus === 'participating' ? 'bg-green-600' : 'bg-primary'}`}
-                        onClick={() => handleParticipation('participating')}
-                      >
-                        <CheckCircle2 /> Participer
-                      </Button>
-                      <Button 
-                        size="lg" 
-                        variant="outline" 
-                        className={`h-20 text-lg gap-2 ${participationStatus === 'passing' ? 'border-destructive text-destructive' : 'border-secondary text-secondary'}`}
-                        onClick={() => handleParticipation('passing')}
-                      >
-                        <XCircle /> Passer
-                      </Button>
+                    <div className="space-y-4">
+                      <p className="text-sm font-semibold text-center text-muted-foreground uppercase">Inscription sur la liste des orateurs</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Button 
+                          size="lg" 
+                          className={`h-20 text-lg gap-2 ${participationStatus === 'participating' ? 'bg-green-600' : 'bg-primary'}`}
+                          onClick={() => handleParticipation('participating')}
+                        >
+                          <CheckCircle2 /> Participer
+                        </Button>
+                        <Button 
+                          size="lg" 
+                          variant="outline" 
+                          className={`h-20 text-lg gap-2 ${participationStatus === 'passing' ? 'border-destructive text-destructive' : 'border-secondary text-secondary'}`}
+                          onClick={() => handleParticipation('passing')}
+                        >
+                          <XCircle /> Passer
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentAction.status === 'started' && (
+                    <div className="bg-primary/10 p-6 rounded-xl flex flex-col items-center gap-3 text-primary animate-pulse border-2 border-primary/20">
+                      <Clock size={40} />
+                      <span className="font-bold text-lg uppercase tracking-widest">DÉBAT EN COURS</span>
                     </div>
                   )}
 
                   {!currentAction.allow_participation && currentAction.status !== 'completed' && (
                     <div className="bg-muted p-4 rounded-lg flex items-center gap-3 text-muted-foreground italic">
-                      <AlertCircle size={20} /> La participation directe des délégués n'est pas requise pour cette action.
+                      <AlertCircle size={20} /> Aucune inscription requise pour cette phase.
                     </div>
                   )}
                 </>
@@ -160,7 +180,7 @@ export default function DelegateDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><FileText /> Mes Résolutions</CardTitle>
+              <CardTitle className="flex items-center gap-2"><FileText /> Mes Propositions</CardTitle>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[300px] pr-4">
@@ -168,60 +188,43 @@ export default function DelegateDashboard() {
                   {myResolutions.map(res => (
                     <div key={res.id} className="p-4 border rounded-xl bg-muted/20">
                       <div className="flex justify-between items-start mb-2">
-                        <Badge variant={
-                          res.status === 'approved' ? 'default' : 
-                          res.status === 'rejected' ? 'destructive' : 'secondary'
-                        }>
-                          {res.status.replace('_', ' ').toUpperCase()}
+                        <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
+                          {res.status.toUpperCase()}
                         </Badge>
-                        <span className="text-[10px] text-muted-foreground">
-                          {res.created_at?.toDate ? res.created_at.toDate().toLocaleDateString() : ''}
-                        </span>
                       </div>
-                      <p className="text-sm font-semibold truncate mb-1">Sponsors: {res.sponsors || 'N/A'}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-2 italic">"{res.content}"</p>
-                      {res.feedback && (
-                        <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-800">
-                          <strong>Note de présidence:</strong> {res.feedback}
-                        </div>
-                      )}
+                      <p className="text-sm font-semibold mb-1">Co-proposants: {res.sponsors || 'Aucun'}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-3 italic">"{res.content}"</p>
                     </div>
                   ))}
-                  {myResolutions.length === 0 && <p className="text-center text-muted-foreground text-sm py-10">Aucune résolution soumise.</p>}
                 </div>
               </ScrollArea>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right: Submit Resolution */}
         <div className="lg:col-span-7">
           <Card className="shadow-xl">
             <CardHeader className="bg-secondary/5 border-b mb-6">
-              <CardTitle className="text-2xl font-headline">Soumettre une Proposition</CardTitle>
-              <CardDescription>Rédigez votre résolution pour examen par la présidence.</CardDescription>
+              <CardTitle className="text-2xl font-headline">Rédiger une Résolution</CardTitle>
+              <CardDescription>Envoyez votre proposition pour étude par le bureau.</CardDescription>
             </CardHeader>
             <form onSubmit={submitResolution}>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label>Nom du Pays (Proposant)</Label>
-                  <Input disabled value={delegate.country_name} className="bg-muted" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sponsors">Sponsors / Co-proposants</Label>
+                  <Label htmlFor="sponsors">Pays Sponsors (Séparez par des virgules)</Label>
                   <Input 
                     id="sponsors" 
-                    placeholder="Séparez par des virgules..." 
+                    placeholder="Ex: Brésil, Inde, Japon..." 
                     value={resolutionForm.sponsors}
                     onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="content">Contenu de la Résolution</Label>
+                  <Label htmlFor="content">Texte de la Résolution</Label>
                   <Textarea 
                     id="content" 
                     className="min-h-[300px] font-body text-base leading-relaxed" 
-                    placeholder="Écrivez ici le texte intégral de votre proposition..." 
+                    placeholder="Votre texte ici..." 
                     required
                     value={resolutionForm.content}
                     onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})}
@@ -230,7 +233,7 @@ export default function DelegateDashboard() {
               </CardContent>
               <CardFooter className="bg-muted/30 pt-6">
                 <Button type="submit" className="w-full h-14 bg-secondary text-lg gap-2">
-                  <Send size={20} /> Envoyer à la Présidence
+                  <Send size={20} /> Envoyer au Bureau
                 </Button>
               </CardFooter>
             </form>

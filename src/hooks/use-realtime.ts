@@ -12,22 +12,21 @@ export function useRealtime() {
   useEffect(() => {
     if (!db) return;
 
-    // Écouter l'état global de la session (Toujours autorisé)
+    // Écouter l'état de suspension
     const sessionStateRef = doc(db, 'sessionState', 'current');
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
       if (docSnap.exists()) {
         setIsSuspended(docSnap.data().isSuspended === true);
       }
     }, (error) => {
-      // Silencieux pour le prototype
-      console.warn("Session state hook silent error:", error.message);
+      console.warn("Session state error:", error.message);
     });
 
-    // Écouter l'action actuelle (Toujours autorisé)
+    // Écouter l'action actuelle
     const actionsRef = collection(db, 'actions');
     const q = query(
       actionsRef, 
-      where('status', 'in', ['launched', 'started', 'completed']), 
+      where('status', 'in', ['launched', 'started', 'paused', 'completed']), 
       orderBy('created_at', 'desc'), 
       limit(1)
     );
@@ -40,8 +39,7 @@ export function useRealtime() {
         setCurrentAction(null);
       }
     }, (error) => {
-      // Silencieux pour le prototype
-      console.warn("Actions hook silent error:", error.message);
+      console.warn("Actions listener error:", error.message);
     });
 
     return () => {
