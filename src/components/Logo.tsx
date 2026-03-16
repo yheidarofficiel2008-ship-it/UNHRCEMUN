@@ -15,19 +15,32 @@ export function Logo({ className }: LogoProps) {
       className={cn("fill-current", className)}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Laurels */}
-      <path d="M50 85C35 85 20 75 15 55C15 45 20 35 25 30M50 85C65 85 80 75 85 55C85 45 80 35 75 30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M20 70L15 72M18 60L12 61M22 50L16 49M80 70L85 72M82 60L88 61M78 50L84 49" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      {/* UN Official Laurel Leaves */}
+      <path 
+        d="M50 85C32 85 18 72 15 50C15 40 20 30 28 22M50 85C68 85 82 72 85 50C85 40 80 30 72 22" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2.5" 
+        strokeLinecap="round" 
+      />
+      <path d="M22 75L15 78M18 65L10 67M20 55L12 54M80 75L87 78M84 65L92 67M82 55L90 54" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
       
-      {/* Globe Grid */}
-      <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <ellipse cx="50" cy="50" rx="15" ry="30" fill="none" stroke="currentColor" strokeWidth="1" />
-      <line x1="20" y1="50" x2="80" y2="50" stroke="currentColor" strokeWidth="1" />
-      <path d="M24 35C30 38 40 40 50 40C60 40 70 38 76 35" fill="none" stroke="currentColor" strokeWidth="1" />
-      <path d="M24 65C30 62 40 60 50 60C60 60 70 62 76 65" fill="none" stroke="currentColor" strokeWidth="1" />
+      {/* World Map Grid (UN Style) */}
+      <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="50" cy="50" r="22" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+      <circle cx="50" cy="50" r="12" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.6" />
       
-      {/* UNHRC Text */}
-      <text x="50" y="98" textAnchor="middle" fontSize="8" fontWeight="900" letterSpacing="0.1em">UNHRC</text>
+      {/* Longitudinal lines */}
+      <path d="M50 18V82" stroke="currentColor" strokeWidth="1" />
+      <path d="M18 50H82" stroke="currentColor" strokeWidth="1" />
+      <path d="M28 28L72 72" stroke="currentColor" strokeWidth="1" opacity="0.4" />
+      <path d="M28 72L72 28" stroke="currentColor" strokeWidth="1" opacity="0.4" />
+      
+      {/* Latitude Ellipses */}
+      <ellipse cx="50" cy="50" rx="10" ry="32" fill="none" stroke="currentColor" strokeWidth="1" />
+      <ellipse cx="50" cy="50" rx="20" ry="32" fill="none" stroke="currentColor" strokeWidth="1" />
+      <ellipse cx="50" cy="50" rx="32" ry="10" fill="none" stroke="currentColor" strokeWidth="1" />
+      <ellipse cx="50" cy="50" rx="32" ry="20" fill="none" stroke="currentColor" strokeWidth="1" />
     </svg>
   );
 }
