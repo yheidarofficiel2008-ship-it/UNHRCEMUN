@@ -20,6 +20,8 @@ import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
 import { aiResolutionSummarizer } from '@/ai/flows/ai-resolution-summarizer';
 import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function PresidentDashboard() {
   const router = useRouter();
@@ -50,7 +52,10 @@ export default function PresidentDashboard() {
     const delRef = collection(db, 'delegates');
     const unsubDel = onSnapshot(query(delRef, orderBy('country_name', 'asc')), (snap) => {
       setDelegates(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, (err) => console.error("Delegates listener error:", err));
+    }, async (err) => {
+      const permissionError = new FirestorePermissionError({ path: 'delegates', operation: 'list' });
+      errorEmitter.emit('permission-error', permissionError);
+    });
 
     // Listen to resolutions
     const resolutionsRef = collection(db, 'resolutions');
@@ -58,7 +63,10 @@ export default function PresidentDashboard() {
     const unsubRes = onSnapshot(qRes, (snapshot) => {
       const resData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setResolutions(resData);
-    }, (err) => console.error("Resolutions listener error:", err));
+    }, async (err) => {
+      const permissionError = new FirestorePermissionError({ path: 'resolutions', operation: 'list' });
+      errorEmitter.emit('permission-error', permissionError);
+    });
 
     // Listen to participations for current action
     let unsubPart = () => {};

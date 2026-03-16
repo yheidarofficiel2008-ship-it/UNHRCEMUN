@@ -21,8 +21,9 @@ service cloud.firestore {
     // --- COLLECTION RULES ---
 
     match /delegates/{delegateId} {
-      allow get: if isOwner(delegateId) || isPresident();
-      allow list: if isPresident();
+      // Les délégués doivent pouvoir se trouver pour la connexion
+      allow get: if isSignedIn();
+      allow list: if isSignedIn(); 
       allow create, update, delete: if isPresident();
     }
 
@@ -38,7 +39,7 @@ service cloud.firestore {
       allow create, update, delete: if isPresident();
 
       match /participations/{participationId} {
-        allow get: if isPresident() || isOwner(resource.data.delegateId);
+        allow get: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
         allow list: if isPresident() || (isSignedIn() && request.query.limit <= 100);
         allow create: if isSignedIn() && request.resource.data.delegateId == request.auth.uid && request.resource.data.actionId == actionId;
         allow update: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
@@ -60,7 +61,7 @@ service cloud.firestore {
       allow list, delete: if false;
     }
 
-    // Règle de repli pour éviter les erreurs sur d'autres collections potentielles durant le dev
+    // Règle de repli
     match /{document=**} {
       allow read, write: if isPresident();
     }

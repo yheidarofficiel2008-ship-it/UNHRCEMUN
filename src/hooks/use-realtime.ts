@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useRealtime() {
   const [isSuspended, setIsSuspended] = useState(false);
@@ -19,7 +21,11 @@ export function useRealtime() {
         setIsSuspended(false);
       }
     }, (error) => {
-      console.warn("Permission denied for sessionState, user might not be logged in yet.", error);
+      const permissionError = new FirestorePermissionError({
+        path: 'sessionState/current',
+        operation: 'get'
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
 
     // Écouter l'action actuelle
@@ -39,7 +45,11 @@ export function useRealtime() {
         setCurrentAction(null);
       }
     }, (error) => {
-      console.warn("Permission denied for actions listener.", error);
+      const permissionError = new FirestorePermissionError({
+        path: 'actions',
+        operation: 'list'
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
 
     return () => {

@@ -7,9 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { signInAnonymously } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function DelegateLogin() {
   const [country, setCountry] = useState('');
@@ -23,12 +26,24 @@ export default function DelegateLogin() {
     setLoading(true);
 
     try {
+      // 1. Connexion anonyme pour satisfaire les règles Firestore
+      await signInAnonymously(auth);
+
+      // 2. Recherche du délégué dans Firestore
       const q = query(
         collection(db, 'delegates'), 
         where('country_name', '==', country), 
         where('password', '==', password)
       );
-      const querySnapshot = await getDocs(q);
+      
+      const querySnapshot = await getDocs(q).catch((err) => {
+        const permissionError = new FirestorePermissionError({
+          path: 'delegates',
+          operation: 'list'
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw err;
+      });
 
       if (querySnapshot.empty) {
         toast({
@@ -40,15 +55,15 @@ export default function DelegateLogin() {
       } else {
         const delegateDoc = querySnapshot.docs[0];
         const delegateData = { id: delegateDoc.id, ...delegateDoc.data() };
+        
+        // Stockage de la session locale pour identifier le pays
         localStorage.setItem('delegate_session', JSON.stringify(delegateData));
+        
+        toast({ title: "Bienvenue", description: `Délégué de ${country} connecté.` });
         router.push('/delegate/dashboard');
       }
     } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: "Un problème est survenu lors de la connexion.",
-        variant: "destructive"
-      });
+      console.error(error);
       setLoading(false);
     }
   };
