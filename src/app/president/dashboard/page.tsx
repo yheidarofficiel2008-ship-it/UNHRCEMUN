@@ -11,8 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useFirebase, setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, doc, onSnapshot, query, orderBy, where, getDoc, serverTimestamp } from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
+import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, doc, onSnapshot, query, orderBy, getDoc, serverTimestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useRealtime } from '@/hooks/use-realtime';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
@@ -56,7 +57,7 @@ export default function PresidentDashboard() {
     const unsubDel = onSnapshot(query(delRef, orderBy('country_name', 'asc')), (snap) => {
       setDelegates(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }, (err) => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'delegates', operation: 'list' }));
+      if (user) errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'delegates', operation: 'list' }));
     });
 
     const resolutionsRef = collection(db, 'resolutions');
@@ -64,14 +65,14 @@ export default function PresidentDashboard() {
     const unsubRes = onSnapshot(qRes, (snapshot) => {
       setResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (err) => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'resolutions', operation: 'list' }));
+      if (user) errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'resolutions', operation: 'list' }));
     });
 
     return () => {
       unsubDel();
       unsubRes();
     };
-  }, [db]);
+  }, [db, user]);
 
   useEffect(() => {
     if (!db || !currentAction?.id) return;
@@ -210,7 +211,7 @@ export default function PresidentDashboard() {
           <Button variant={isSuspended ? "destructive" : "outline"} onClick={toggleSuspension}>
             {isSuspended ? "Reprendre" : "Suspendre"}
           </Button>
-          <Button variant="ghost" onClick={handleLogout}>
+          <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}>
             <LogOut size={20} />
           </Button>
         </div>

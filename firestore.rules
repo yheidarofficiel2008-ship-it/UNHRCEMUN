@@ -43,7 +43,7 @@ service cloud.firestore {
     }
 
     match /roles_president/{presidentUid} {
-      // Permettre la création du rôle lors de l'inscription
+      // Permettre la création du rôle lors de l'inscription et la lecture pour l'auth
       allow read: if true;
       allow write: if isSignedIn() && request.auth.uid == presidentUid;
     }
