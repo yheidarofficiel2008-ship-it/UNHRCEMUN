@@ -25,7 +25,6 @@ import { GlobalTimer } from '@/components/GlobalTimer';
 import { SpeakingTimer } from '@/components/SpeakingTimer';
 import { useToast } from '@/hooks/use-toast';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, Cell } from 'recharts';
-import { Logo } from '@/components/Logo';
 
 export default function PresidentDashboard() {
   const router = useRouter();
@@ -321,7 +320,7 @@ export default function PresidentDashboard() {
     router.push('/');
   };
 
-  if (isUserLoading) return <div className="min-h-screen flex items-center justify-center">Authentification...</div>;
+  if (isUserLoading) return <div className="min-h-screen flex items-center justify-center font-bold uppercase tracking-widest animate-pulse">Authentification...</div>;
 
   const orateursInscrits = participants.filter(p => p.status === 'participating');
   const unreadMessagesCount = messages.filter(m => !m.is_read).length;
@@ -336,7 +335,6 @@ export default function PresidentDashboard() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-50">
         <div className="flex items-center gap-4">
-          <Logo className="h-10 w-10 text-white" />
           <h1 className="text-xl font-bold font-headline uppercase tracking-widest">EMUN UNHRC - Présidence</h1>
           {isSuspended && <Badge variant="destructive" className="animate-pulse">SÉANCE SUSPENDUE</Badge>}
         </div>

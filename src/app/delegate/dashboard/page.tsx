@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,7 +19,6 @@ import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
 import { SpeakingTimer } from '@/components/SpeakingTimer';
 import { useToast } from '@/hooks/use-toast';
-import { Logo } from '@/components/Logo';
 
 export default function DelegateDashboard() {
   const router = useRouter();
@@ -256,8 +255,7 @@ export default function DelegateDashboard() {
       {activeOverlay && activeOverlay.type !== 'none' && (
         <div className="fixed inset-0 z-[9999] bg-primary flex flex-col items-center justify-center p-8 text-white animate-in fade-in zoom-in duration-500">
           <div className="max-w-4xl w-full text-center space-y-12">
-            <Logo className="mx-auto h-32 w-32 text-white/50 mb-8" />
-            <h1 className="text-6xl font-black uppercase tracking-tighter leading-tight">{activeOverlay.title}</h1>
+            <h1 className="text-6xl font-black uppercase tracking-tighter leading-tight border-b-8 border-white pb-8">{activeOverlay.title}</h1>
             
             {activeOverlay.type === 'vote' && (
               <div className="space-y-12">
@@ -296,12 +294,12 @@ export default function DelegateDashboard() {
                     <div className="text-5xl font-black tabular-nums">{activeOverlay.results?.abstention || 0}</div>
                   </div>
                 </div>
-                {hasVoted && <div className="text-xl font-bold uppercase tracking-widest text-white/80 animate-pulse">Vote enregistré avec succès</div>}
+                {hasVoted && <div className="text-xl font-bold uppercase tracking-widest text-white/80 animate-pulse bg-white/20 py-4 rounded-full">Vote enregistré avec succès</div>}
               </div>
             )}
             
             {activeOverlay.type === 'message' && (
-              <div className="text-2xl font-bold uppercase tracking-[0.3em] text-white/60 animate-pulse">Annonce de la Présidence</div>
+              <div className="text-3xl font-black uppercase tracking-[0.3em] text-white/80 animate-pulse">Annonce de la Présidence</div>
             )}
           </div>
         </div>
@@ -309,8 +307,8 @@ export default function DelegateDashboard() {
 
       <header className="bg-secondary text-white p-4 shadow-md flex justify-between items-center z-20">
         <div className="flex items-center gap-4">
-          <Logo className="h-10 w-10 text-white" />
           <h1 className="text-xl font-bold font-headline uppercase tracking-widest">{delegate.country_name}</h1>
+          <Badge variant="outline" className="text-white border-white/30 uppercase text-[10px]">Session Active</Badge>
         </div>
         <div className="flex items-center gap-4">
           <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}>

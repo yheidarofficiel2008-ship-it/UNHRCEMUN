@@ -14,7 +14,6 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'fire
 import { doc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Logo } from '@/components/Logo';
 
 export default function PresidentLogin() {
   const [email, setEmail] = useState('');
@@ -76,39 +75,38 @@ export default function PresidentLogin() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-2xl border-t-4 border-primary">
-        <CardHeader className="text-center space-y-4">
-          <Logo className="mx-auto h-16 w-16 text-primary" />
-          <CardTitle className="text-2xl font-bold font-headline">Portail Président</CardTitle>
-          <CardDescription>Accès réservé EMUN UNHRC</CardDescription>
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-3xl font-black uppercase tracking-tighter font-headline">Portail Président</CardTitle>
+          <CardDescription className="font-bold uppercase tracking-widest text-[10px]">Accès réservé EMUN UNHRC</CardDescription>
         </CardHeader>
         
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2 px-6 bg-transparent">
-            <TabsTrigger value="login">Connexion</TabsTrigger>
-            <TabsTrigger value="signup">Initialiser</TabsTrigger>
+            <TabsTrigger value="login" className="data-[state=active]:font-bold">Connexion</TabsTrigger>
+            <TabsTrigger value="signup" className="data-[state=active]:font-bold">Initialiser</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
             <form onSubmit={handleLogin}>
               <CardContent className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="login-email">Email Professionnel</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="login-email" className="pl-10" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <Input id="login-email" className="pl-10 h-11" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="login-password">Mot de passe</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="login-password" type="password" className="pl-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                    <Input id="login-password" type="password" className="pl-10 h-11" value={password} onChange={(e) => setPassword(e.target.value)} required />
                   </div>
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="w-full bg-primary" disabled={loading}>
-                  {loading ? "Chargement..." : <><LogIn className="mr-2 h-4 w-4" /> Accéder</>}
+                <Button type="submit" className="w-full bg-primary h-12 text-lg font-bold" disabled={loading}>
+                  {loading ? "Chargement..." : <><LogIn className="mr-2 h-5 w-5" /> Accéder au Bureau</>}
                 </Button>
               </CardFooter>
             </form>
@@ -119,23 +117,23 @@ export default function PresidentLogin() {
               <CardContent className="space-y-4 pt-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
-                  <Input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                  <Input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Mot de passe</Label>
-                  <Input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                  <Input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-11" />
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" variant="outline" className="w-full border-primary text-primary" disabled={loading}>
-                  {loading ? "Création..." : <><UserPlus className="mr-2 h-4 w-4" /> Créer le compte</>}
+                <Button type="submit" variant="outline" className="w-full border-primary text-primary h-12 text-lg font-bold" disabled={loading}>
+                  {loading ? "Création..." : <><UserPlus className="mr-2 h-5 w-5" /> Créer le compte</>}
                 </Button>
               </CardFooter>
             </form>
           </TabsContent>
         </Tabs>
       </Card>
-      <p className="mt-8 text-xs text-muted-foreground text-center">Note: Désactivez AdBlock si vous voyez des erreurs.</p>
+      <p className="mt-8 text-[10px] text-muted-foreground text-center uppercase tracking-widest opacity-50">EMUN UNHRC - Management Suite</p>
     </div>
   );
 }

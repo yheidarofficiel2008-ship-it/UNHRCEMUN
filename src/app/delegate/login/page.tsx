@@ -14,7 +14,6 @@ import { signInAnonymously } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { Logo } from '@/components/Logo';
 
 export default function DelegateLogin() {
   const [country, setCountry] = useState('');
@@ -69,31 +68,32 @@ export default function DelegateLogin() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-2xl">
-        <CardHeader className="text-center space-y-4">
-          <Logo className="mx-auto h-20 w-20 text-secondary" />
-          <CardTitle className="text-2xl font-bold font-headline">Accès Délégué</CardTitle>
+      <Card className="w-full max-w-md shadow-2xl border-t-4 border-secondary">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-3xl font-black uppercase tracking-tighter font-headline">Accès Délégué</CardTitle>
+          <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold">EMUN UNHRC</p>
         </CardHeader>
         <form onSubmit={handleLogin}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label htmlFor="country">Nom du Pays</Label>
+              <Label htmlFor="country" className="font-bold uppercase text-[10px] tracking-widest">Nom de la Délégation</Label>
               <Input 
                 id="country" 
                 placeholder="Ex: France" 
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
                 required
+                className="h-12"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password" className="font-bold uppercase text-[10px] tracking-widest">Code d'accès</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
                 <Input 
                   id="password" 
                   type="password" 
-                  className="pl-10"
+                  className="pl-10 h-12"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -101,8 +101,8 @@ export default function DelegateLogin() {
               </div>
             </div>
           </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90" disabled={loading}>
+          <CardFooter className="pt-2">
+            <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 h-12 text-lg font-bold" disabled={loading}>
               {loading ? "Connexion..." : "Entrer en séance"}
             </Button>
           </CardFooter>
