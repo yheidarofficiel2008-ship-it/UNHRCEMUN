@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Plus, List, CheckCircle2, XCircle, FileText, Sparkles, LogOut, Users, Settings as SettingsIcon, Trash2 } from 'lucide-react';
+import { Play, Pause, Plus, List, CheckCircle2, XCircle, FileText, Sparkles, LogOut, Users, Settings as SettingsIcon, Trash2, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,6 +40,7 @@ export default function PresidentDashboard() {
   const [resolutions, setResolutions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<Record<string, any>>({});
+  const [initializing, setInitializing] = useState(false);
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (user) => {
@@ -88,17 +89,43 @@ export default function PresidentDashboard() {
     };
   }, [currentAction?.id, router]);
 
+  const initDatabase = async () => {
+    setInitializing(true);
+    try {
+      // Create initial settings
+      await setDoc(doc(db, 'settings', 'session_suspended'), { value: false });
+      
+      // Create a test action
+      await addDoc(collection(db, 'actions'), {
+        title: "Session d'Ouverture",
+        duration_minutes: 10,
+        time_per_delegate: "1:00",
+        description: "Bienvenue au conseil.",
+        allow_participation: true,
+        status: 'launched',
+        created_at: serverTimestamp()
+      });
+
+      toast({ title: "Base de données prête", description: "Les collections initiales ont été créées." });
+    } catch (e: any) {
+      toast({ title: "Erreur d'initialisation", description: e.message, variant: "destructive" });
+    } finally {
+      setInitializing(false);
+    }
+  };
+
   const toggleSuspension = async () => {
     const settingsRef = doc(db, 'settings', 'session_suspended');
-    const snap = await getDoc(settingsRef);
-    if (!snap.exists()) {
-      await setDoc(settingsRef, { value: true });
-    } else {
+    try {
       await updateDoc(settingsRef, { value: !isSuspended });
+    } catch (e) {
+      // If doc doesn't exist, create it
+      await setDoc(settingsRef, { value: !isSuspended });
     }
   };
 
   const createAction = async () => {
+    if (!newAction.title) return;
     try {
       await addDoc(collection(db, 'actions'), {
         title: newAction.title,
@@ -177,6 +204,15 @@ export default function PresidentDashboard() {
         </div>
         <div className="flex items-center gap-4">
           <Button 
+            variant="outline" 
+            size="sm"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            onClick={initDatabase}
+            disabled={initializing}
+          >
+            <Database size={16} className="mr-2" /> Initialiser DB
+          </Button>
+          <Button 
             variant={isSuspended ? "destructive" : "outline"} 
             className={`${isSuspended ? 'bg-white text-destructive hover:bg-white/90' : 'bg-destructive text-white border-none hover:bg-destructive/90'}`}
             onClick={toggleSuspension}
@@ -227,7 +263,7 @@ export default function PresidentDashboard() {
               {currentAction && (
                 <Card className="border-primary/20 shadow-lg">
                   <CardHeader className="pb-2">
-                    <Badge className="w-fit mb-2 bg-accent">{currentAction.status === 'launched' ? 'PRÊT' : 'EN COURS'}</Badge>
+                    <Badge className="w-fit mb-2 bg-accent">{currentAction.status === 'launched' ? 'PRÊT' : currentAction.status === 'started' ? 'EN COURS' : 'TERMINÉ'}</Badge>
                     <CardTitle>{currentAction.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -240,12 +276,16 @@ export default function PresidentDashboard() {
                     <div className="space-y-3">
                       <h3 className="font-bold text-sm text-muted-foreground uppercase">Participants ({participants.filter(p => p.status === 'participating').length})</h3>
                       <ScrollArea className="h-[150px] border rounded-md p-2">
-                        {participants.map((p, i) => (
-                          <div key={i} className="flex justify-between items-center p-2 border-b last:border-0">
-                            <span>{p.delegates?.country_name}</span>
-                            <Badge variant={p.status === 'participating' ? 'default' : 'secondary'}>{p.status === 'participating' ? 'Présent' : 'Passe'}</Badge>
-                          </div>
-                        ))}
+                        {participants.length === 0 ? (
+                          <p className="text-center text-xs text-muted-foreground py-4">Aucune réponse pour le moment.</p>
+                        ) : (
+                          participants.map((p, i) => (
+                            <div key={i} className="flex justify-between items-center p-2 border-b last:border-0">
+                              <span>{p.delegates?.country_name}</span>
+                              <Badge variant={p.status === 'participating' ? 'default' : 'secondary'}>{p.status === 'participating' ? 'Présent' : 'Passe'}</Badge>
+                            </div>
+                          ))
+                        )}
                       </ScrollArea>
                     </div>
                   </CardContent>
@@ -289,6 +329,7 @@ export default function PresidentDashboard() {
                           </Button>
                         </div>
                       ))}
+                      {delegates.length === 0 && <p className="text-center text-sm text-muted-foreground py-10">Aucun délégué enregistré.</p>}
                     </div>
                   </ScrollArea>
                 </CardContent>
