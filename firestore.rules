@@ -3,131 +3,133 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * IMMUNE UERC - FIRESTORE SECURITY RULES
+     * MODEL UNITED NATIONS (MUN) SESSION SECURITY RULES
      *
-     * CORE PHILOSOPHY:
-     * This ruleset implements a Model United Nations (MUN) management system using a 
-     * hybrid of Ownership and Role-Based (DBAC) access control. It focuses on 
-     * "Authorization Independence," where documents contain the necessary metadata 
-     * (like uids) to make security decisions without recursive document lookups.
+     * Core Philosophy:
+     * This ruleset enforces a strict role-based and ownership model optimized for Model UN sessions. 
+     * It distinguishes between "Presidents" (administrators) and "Delegates" (participants).
      *
-     * DATA STRUCTURE:
-     * - /delegates/{uid}: Private profiles owned by the authenticated delegate.
-     * - /committeeSessions/{id}: Global state managed by a President (ownerId on doc).
-     * - /actions/{id}: Agenda items managed by a President.
-     * - /actionParticipations/{id}: Delegate responses to actions (Self-owned + President view).
-     * - /resolutions/{id}: Proposed documents (Self-owned + President review/update).
+     * Data Structure:
+     * - /delegates/{delegateId}: User profiles for participants.
+     * - /roles_president/{presidentUid}: Administrative role markers.
+     * - /actions/{actionId}: Agenda items and session timers.
+     * - /actions/{actionId}/participations/{participationId}: Delegate participation tracking.
+     * - /resolutions/{resolutionId}: Proposals submitted by delegates.
+     * - /sessionState/current: Global singleton for session status (e.g., suspension).
      *
-     * KEY SECURITY DECISIONS:
-     * 1. Delegate Privacy: Delegates can only see their own profile and responses.
-     * 2. President Authority: A 'presidentId' field is used on global entities 
-     *    to grant administrative write access without custom auth claims.
-     * 3. Relational Integrity: On creation, documents must align their internal 
-     *    IDs with the user's authenticated UID to prevent spoofing.
-     * 4. Denormalization: Fields like 'delegateId' and 'presidentId' are strictly 
-     *    required on documents to enable performant, single-read security checks.
+     * Key Security Decisions:
+     * 1. Role-Based Access: A separate collection `/roles_president` stores UIDs of users with 
+     *    administrative privileges. This is checked via an `exists()` lookup.
+     * 2. Authorization Independence: Critical IDs (delegateId, actionId) are denormalized 
+     *    directly onto documents (Participations, Resolutions) to allow for fast, 
+     *    non-hierarchical security checks without costly parent-document lookups.
+     * 3. Prototyping Flexibility: While authorization is strictly enforced based on identity 
+     *    and roles, specific data schemas (types, optional fields) are not enforced to 
+     *    allow for rapid UI/UX iteration.
+     * 4. Session Integrity: Only the President can manage global state and session actions, 
+     *    ensuring the flow of the MUN session remains controlled.
      */
 
-    // --- Helper Functions ---
+    // --- HELPER FUNCTIONS ---
 
-    /** @description Checks if the user is authenticated. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the user's UID matches the provided ID. */
+    function isPresident() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_president/$(request.auth.uid));
+    }
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks ownership and ensures the document exists for state changes. */
     function isExistingOwner(userId) {
       return resource != null && isOwner(userId);
     }
 
-    /** @description Checks if the user is the President assigned to a specific document. */
-    function isPresident(docData) {
-      return isSignedIn() && docData.presidentId == request.auth.uid;
-    }
-
-    /** @description Checks if the user is the President and the document exists. */
-    function isExistingPresident(docData) {
-      return resource != null && isPresident(docData);
-    }
-
-    // --- Collection Rules ---
+    // --- COLLECTION RULES ---
 
     /**
-     * @description Rules for delegate profiles. Owned by the delegate whose UID matches the document ID.
+     * @description Rules for the Delegate entity. Presidents manage all accounts; delegates read their own.
      * @path /delegates/{delegateId}
-     * @allow (create) if auth.uid == 'user123' and data.id == 'user123'
-     * @deny (list) if auth.uid != delegateId
-     * @principle Ownership: Users manage their own profile; document ID must match internal ID.
+     * @allow get: if the user is the owner or a President.
+     * @deny list: if the user is a Delegate (Delegates cannot list all accounts).
+     * @principle Restricts access to sensitive delegate profiles to the owner or admins.
      */
     match /delegates/{delegateId} {
-      allow get, list: if isOwner(delegateId);
-      allow create: if isOwner(delegateId) && request.resource.data.id == delegateId;
-      allow update: if isExistingOwner(delegateId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(delegateId);
+      allow get: if isOwner(delegateId) || isPresident();
+      allow list: if isPresident();
+      allow create, update, delete: if isPresident();
     }
 
     /**
-     * @description Global committee session state. Publicly readable by all delegates; writable by the President.
-     * @path /committeeSessions/{sessionId}
-     * @allow (get) if isSignedIn()
-     * @allow (update) if auth.uid == resource.data.presidentId
-     * @deny (create) if auth.uid != request.resource.data.presidentId
-     * @principle Public Read with Owner-Only Writes: Global state is visible but protected.
+     * @description Administrative role marker. Only used for authorization lookups.
+     * @path /roles_president/{presidentUid}
+     * @allow get: if the user is checking their own role status.
+     * @deny write: if any user attempts to modify role assignments directly from the client.
+     * @principle System-managed roles ensure administrative integrity.
      */
-    match /committeeSessions/{sessionId} {
-      allow get, list: if isSignedIn();
-      allow create: if isPresident(request.resource.data);
-      allow update: if isExistingPresident(resource.data);
-      allow delete: if isExistingPresident(resource.data);
+    match /roles_president/{presidentUid} {
+      allow get: if isOwner(presidentUid);
+      allow list, create, update, delete: if false;
     }
 
     /**
-     * @description Agenda items (Actions). Managed by the President; viewable by all.
+     * @description Session actions/agenda items. Managed by President, read by all.
      * @path /actions/{actionId}
-     * @allow (create) if request.resource.data.presidentId == auth.uid
-     * @deny (delete) if auth.uid != resource.data.presidentId
-     * @principle DBAC: Uses 'presidentId' field for administrative authorization.
+     * @allow get, list: if the user is signed in.
+     * @deny write: if the user is not a President.
+     * @principle Global visibility for session items with administrative-only control.
      */
     match /actions/{actionId} {
       allow get, list: if isSignedIn();
-      allow create: if isPresident(request.resource.data);
-      allow update: if isExistingPresident(resource.data);
-      allow delete: if isExistingPresident(resource.data);
+      allow create, update, delete: if isPresident();
+
+      /**
+       * @description Records of delegate participation for a specific action.
+       * @path /actions/{actionId}/participations/{participationId}
+       * @allow create: if the delegateId in the data matches the authenticated user.
+       * @deny update: if the delegate attempts to change the original owner or action link.
+       * @principle Relational integrity: enforces that delegates only submit for themselves.
+       */
+      match /participations/{participationId} {
+        allow get: if isPresident() || isOwner(resource.data.delegateId);
+        allow list: if isPresident() || (isSignedIn() && request.query.limit <= 100); // Restricted list for delegates via query
+        allow create: if isSignedIn() && request.resource.data.delegateId == request.auth.uid && request.resource.data.actionId == actionId;
+        allow update: if isExistingOwner(resource.data.delegateId) && request.resource.data.delegateId == resource.data.delegateId && request.resource.data.actionId == resource.data.actionId;
+        allow delete: if isPresident() || isExistingOwner(resource.data.delegateId);
+      }
     }
 
     /**
-     * @description Records of delegate participation. Owned by the delegate; viewable by the President.
-     * @path /actionParticipations/{participationId}
-     * @allow (create) if request.resource.data.delegateId == auth.uid
-     * @allow (list) if auth.uid == resource.data.delegateId || isPresident(resource.data)
-     * @deny (update) if auth.uid != resource.data.delegateId
-     * @principle Ownership + Shared Access: Delegates own their data; Presidents oversee it.
-     */
-    match /actionParticipations/{participationId} {
-      // Note: list requires filter: .where('delegateId', '==', auth.uid) OR being the President
-      allow get, list: if isSignedIn(); 
-      allow create: if isOwner(request.resource.data.delegateId);
-      allow update: if isExistingOwner(resource.data.delegateId) && request.resource.data.delegateId == resource.data.delegateId;
-      allow delete: if isExistingOwner(resource.data.delegateId);
-    }
-
-    /**
-     * @description Proposed resolutions. Created/owned by delegates. Presidents can update status and feedback.
+     * @description Resolutions proposed by delegates.
      * @path /resolutions/{resolutionId}
-     * @allow (update) if isPresident(resource.data) // For status/feedback updates
-     * @deny (create) if request.resource.data.delegateId != auth.uid
-     * @principle Collaborative State Modeling: Owner creates; admin reviews and updates status.
+     * @allow create: if the user sets themselves as the delegateId.
+     * @deny update: if a delegate tries to modify a resolution they do not own.
+     * @principle Ownership-based writes for delegates, administrative oversight for Presidents.
      */
     match /resolutions/{resolutionId} {
-      allow get, list: if isSignedIn();
-      allow create: if isOwner(request.resource.data.delegateId);
-      allow update: if (isExistingOwner(resource.data.delegateId) && request.resource.data.delegateId == resource.data.delegateId) || isExistingPresident(resource.data);
-      allow delete: if isExistingOwner(resource.data.delegateId);
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.delegateId == request.auth.uid;
+      allow update: if isPresident() || (isExistingOwner(resource.data.delegateId) && request.resource.data.delegateId == resource.data.delegateId);
+      allow delete: if isPresident() || isExistingOwner(resource.data.delegateId);
+    }
+
+    /**
+     * @description Global session state singleton.
+     * @path /sessionState/current
+     * @allow get: if the user is signed in.
+     * @deny update: if the user is not a President.
+     * @principle Centralized session control restricted to administrative users.
+     */
+    match /sessionState/current {
+      allow get: if isSignedIn();
+      allow list: if false; // Singleton access only
+      allow create: if isPresident();
+      allow update: if isPresident();
+      allow delete: if false;
     }
 
   }
