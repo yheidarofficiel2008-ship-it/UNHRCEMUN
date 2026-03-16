@@ -13,10 +13,10 @@ export function useRealtime() {
   const [currentAction, setCurrentAction] = useState<any>(null);
 
   useEffect(() => {
-    // On attend que l'utilisateur soit connecté et que le SDK soit prêt
-    if (!db || isUserLoading || !user) return;
+    // Si la DB n'est pas prête, on ne fait rien
+    if (!db) return;
 
-    // Écouter l'état global de la session
+    // Écouter l'état global de la session (lecture publique selon firestore.rules)
     const sessionStateRef = doc(db, 'sessionState', 'current');
     
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
@@ -26,7 +26,8 @@ export function useRealtime() {
         setIsSuspended(false);
       }
     }, (error) => {
-      if (user) {
+      // On ne log que si l'utilisateur est censé être connecté pour éviter les bruits au démarrage
+      if (!isUserLoading && user) {
         const permissionError = new FirestorePermissionError({
           path: 'sessionState/current',
           operation: 'get'
@@ -52,7 +53,7 @@ export function useRealtime() {
         setCurrentAction(null);
       }
     }, (error) => {
-      if (user) {
+      if (!isUserLoading && user) {
         const permissionError = new FirestorePermissionError({
           path: 'actions',
           operation: 'list'

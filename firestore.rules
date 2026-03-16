@@ -8,51 +8,50 @@ service cloud.firestore {
     }
 
     function isPresident() {
+      // Un président est identifié par son document dans la collection roles_president
       return isSignedIn() && exists(/databases/$(database)/documents/roles_president/$(request.auth.uid));
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
     }
 
     // --- RÈGLES DES COLLECTIONS ---
 
     match /delegates/{delegateId} {
-      // Les délégués et le président peuvent voir la liste (pour le login et la gestion)
-      allow read: if isSignedIn();
+      // Lecture permise pour tout le monde (pour permettre la recherche par pays au login)
+      allow read: if true;
       // Seul le président gère les délégués
       allow write: if isPresident();
     }
 
     match /roles_president/{presidentUid} {
-      // Un président peut créer et voir son propre document de rôle
-      allow get, create, update: if isOwner(presidentUid);
+      // Un président peut créer son propre rôle lors de l'initialisation
+      allow get, create, update: if isSignedIn() && request.auth.uid == presidentUid;
       allow list, delete: if false;
     }
 
     match /actions/{actionId} {
-      // Tout utilisateur connecté peut voir les actions
-      allow read: if isSignedIn();
-      // Seul le président peut gérer les actions
+      // Lecture publique de l'état de la séance
+      allow read: if true;
+      // Seul le président gère les actions
       allow write: if isPresident();
 
       match /participations/{participationId} {
-        allow read: if isSignedIn();
-        allow create: if isSignedIn() && request.resource.data.delegateId == request.auth.uid;
+        allow read: if true;
+        allow create: if isSignedIn();
         allow update: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
         allow delete: if isPresident();
       }
     }
 
     match /resolutions/{resolutionId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.delegateId == request.auth.uid;
+      // Lecture publique pour voir les statuts
+      allow read: if true;
+      allow create: if isSignedIn();
       allow update: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
       allow delete: if isPresident();
     }
 
     match /sessionState/current {
-      allow read: if isSignedIn();
+      // Lecture publique pour l'overlay de suspension
+      allow read: if true;
       allow write: if isPresident();
     }
 
