@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert, Lock, AlertTriangle, User } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert, Lock, AlertTriangle, User, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -433,7 +433,7 @@ export default function DelegateDashboard() {
                         )}
                       </div>
                       {item._type === 'resolution' && (
-                        <div className="mb-2 font-black uppercase text-secondary">{item.title}</div>
+                        <div className="mb-2 font-black uppercase text-secondary break-words">{item.title}</div>
                       )}
                       <div 
                         className="text-foreground whitespace-pre-wrap break-words prose prose-sm max-w-none"
@@ -455,8 +455,8 @@ export default function DelegateDashboard() {
                 <Badge className="bg-secondary">SÉANCE EN COURS</Badge>
                 {isActive && <Badge variant="outline" className="text-[10px] opacity-60">Temps alloué: {currentAction.time_per_delegate}</Badge>}
               </div>
-              <CardTitle className="text-3xl font-headline mt-2">{isActive ? currentAction.title : 'En attente d\'une action...'}</CardTitle>
-              {isActive && <CardDescription className="text-lg">{currentAction.description}</CardDescription>}
+              <CardTitle className="text-3xl font-headline mt-2 break-words">{isActive ? currentAction.title : 'En attente d\'une action...'}</CardTitle>
+              {isActive && <CardDescription className="text-lg break-words">{currentAction.description}</CardDescription>}
             </CardHeader>
             <CardContent className="p-8 space-y-8">
               {isActive ? (
@@ -532,33 +532,32 @@ export default function DelegateDashboard() {
                   <CardHeader className="flex flex-row items-center justify-between border-b border-primary/20 pb-4 bg-white/50">
                     <div className="space-y-1">
                       <Badge className="gap-1 mb-2 bg-primary"><Monitor size={12} /> PROJETÉ AU COMITÉ</Badge>
-                      <CardTitle className="text-2xl text-primary font-black uppercase tracking-tight">{res.title}</CardTitle>
-                      <p className="text-sm font-bold text-muted-foreground uppercase">{res.proposing_country}</p>
+                      <CardTitle className="text-2xl text-primary font-black uppercase tracking-tight break-words">{res.title}</CardTitle>
                     </div>
                     <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="h-fit">
                       {res.status.toUpperCase()}
                     </Badge>
                   </CardHeader>
                   <CardContent className="pt-8 text-left">
-                    <div className="mb-6 flex flex-wrap gap-4 items-center">
-                       {res.spokesperson && (
-                        <Badge variant="outline" className="gap-2 border-primary/30 text-primary py-1.5 px-3">
-                          <User size={14} /> Porte-parole: <span className="font-bold">{res.spokesperson}</span>
+                    <div className="mb-6 flex flex-wrap gap-2 items-center">
+                      <Badge variant="outline" className="bg-primary/10 border-primary/30 text-primary py-1 px-2 text-xs font-bold uppercase tracking-widest break-words">
+                        DE: {res.proposing_country}
+                      </Badge>
+                      {res.spokesperson && (
+                        <Badge variant="outline" className="bg-secondary/10 border-secondary/30 text-secondary py-1 px-2 text-xs font-bold uppercase tracking-widest break-words gap-1">
+                          <User size={12} /> Porte-parole: {res.spokesperson}
+                        </Badge>
+                      )}
+                      {res.sponsors && (
+                        <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-muted-foreground py-1 px-2 text-xs font-bold uppercase tracking-widest break-words gap-1">
+                          <Users size={12} /> Sponsors: {res.sponsors}
                         </Badge>
                       )}
                     </div>
                     <div 
-                      className="text-lg leading-relaxed font-serif whitespace-pre-wrap break-words prose prose-lg max-w-none"
+                      className="text-lg leading-relaxed font-serif whitespace-pre-wrap break-words prose prose-lg max-w-none text-left"
                       dangerouslySetInnerHTML={{ __html: res.content }}
                     />
-                    <div className="mt-8 pt-4 border-t border-primary/10 space-y-2 text-center">
-                      {res.spokesperson && (
-                        <p className="text-sm text-primary font-black uppercase tracking-widest">Porte-parole: {res.spokesperson}</p>
-                      )}
-                      {res.sponsors && (
-                        <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Sponsors: <span className="text-primary">{res.sponsors}</span></p>
-                      )}
-                    </div>
                   </CardContent>
                 </Card>
               ))}

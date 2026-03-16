@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor } from 'lucide-react';
+import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -459,7 +459,7 @@ export default function PresidentDashboard() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <Badge className="mb-1">{currentAction.status.toUpperCase()}</Badge>
-                        <CardTitle className="text-xl">{currentAction.title}</CardTitle>
+                        <CardTitle className="text-xl break-words">{currentAction.title}</CardTitle>
                       </div>
                       <div className="flex items-center gap-1 bg-white/50 p-1 rounded-lg border">
                         <Input 
@@ -592,7 +592,7 @@ export default function PresidentDashboard() {
                       <div key={d.id} className={`flex justify-between items-center p-3 mb-2 rounded-lg border transition-colors ${d.is_suspended ? 'bg-destructive/5 border-destructive/20' : 'bg-muted/50 border-transparent'}`}>
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm">{d.country_name}</span>
+                            <span className="font-semibold text-sm break-words">{d.country_name}</span>
                             {d.is_suspended && <Badge variant="destructive" className="h-4 text-[8px] px-1 uppercase"><ShieldAlert size={10} className="mr-0.5" /> Suspendu</Badge>}
                           </div>
                           <span className="text-[10px] text-muted-foreground font-mono">Pass: {d.password}</span>
@@ -687,7 +687,7 @@ export default function PresidentDashboard() {
                       {allActions.map(action => (
                         <div key={action.id} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg border text-xs">
                           <div className="flex flex-col gap-1">
-                            <span className="font-bold">{action.title}</span>
+                            <span className="font-bold break-words">{action.title}</span>
                             <div className="flex gap-2">
                               <Badge variant="outline" className="text-[10px]">{action.status}</Badge>
                               <span className="text-muted-foreground">
@@ -741,7 +741,7 @@ export default function PresidentDashboard() {
                     <Card key={res.id} className={`overflow-hidden border-2 ${res.is_displayed ? 'border-primary' : ''}`}>
                       <div className="bg-muted/50 p-4 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-primary uppercase tracking-tight">{res.title || "SANS TITRE"}</span>
+                          <span className="font-bold text-primary uppercase tracking-tight break-words">{res.title || "SANS TITRE"}</span>
                           {res.is_displayed && <Badge className="bg-primary"><Monitor className="h-3 w-3 mr-1" /> PROJETÉ</Badge>}
                         </div>
                         <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
@@ -749,32 +749,25 @@ export default function PresidentDashboard() {
                         </Badge>
                       </div>
                       <CardContent className="p-4 space-y-4">
-                        <div className="flex flex-wrap gap-4 items-center text-xs font-bold text-muted-foreground">
-                          <span className="bg-muted px-2 py-1 rounded">DE: {res.proposing_country}</span>
+                        <div className="flex flex-wrap gap-2 items-center mb-4">
+                          <Badge variant="outline" className="bg-primary/10 border-primary/30 text-primary py-1 px-2 text-[10px] font-bold uppercase tracking-widest break-words">
+                            DE: {res.proposing_country}
+                          </Badge>
                           {res.spokesperson && (
-                            <span className="flex items-center gap-1 bg-muted px-2 py-1 rounded">
-                              <User size={12} /> PORTE-PAROLE: {res.spokesperson}
-                            </span>
+                            <Badge variant="outline" className="bg-secondary/10 border-secondary/30 text-secondary py-1 px-2 text-[10px] font-bold uppercase tracking-widest break-words gap-1">
+                              <User size={10} /> Porte-parole: {res.spokesperson}
+                            </Badge>
+                          )}
+                          {res.sponsors && (
+                            <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-muted-foreground py-1 px-2 text-[10px] font-bold uppercase tracking-widest break-words gap-1">
+                              <Users size={10} /> Sponsors: {res.sponsors}
+                            </Badge>
                           )}
                         </div>
                         <div 
-                          className="text-sm leading-relaxed whitespace-pre-wrap break-words prose prose-sm max-w-none"
+                          className="text-sm leading-relaxed whitespace-pre-wrap break-words prose prose-sm max-w-none text-left"
                           dangerouslySetInnerHTML={{ __html: res.content }}
                         />
-                        <div className="mt-4 p-3 border rounded-lg bg-muted/20 space-y-3">
-                          {res.spokesperson && (
-                            <div>
-                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Porte-parole</p>
-                              <p className="text-sm font-bold text-primary">{res.spokesperson}</p>
-                            </div>
-                          )}
-                          {res.sponsors && (
-                            <div>
-                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Pays Sponsors</p>
-                              <p className="text-sm font-medium">{res.sponsors}</p>
-                            </div>
-                          )}
-                        </div>
                         <div className="flex gap-2 justify-end pt-4 border-t">
                           <Button 
                             variant={res.is_displayed ? "default" : "outline"} 
@@ -824,7 +817,7 @@ export default function PresidentDashboard() {
                               <Badge variant={msg.type === 'privilege' ? 'destructive' : 'secondary'} className="uppercase text-[10px]">
                                 {msg.type === 'privilege' ? 'Point de privilège' : 'Message général'}
                               </Badge>
-                              <span className="font-bold text-sm">{msg.sender_country}</span>
+                              <span className="font-bold text-sm break-words">{msg.sender_country}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               {!msg.is_read && (
