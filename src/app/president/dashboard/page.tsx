@@ -266,7 +266,7 @@ export default function PresidentDashboard() {
           <div className="h-6 w-px bg-white/20" />
           <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white" onClick={initDatabase} disabled={initializing}>
             <Database size={16} className="mr-2" /> Init
-          </Database>
+          </Button>
           <Button variant="destructive" onClick={toggleSuspension}>
             {isSuspended ? "Reprendre" : "Suspendre"}
           </Button>
