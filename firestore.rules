@@ -14,45 +14,38 @@ service cloud.firestore {
 
     // --- RÈGLES DES COLLECTIONS ---
 
-    match /delegates/{delegateId} {
-      // Lecture permise pour tout le monde (pour permettre la recherche par pays au login)
+    // Lecture publique pour la session, écriture réservée au président
+    match /sessionState/{document} {
       allow read: if true;
-      // Seul le président gère les délégués
       allow write: if isPresident();
     }
 
-    match /roles_president/{presidentUid} {
-      // Un président peut créer son propre rôle lors de l'initialisation
-      allow get, create, update: if isSignedIn() && request.auth.uid == presidentUid;
-      allow list, delete: if false;
-    }
-
     match /actions/{actionId} {
-      // Lecture publique de l'état de la séance
       allow read: if true;
-      // Seul le président gère les actions
       allow write: if isPresident();
 
       match /participations/{participationId} {
         allow read: if true;
-        allow create: if isSignedIn();
-        allow update: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
-        allow delete: if isPresident();
+        allow write: if isSignedIn();
       }
     }
 
+    match /delegates/{delegateId} {
+      allow read: if true;
+      allow write: if isPresident();
+    }
+
     match /resolutions/{resolutionId} {
-      // Lecture publique pour voir les statuts
       allow read: if true;
       allow create: if isSignedIn();
       allow update: if isPresident() || (isSignedIn() && request.auth.uid == resource.data.delegateId);
       allow delete: if isPresident();
     }
 
-    match /sessionState/current {
-      // Lecture publique pour l'overlay de suspension
+    match /roles_president/{presidentUid} {
+      // Permettre la création du rôle lors de l'inscription
       allow read: if true;
-      allow write: if isPresident();
+      allow write: if isSignedIn() && request.auth.uid == presidentUid;
     }
 
     // Règle de repli
