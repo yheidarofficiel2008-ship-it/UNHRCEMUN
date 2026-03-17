@@ -33,6 +33,7 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { firestore: db } = useFirebase();
   const [securityKey, setSecurityKey] = useState('');
+  const [deleteVerificationKey, setDeleteVerificationKey] = useState('');
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [newCommittee, setNewCommittee] = useState({
     name: '',
@@ -194,7 +195,7 @@ export default function AdminPage() {
                       <p className="text-xs text-muted-foreground font-medium pt-1">Président : {c.president_email}</p>
                     </div>
                     
-                    <AlertDialog>
+                    <AlertDialog onOpenChange={(open) => !open && setDeleteVerificationKey('')}>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
                           <Trash2 size={20} />
@@ -204,16 +205,32 @@ export default function AdminPage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Supprimer le comité {c.name} ?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Cette action est irréversible. Toutes les données liées à ce comité seront perdues.
+                            Cette action est irréversible. Toutes les données liées à ce comité seront perdues. 
+                            Veuillez entrer la clé de sécurité pour confirmer.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
+                        <div className="py-4 space-y-2">
+                          <Label htmlFor="delete-key" className="text-xs uppercase font-bold tracking-widest">Clé de sécurité</Label>
+                          <Input 
+                            id="delete-key"
+                            type="password" 
+                            placeholder="Clé de sécurité"
+                            value={deleteVerificationKey}
+                            onChange={(e) => setDeleteVerificationKey(e.target.value)}
+                            className="font-mono h-12"
+                          />
+                        </div>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogCancel onClick={() => setDeleteVerificationKey('')}>Annuler</AlertDialogCancel>
                           <AlertDialogAction 
-                            onClick={() => handleDelete(c.id)}
+                            onClick={() => {
+                              handleDelete(c.id);
+                              setDeleteVerificationKey('');
+                            }}
+                            disabled={deleteVerificationKey !== 'MUN-X26'}
                             className="bg-destructive hover:bg-destructive/90"
                           >
-                            Supprimer
+                            Confirmer la suppression
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
