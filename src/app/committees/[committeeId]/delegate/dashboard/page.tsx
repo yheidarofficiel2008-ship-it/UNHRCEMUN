@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert, AlertTriangle, User, Users, Lock } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert, AlertTriangle, User, Users, Lock, ListOrdered } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirebase, useDoc } from '@/firebase';
 import { useMemoFirebase } from '@/firebase';
-import { collection, query, where, onSnapshot, addDoc, serverTimestamp, setDoc, doc, increment, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp, setDoc, doc, increment, updateDoc, orderBy } from 'firebase/firestore';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
 import { SpeakingTimer } from '@/components/SpeakingTimer';
@@ -75,7 +75,9 @@ export default function DelegateDashboard() {
       abstention: "ABST.",
       voteRecorded: "Vote enregistré",
       submissionsSuspended: "ENVOIS SUSPENDUS",
-      preview: "Aperçu en temps réel"
+      preview: "Aperçu en temps réel",
+      speakersList: "Liste des Orateurs",
+      noSpeaker: "Aucun orateur inscrit"
     },
     en: {
       sessionActive: "Active Session",
@@ -111,7 +113,9 @@ export default function DelegateDashboard() {
       abstention: "ABST.",
       voteRecorded: "Vote recorded",
       submissionsSuspended: "SUBMISSIONS SUSPENDED",
-      preview: "Real-time Preview"
+      preview: "Real-time Preview",
+      speakersList: "Speakers List",
+      noSpeaker: "No registered speaker"
     }
   }[lang];
   
@@ -121,6 +125,7 @@ export default function DelegateDashboard() {
   const [myResolutions, setMyResolutions] = useState<any[]>([]);
   const [myMessages, setMyMessages] = useState<any[]>([]);
   const [displayedResolutions, setDisplayedResolutions] = useState<any[]>([]);
+  const [activeSpeakers, setActiveSpeakers] = useState<any[]>([]);
 
   useEffect(() => {
     const session = localStorage.getItem('delegate_session');
@@ -169,6 +174,18 @@ export default function DelegateDashboard() {
     return () => unsub();
   }, [currentAction, delegate, db, committeeId]);
 
+  useEffect(() => {
+    if (!db || !currentAction?.id) {
+      setActiveSpeakers([]);
+      return;
+    }
+    const partRef = collection(db, 'committees', committeeId, 'participations');
+    const unsub = onSnapshot(query(partRef, where('action_id', '==', currentAction.id), where('status', '==', 'participating'), orderBy('updated_at', 'asc')), (snapshot) => {
+      setActiveSpeakers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsub();
+  }, [db, currentAction?.id, committeeId]);
+
   // Alarme de crise et gestion des votes
   useEffect(() => {
     if (activeOverlay?.type === 'crisis' && lastOverlayType.current !== 'crisis') {
@@ -206,7 +223,6 @@ export default function DelegateDashboard() {
         osc.stop(startTime + 0.5);
       };
 
-      // 8 pulsations à 0.5s d'intervalle = 4 secondes
       for(let i = 0; i < 8; i++) {
         playPulse(now + i * 0.5);
       }
@@ -434,10 +450,39 @@ export default function DelegateDashboard() {
               </CardFooter>
             </form>
           </Card>
+
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ListOrdered size={18} className="text-primary" />
+                <CardTitle className="text-sm font-bold uppercase tracking-tight">{t.speakersList}</CardTitle>
+              </div>
+              <Badge variant="secondary" className="h-5">{activeSpeakers.length}</Badge>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <ScrollArea className="h-[250px]">
+                <div className="space-y-2">
+                  {activeSpeakers.map((s, i) => (
+                    <div key={s.id} className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-black bg-muted h-6 w-6 flex items-center justify-center rounded-full">{i + 1}</span>
+                        <span className="text-xs font-bold uppercase tracking-tight">{s.country_name}</span>
+                      </div>
+                      {i === 0 && <Badge className="bg-primary text-[8px] animate-pulse">ORATEUR ACTUEL</Badge>}
+                    </div>
+                  ))}
+                  {activeSpeakers.length === 0 && (
+                    <div className="text-center py-10 text-muted-foreground text-xs italic">{t.noSpeaker}</div>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-lg"><Send size={18} /> {t.myEnvois}</CardTitle></CardHeader>
             <CardContent className="px-4">
-              <ScrollArea className="h-[500px]">
+              <ScrollArea className="h-[300px]">
                 <div className="space-y-3">
                   {myEnvois.map(item => (
                     <div key={item.id} className="p-3 border rounded-lg bg-muted/10 text-xs">
