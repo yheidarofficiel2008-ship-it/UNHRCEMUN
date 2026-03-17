@@ -46,7 +46,7 @@ export default function MUNOSHome() {
                 <CardHeader className="bg-muted/30 pb-4">
                   <div className="flex justify-between items-start">
                     <Globe className="h-8 w-8 text-primary opacity-50 group-hover:opacity-100 transition-opacity" />
-                    <Badge className="bg-green-500">Actif</Badge>
+                    <Badge className="bg-green-500 uppercase text-[10px] font-bold">{committee.language === 'en' ? 'Active' : 'Actif'}</Badge>
                   </div>
                   <CardTitle className="text-2xl font-black uppercase tracking-tight mt-2">{committee.name}</CardTitle>
                 </CardHeader>
@@ -54,12 +54,12 @@ export default function MUNOSHome() {
                   <div className="grid grid-cols-2 gap-2">
                     <Button asChild variant="outline" className="w-full border-primary text-primary font-bold">
                       <Link href={`/committees/${committee.id}/president/login`}>
-                        <Shield className="mr-2 h-4 w-4" /> Bureau
+                        <Shield className="mr-2 h-4 w-4" /> {committee.language === 'en' ? 'Office' : 'Bureau'}
                       </Link>
                     </Button>
                     <Button asChild className="w-full bg-primary font-bold">
                       <Link href={`/committees/${committee.id}/delegate/login`}>
-                        <Users className="mr-2 h-4 w-4" /> Délégué
+                        <Users className="mr-2 h-4 w-4" /> {committee.language === 'en' ? 'Delegate' : 'Délégué'}
                       </Link>
                     </Button>
                   </div>
@@ -71,12 +71,12 @@ export default function MUNOSHome() {
           {committees?.length === 0 && !isLoading && (
             <Card className="col-span-full py-12 border-dashed border-2 flex flex-col items-center justify-center text-muted-foreground">
               <PlusCircle size={40} className="mb-4 opacity-20" />
-              <p className="italic">Aucun comité n'a encore été créé par l'administration.</p>
+              <p className="italic text-center px-4">Aucun comité n'a encore été créé par l'administration.</p>
             </Card>
           )}
         </div>
 
-        <div className="flex justify-center pt-12">
+        <div className="flex justify-center pt-8">
           <Button asChild variant="ghost" className="text-muted-foreground hover:text-primary gap-2">
             <Link href="/admin">
               <Settings size={18} /> Gérer les Comités (Accès Admin)
@@ -85,8 +85,10 @@ export default function MUNOSHome() {
         </div>
       </div>
       
-      <footer className="mt-auto py-8 text-[10px] text-muted-foreground uppercase tracking-[0.5em] opacity-30 text-center">
-        Système créé par Youssef Heidar
+      <footer className="mt-auto py-16 flex flex-col items-center gap-4">
+        <div className="bg-primary text-primary-foreground px-10 py-4 rounded-full shadow-[0_20px_50px_rgba(8,_112,_184,_0.7)] font-black uppercase tracking-[0.15em] text-sm border-4 border-white/20 transform hover:scale-110 transition-transform cursor-default">
+          Système créé par Youssef Heidar
+        </div>
       </footer>
     </div>
   );
