@@ -538,12 +538,15 @@ export default function DelegateDashboard() {
             <CardContent className="p-10 space-y-12">
               {isActive ? (
                 <>
-                  <div className="flex flex-col items-center gap-6 max-w-xl mx-auto">
-                    <div className="relative w-full">
-                      <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
-                      <div className="absolute -bottom-4 left-1/2 -translate-x-1/2">
-                        <SpeakingTimer status={currentAction.speaking_timer_status} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} size="md" />
+                  <div className="flex flex-col items-center gap-10 max-w-xl mx-auto w-full">
+                    <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
+                    
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex items-center gap-2 px-4 py-1.5 bg-primary/5 border border-primary/10 rounded-full">
+                        <Timer size={14} className="text-primary/60" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">{t.speakerChrono}</span>
                       </div>
+                      <SpeakingTimer status={currentAction.speaking_timer_status} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} size="md" />
                     </div>
                   </div>
                   {currentAction.allow_participation && currentAction.status === 'launched' && (
