@@ -99,7 +99,8 @@ export default function PresidentDashboard() {
       rank: "Rang",
       saveGrade: "Note enregistrée",
       calculate: "Calculer le classement",
-      markAsSpoken: "A déjà parlé"
+      markAsSpoken: "A déjà parlé",
+      actionDeleted: "Action et statistiques supprimées"
     },
     en: {
       presidency: "Presidency",
@@ -161,7 +162,8 @@ export default function PresidentDashboard() {
       rank: "Rank",
       saveGrade: "Grade saved",
       calculate: "Calculate Ranking",
-      markAsSpoken: "Has spoken"
+      markAsSpoken: "Has spoken",
+      actionDeleted: "Action and statistics deleted"
     }
   }[lang];
 
@@ -285,14 +287,17 @@ export default function PresidentDashboard() {
   const statsData = useMemo(() => {
     const counts: Record<string, number> = {};
     delegates.forEach(d => { counts[d.country_name] = 0; });
+    
+    // On ne compte que les participations liées à des actions qui existent encore
+    const existingActionIds = new Set(allActions.map(a => a.id));
+    
     allParticipations.forEach(p => {
-      // Include both 'participating' and 'spoken' to maintain stats integrity
-      if ((p.status === 'participating' || p.status === 'spoken') && counts[p.country_name] !== undefined) {
+      if (existingActionIds.has(p.action_id) && (p.status === 'participating' || p.status === 'spoken') && counts[p.country_name] !== undefined) {
         counts[p.country_name]++;
       }
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
-  }, [allParticipations, delegates]);
+  }, [allParticipations, delegates, allActions]);
 
   const toggleSuspension = () => {
     if (!db) return;
@@ -465,7 +470,17 @@ export default function PresidentDashboard() {
 
   const handleDeleteAction = (actionId: string) => {
     if (!db) return;
+    // Supprimer l'action elle-même
     deleteDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', actionId));
+    
+    // Supprimer en cascade toutes les participations liées pour nettoyer le graphe et la DB
+    allParticipations.forEach(p => {
+      if (p.action_id === actionId) {
+        deleteDocumentNonBlocking(doc(db, 'committees', committeeId, 'participations', p.id));
+      }
+    });
+    
+    toast({ title: t.actionDeleted });
   };
 
   const handleLogout = async () => {
