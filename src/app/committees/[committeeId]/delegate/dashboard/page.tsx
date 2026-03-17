@@ -73,7 +73,8 @@ export default function DelegateDashboard() {
       against: "CONTRE",
       abstention: "ABST.",
       voteRecorded: "Vote enregistré",
-      submissionsSuspended: "ENVOIS SUSPENDUS"
+      submissionsSuspended: "ENVOIS SUSPENDUS",
+      preview: "Aperçu en temps réel"
     },
     en: {
       sessionActive: "Active Session",
@@ -108,7 +109,8 @@ export default function DelegateDashboard() {
       against: "AGAINST",
       abstention: "ABST.",
       voteRecorded: "Vote recorded",
-      submissionsSuspended: "SUBMISSIONS SUSPENDED"
+      submissionsSuspended: "SUBMISSIONS SUSPENDED",
+      preview: "Real-time Preview"
     }
   }[lang];
   
@@ -202,10 +204,40 @@ export default function DelegateDashboard() {
     const end = textarea.selectionEnd;
     const text = textarea.value;
     const selectedText = text.substring(start, end);
+    
     const openTag = `<${tag}>`;
     const closeTag = `</${tag}>`;
-    let newText = text.substring(0, start) + openTag + selectedText + closeTag + text.substring(end);
+    
+    let newText;
+    let newSelectionStart;
+    let newSelectionEnd;
+
+    if (selectedText.startsWith(openTag) && selectedText.endsWith(closeTag)) {
+      const unwrapped = selectedText.substring(openTag.length, selectedText.length - closeTag.length);
+      newText = text.substring(0, start) + unwrapped + text.substring(end);
+      newSelectionStart = start;
+      newSelectionEnd = start + unwrapped.length;
+    } 
+    else if (
+      text.substring(start - openTag.length, start) === openTag &&
+      text.substring(end, end + closeTag.length) === closeTag
+    ) {
+      newText = text.substring(0, start - openTag.length) + selectedText + text.substring(end + closeTag.length);
+      newSelectionStart = start - openTag.length;
+      newSelectionEnd = end - openTag.length;
+    }
+    else {
+      newText = text.substring(0, start) + openTag + selectedText + closeTag + text.substring(end);
+      newSelectionStart = start + openTag.length;
+      newSelectionEnd = end + openTag.length;
+    }
+
     setResolutionForm({ ...resolutionForm, content: newText });
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newSelectionStart, newSelectionEnd);
+    }, 0);
   };
 
   const submitResolution = async (e: React.FormEvent) => {
@@ -263,6 +295,12 @@ export default function DelegateDashboard() {
     const timeB = b.created_at?.seconds || b.timestamp?.seconds || 0;
     return timeB - timeA;
   });
+
+  const parseTimePerDelegate = (timeStr: string) => {
+    if (!timeStr) return 60;
+    const [mins, secs] = timeStr.split(':').map(Number);
+    return (mins * 60) + (secs || 0);
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
@@ -383,7 +421,7 @@ export default function DelegateDashboard() {
                     <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
                     <div className="bg-muted/30 p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-4">
                       <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest"><Timer size={18} /> {t.speakerChrono}</div>
-                      <SpeakingTimer status={currentAction.speaking_timer_status} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={60} size="lg" />
+                      <SpeakingTimer status={currentAction.speaking_timer_status} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} size="lg" />
                     </div>
                   </div>
                   {currentAction.allow_participation && currentAction.status === 'launched' && (
@@ -447,9 +485,22 @@ export default function DelegateDashboard() {
                     <div className="flex gap-1">
                       <Button type="button" variant="outline" size="sm" onClick={() => wrapText('b')}><Bold size={14} /></Button>
                       <Button type="button" variant="outline" size="sm" onClick={() => wrapText('i')}><Italic size={14} /></Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => wrapText('u')}><Underline size={14} /></Button>
                     </div>
                   </div>
                   <Textarea ref={textAreaRef} className="min-h-[250px] text-lg leading-relaxed font-serif" value={resolutionForm.content} onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} required disabled={!allowResolutions} />
+                  
+                  {resolutionForm.content && (
+                    <div className="mt-4 p-4 border rounded-lg bg-muted/5">
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase mb-2">
+                        <Eye size={12} /> {t.preview}
+                      </div>
+                      <div 
+                        className="text-lg font-serif leading-relaxed text-left whitespace-pre-wrap break-words prose prose-neutral max-w-none"
+                        dangerouslySetInnerHTML={{ __html: resolutionForm.content }}
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
               <CardFooter><Button type="submit" disabled={!allowResolutions} className="w-full h-16 bg-secondary text-xl font-bold gap-3 shadow-lg"><Send size={24} /> {t.transmit}</Button></CardFooter>
