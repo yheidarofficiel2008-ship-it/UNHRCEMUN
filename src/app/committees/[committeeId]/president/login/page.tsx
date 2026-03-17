@@ -1,9 +1,8 @@
-
 "use client"
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Lock, Mail, LogIn, ArrowLeft } from 'lucide-react';
+import { Lock, Mail, LogIn, ArrowLeft, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
@@ -31,30 +30,30 @@ export default function PresidentLogin() {
   const lang = committee?.language || 'fr';
   const t = {
     fr: {
-      portal: "Portail Président",
-      committeeLabel: "Comité :",
-      loading: "Chargement...",
-      emailLabel: "Email Président",
-      passLabel: "Mot de passe",
-      accessButton: "Accéder au Bureau",
+      portal: "Bureau de la Présidence",
+      committeeLabel: "Comité",
+      loading: "Authentification...",
+      emailLabel: "Email Présidentiel",
+      passLabel: "Code d'Accès",
+      accessButton: "Déverrouiller le Bureau",
       backHub: "Retour au Hub",
       errorTitle: "Accès Refusé",
-      errorDesc: "Ces identifiants ne correspondent pas à la présidence de ce comité.",
-      successTitle: "Connexion réussie",
-      successDesc: "Bureau de la présidence"
+      errorDesc: "Ces identifiants ne correspondent pas à l'autorité de ce comité.",
+      successTitle: "Session Initialisée",
+      successDesc: "Ouverture du bureau"
     },
     en: {
-      portal: "President Portal",
-      committeeLabel: "Committee:",
-      loading: "Loading...",
-      emailLabel: "President Email",
-      passLabel: "Password",
-      accessButton: "Access Office",
+      portal: "Presidential Office",
+      committeeLabel: "Committee",
+      loading: "Authenticating...",
+      emailLabel: "Presidential Email",
+      passLabel: "Access Code",
+      accessButton: "Unlock Office",
       backHub: "Back to Hub",
       errorTitle: "Access Denied",
-      errorDesc: "Credentials do not match the presidency of this committee.",
-      successTitle: "Login successful",
-      successDesc: "Presidency Office"
+      errorDesc: "Credentials do not match the authority of this committee.",
+      successTitle: "Session Initialized",
+      successDesc: "Opening office"
     }
   }[lang];
 
@@ -85,43 +84,49 @@ export default function PresidentLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-2xl border-t-4 border-primary">
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl font-black uppercase tracking-tighter font-headline">{t.portal}</CardTitle>
-          <CardDescription className="font-bold uppercase tracking-widest text-[10px]">
-            {committee ? `${t.committeeLabel} ${committee.name}` : t.loading}
-          </CardDescription>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6">
+      <Card className="w-full max-w-md border-none glass-card rounded-[2.5rem] p-10 overflow-hidden relative">
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-black"></div>
+        <CardHeader className="text-center space-y-6 pt-6">
+          <div className="p-4 bg-primary/5 rounded-[2rem] w-fit mx-auto border border-primary/10 shadow-inner">
+            <Shield size={48} className="text-primary" />
+          </div>
+          <div className="space-y-2">
+            <CardTitle className="text-4xl font-black uppercase tracking-tight text-gradient leading-none">{t.portal}</CardTitle>
+            <CardDescription className="font-bold uppercase tracking-[0.2em] text-[10px] text-primary/60">
+              {committee ? `${t.committeeLabel} ${committee.name}` : t.loading}
+            </CardDescription>
+          </div>
         </CardHeader>
         
         <form onSubmit={handleLogin}>
-          <CardContent className="space-y-4 pt-4">
+          <CardContent className="space-y-6 pt-4">
             <div className="space-y-2">
-              <Label htmlFor="login-email">{t.emailLabel}</Label>
+              <Label className="text-[10px] uppercase font-black tracking-widest text-primary/60 ml-1">{t.emailLabel}</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="login-email" className="pl-10 h-11" type="email" placeholder="president@mun.org" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Mail className="absolute left-4 top-4 h-5 w-5 text-primary/30" />
+                <Input className="pl-12 h-14 rounded-2xl border-primary/10 bg-primary/[0.01] font-medium" type="email" placeholder="president@mun-os.org" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="login-password">{t.passLabel}</Label>
+              <Label className="text-[10px] uppercase font-black tracking-widest text-primary/60 ml-1">{t.passLabel}</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="login-password" type="password" className="pl-10 h-11" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Lock className="absolute left-4 top-4 h-5 w-5 text-primary/30" />
+                <Input type="password" className="pl-12 h-14 rounded-2xl border-primary/10 bg-primary/[0.01] font-mono tracking-widest" value={password} onChange={(e) => setPassword(e.target.value)} required />
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-2">
-            <Button type="submit" className="w-full bg-primary h-12 text-lg font-bold" disabled={loading}>
-              {loading ? t.loading : <><LogIn className="mr-2 h-5 w-5" /> {t.accessButton}</>}
+          <CardFooter className="flex flex-col gap-4 mt-6">
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-16 text-xs font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95" disabled={loading}>
+              {loading ? t.loading : <><LogIn className="mr-3 h-5 w-5" /> {t.accessButton}</>}
             </Button>
-            <Button asChild variant="ghost" className="w-full">
+            <Button asChild variant="ghost" className="w-full text-muted-foreground hover:text-primary rounded-xl h-12 font-bold uppercase tracking-widest text-[10px]">
               <Link href="/"><ArrowLeft className="mr-2 h-4 w-4" /> {t.backHub}</Link>
             </Button>
           </CardFooter>
         </form>
       </Card>
-      <p className="mt-8 text-[10px] text-muted-foreground text-center uppercase tracking-widest opacity-30">MUN-OS v2.0</p>
+      <p className="mt-12 text-[10px] text-primary/30 font-black uppercase tracking-[0.5em]">MUN-OS Excellence v2.0</p>
     </div>
   );
 }

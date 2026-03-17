@@ -1,11 +1,10 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
+    --background: 210 40% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -13,18 +12,18 @@
     --popover-foreground: 222 47% 11%;
     --primary: 209 95% 34%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 188 62% 47%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 210 20% 90%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 20% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent: 188 62% 47%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 82% 44%;
+    --accent: 209 95% 34%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 20% 98%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 209 95% 34%;
-    --radius: 0.75rem;
+    --radius: 1rem;
   }
 }
 
@@ -33,33 +32,26 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-background text-foreground font-body antialiased;
+    background-image: radial-gradient(at 0% 0%, hsla(209, 95%, 34%, 0.03) 0, transparent 50%),
+                      radial-gradient(at 100% 100%, hsla(209, 95%, 34%, 0.03) 0, transparent 50%);
   }
 }
 
+.text-gradient {
+  @apply bg-gradient-to-br from-primary to-black bg-clip-text text-transparent;
+}
+
 .session-suspended {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(204, 20, 20, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  color: white;
-  pointer-events: all;
+  @apply fixed inset-0 z-[9999] bg-destructive/90 backdrop-blur-md flex items-center justify-center text-white;
+  animation: fadeIn 0.5s ease-out;
 }
 
-.session-suspended h1 {
-  font-size: 3rem;
-  font-weight: 800;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  animation: pulse 2s infinite;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.05); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 1; }
+.glass-card {
+  @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
 }

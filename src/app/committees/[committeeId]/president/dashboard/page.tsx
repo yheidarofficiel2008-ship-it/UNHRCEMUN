@@ -40,130 +40,130 @@ export default function PresidentDashboard() {
   const lang = committee?.language || 'fr';
   const t = {
     fr: {
-      presidency: "Présidence",
+      presidency: "Bureau de la Présidence",
       specialAction: "Action Spéciale",
-      crisisMode: "Mode Crise Actif",
+      crisisMode: "MODE CRISE ACTIF",
       voteLaunched: "Vote lancé",
       crisisTriggered: "CRISE DÉCLENCHÉE",
       messageDisplayed: "Message affiché",
       resolutionsAllowed: "Résolutions autorisées",
       resolutionsBlocked: "Résolutions bloquées",
-      resume: "Reprendre",
-      suspend: "Suspendre",
-      newAction: "Nouvelle Action",
-      title: "Titre",
-      duration: "Durée (min)",
+      resume: "Rétablir la Séance",
+      suspend: "Suspendre la Séance",
+      newAction: "Nouvelle Procédure",
+      title: "Intitulé",
+      duration: "Durée (minutes)",
       speakingTime: "Temps de parole",
-      allowOptional: "Autoriser participation facultative",
-      launchAction: "Lancer l'Action",
+      allowOptional: "Participation facultative",
+      launchAction: "Initier l'Action",
       start: "Démarrer",
       pause: "Pause",
-      stop: "Arrêter",
-      speakerChrono: "Chrono Orateur",
-      speakersList: "Liste des Orateurs",
-      noSpeaker: "Aucun orateur",
-      addCountry: "Ajouter un Pays",
+      stop: "Terminer",
+      speakerChrono: "Minuteur Orateur",
+      speakersList: "Ordre du Jour / Orateurs",
+      noSpeaker: "Aucun orateur inscrit",
+      addCountry: "Ajouter une Délégation",
       countryName: "Nom du Pays",
-      password: "Mot de passe",
-      addToList: "Ajouter à la liste",
-      registeredDelegates: "Délégués Enregistrés",
-      participationStats: "Participations aux Débats",
-      actionsHistory: "Historique des Actions",
-      resolutionsSubmitted: "Resolutions Soumises",
-      privateInbox: "Boîte de réception Privée",
+      password: "Code d'accès",
+      addToList: "Enregistrer la Délégation",
+      registeredDelegates: "Délégations Membres",
+      participationStats: "Analytique des Participations",
+      actionsHistory: "Journal des Procédures",
+      resolutionsSubmitted: "Projets de Résolution",
+      privateInbox: "Communications Privées",
       noResolution: "Aucune résolution soumise",
-      noMessage: "Aucun message",
-      approve: "Approuver",
+      noMessage: "Aucun message en attente",
+      approve: "Valider",
       reject: "Rejeter",
       hide: "Masquer",
-      show: "Afficher",
+      show: "Projeter",
       spokesperson: "Porte-parole",
       sponsors: "Sponsors",
-      specialTitle: "Annonce, Vote ou Crise",
-      overlayType: "Type d'affichage",
-      overlaySubject: "Titre / Sujet",
-      crisisSubject: "Sujet de la Crise",
-      launchEverywhere: "Lancer sur tous les écrans",
-      launchCrisis: "Lancer la Crise",
-      auth: "Authentification...",
-      actions: "Actions",
-      countries: "Pays",
-      stats: "Stats & Notation",
-      resolutionsTab: "Projets de Résolution",
-      messagesTab: "Messages Privés",
-      gradingTitle: "Notation des Délégués",
-      speaking: "Prise de parole",
-      diplomacy: "Diplomatie & participation",
-      knowledge: "Connaissance & cohérence",
-      average: "Moyenne",
+      specialTitle: "Configuration de l'Alerte",
+      overlayType: "Mode de Diffusion",
+      overlaySubject: "Sujet / Titre",
+      crisisSubject: "Nature de la Crise",
+      launchEverywhere: "Diffuser sur tous les écrans",
+      launchCrisis: "DÉCLENCHER LA CRISE",
+      auth: "Vérification des accès...",
+      actions: "Session",
+      countries: "Membres",
+      stats: "Notation & Stats",
+      resolutionsTab: "Résolutions",
+      messagesTab: "Messages",
+      gradingTitle: "Barème d'Évaluation",
+      speaking: "Élocution",
+      diplomacy: "Diplomatie",
+      knowledge: "Expertise",
+      average: "Moyenne Générale",
       rank: "Rang",
-      saveGrade: "Note enregistrée",
-      calculate: "Calculer le classement",
-      markAsSpoken: "A déjà parlé",
-      actionDeleted: "Action et statistiques supprimées"
+      saveGrade: "Évaluation enregistrée",
+      calculate: "Générer le Classement",
+      markAsSpoken: "A terminé son allocution",
+      actionDeleted: "Procédure et données associées supprimées"
     },
     en: {
-      presidency: "Presidency",
+      presidency: "Presidency Office",
       specialAction: "Special Action",
-      crisisMode: "Crisis Mode Active",
+      crisisMode: "CRISIS MODE ACTIVE",
       voteLaunched: "Vote launched",
       crisisTriggered: "CRISIS TRIGGERED",
       messageDisplayed: "Message displayed",
       resolutionsAllowed: "Resolutions allowed",
       resolutionsBlocked: "Resolutions blocked",
-      resume: "Resume",
-      suspend: "Suspend",
-      newAction: "New Action",
+      resume: "Resume Session",
+      suspend: "Suspend Session",
+      newAction: "New Procedure",
       title: "Title",
       duration: "Duration (min)",
       speakingTime: "Speaking time",
-      allowOptional: "Allow optional participation",
-      launchAction: "Launch Action",
+      allowOptional: "Optional participation",
+      launchAction: "Initiate Action",
       start: "Start",
       pause: "Pause",
-      stop: "Stop",
+      stop: "Finish",
       speakerChrono: "Speaker Timer",
-      speakersList: "Speakers List",
-      noSpeaker: "No speaker",
-      addCountry: "Add Country",
+      speakersList: "Order of the Day / Speakers",
+      noSpeaker: "No speakers listed",
+      addCountry: "Add Delegation",
       countryName: "Country Name",
-      password: "Password",
-      addToList: "Add to list",
-      registeredDelegates: "Registered Delegates",
-      participationStats: "Debate Participation",
-      actionsHistory: "Actions History",
-      resolutionsSubmitted: "Submitted Resolutions",
-      privateInbox: "Private Inbox",
-      noResolution: "No resolution submitted",
-      noMessage: "No message",
+      password: "Access Code",
+      addToList: "Register Delegation",
+      registeredDelegates: "Member Delegations",
+      participationStats: "Participation Analytics",
+      actionsHistory: "Procedure Log",
+      resolutionsSubmitted: "Draft Resolutions",
+      privateInbox: "Private Communications",
+      noResolution: "No resolutions submitted",
+      noMessage: "No messages pending",
       approve: "Approve",
       reject: "Reject",
       hide: "Hide",
-      show: "Show",
+      show: "Project",
       spokesperson: "Spokesperson",
       sponsors: "Sponsors",
-      specialTitle: "Announcement, Vote or Crisis",
-      overlayType: "Display Type",
-      overlaySubject: "Title / Subject",
-      crisisSubject: "Crisis Subject",
-      launchEverywhere: "Launch on all screens",
-      launchCrisis: "Launch Crisis",
-      auth: "Authentication...",
-      actions: "Actions",
-      countries: "Countries",
-      stats: "Stats & Grading",
-      resolutionsTab: "Draft Resolutions",
-      messagesTab: "Private Messages",
-      gradingTitle: "Delegate Grading",
-      speaking: "Speaking",
-      diplomacy: "Diplomacy & Participation",
-      knowledge: "Knowledge & Coherence",
-      average: "Average",
+      specialTitle: "Alert Configuration",
+      overlayType: "Broadcast Mode",
+      overlaySubject: "Subject / Title",
+      crisisSubject: "Crisis Nature",
+      launchEverywhere: "Broadcast to all screens",
+      launchCrisis: "TRIGGER CRISIS",
+      auth: "Checking access...",
+      actions: "Session",
+      countries: "Members",
+      stats: "Grading & Stats",
+      resolutionsTab: "Resolutions",
+      messagesTab: "Messages",
+      gradingTitle: "Evaluation Rubric",
+      speaking: "Elocution",
+      diplomacy: "Diplomacy",
+      knowledge: "Expertise",
+      average: "General Average",
       rank: "Rank",
       saveGrade: "Grade saved",
-      calculate: "Calculate Ranking",
-      markAsSpoken: "Has spoken",
-      actionDeleted: "Action and statistics deleted"
+      calculate: "Generate Ranking",
+      markAsSpoken: "Has finished speaking",
+      actionDeleted: "Procedure and associated data deleted"
     }
   }[lang];
 
@@ -288,7 +288,6 @@ export default function PresidentDashboard() {
     const counts: Record<string, number> = {};
     delegates.forEach(d => { counts[d.country_name] = 0; });
     
-    // On ne compte que les participations liées à des actions qui existent encore
     const existingActionIds = new Set(allActions.map(a => a.id));
     
     allParticipations.forEach(p => {
@@ -470,10 +469,8 @@ export default function PresidentDashboard() {
 
   const handleDeleteAction = (actionId: string) => {
     if (!db) return;
-    // Supprimer l'action elle-même
     deleteDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', actionId));
     
-    // Supprimer en cascade toutes les participations liées pour nettoyer le graphe et la DB
     allParticipations.forEach(p => {
       if (p.action_id === actionId) {
         deleteDocumentNonBlocking(doc(db, 'committees', committeeId, 'participations', p.id));
@@ -502,38 +499,43 @@ export default function PresidentDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-50">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold font-headline uppercase tracking-widest">{committee?.name || "Comité"} - {t.presidency}</h1>
-          {isSuspended && <Badge variant="destructive" className="animate-pulse">{lang === 'fr' ? 'SÉANCE SUSPENDUE' : 'SESSION SUSPENDED'}</Badge>}
-          {activeOverlay?.type === 'crisis' && <Badge variant="destructive" className="bg-red-600 animate-bounce uppercase font-black px-4 shadow-2xl">{t.crisisMode}</Badge>}
-        </div>
+      <header className="bg-white/80 backdrop-blur-md border-b border-primary/10 p-4 shadow-sm flex justify-between items-center z-50 sticky top-0">
         <div className="flex items-center gap-6">
+          <h1 className="text-xl font-black font-headline uppercase tracking-tight text-gradient">{committee?.name || "Comité"}</h1>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="border-primary/20 text-primary uppercase text-[10px] font-bold px-3">{t.presidency}</Badge>
+            {isSuspended && <Badge variant="destructive" className="animate-pulse bg-destructive/10 text-destructive border-destructive/20">{lang === 'fr' ? 'SÉANCE SUSPENDUE' : 'SESSION SUSPENDED'}</Badge>}
+            {activeOverlay?.type === 'crisis' && <Badge variant="destructive" className="bg-red-600 animate-bounce uppercase font-black px-4 shadow-xl border-none">{t.crisisMode}</Badge>}
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
           <Dialog open={isOverlayDialogOpen} onOpenChange={setIsOverlayDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-amber-500 hover:bg-amber-600 font-bold gap-2"><Stars size={18} /> {t.specialAction}</Button>
+              <Button className="bg-primary hover:bg-primary/90 text-white rounded-full font-bold gap-2 px-6">
+                <Stars size={16} /> {t.specialAction}
+              </Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>{t.specialTitle}</DialogTitle></DialogHeader>
-              <div className="space-y-4 py-4">
+            <DialogContent className="rounded-3xl border-primary/10 shadow-2xl">
+              <DialogHeader><DialogTitle className="text-2xl font-black uppercase text-gradient">{t.specialTitle}</DialogTitle></DialogHeader>
+              <div className="space-y-6 py-6">
                 <div className="space-y-2">
-                  <Label>{t.overlayType}</Label>
+                  <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.overlayType}</Label>
                   <Select value={overlayForm.type} onValueChange={(val) => setOverlayForm({...overlayForm, type: val})}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="rounded-xl border-primary/20"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="message">{lang === 'fr' ? 'Message à afficher' : 'Message to display'}</SelectItem>
-                      <SelectItem value="vote">{lang === 'fr' ? 'Procédure de vote' : 'Voting procedure'}</SelectItem>
-                      <SelectItem value="crisis" className="text-red-600 font-bold">🚨 {lang === 'fr' ? 'CRISE (Écran rouge + Alarme)' : 'CRISIS (Red screen + Alarm)'}</SelectItem>
+                      <SelectItem value="message">{lang === 'fr' ? 'Diffusion de Message' : 'Message Broadcast'}</SelectItem>
+                      <SelectItem value="vote">{lang === 'fr' ? 'Procédure de Scrutin' : 'Voting Procedure'}</SelectItem>
+                      <SelectItem value="crisis" className="text-red-600 font-black">🚨 {lang === 'fr' ? 'ALERTE CRISE' : 'CRISIS ALERT'}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>{overlayForm.type === 'crisis' ? t.crisisSubject : t.overlaySubject}</Label>
-                  <Input placeholder={overlayForm.type === 'crisis' ? (lang === 'fr' ? "Situation d'urgence..." : "Emergency situation...") : "..."} value={overlayForm.title} onChange={(e) => setOverlayForm({...overlayForm, title: e.target.value})} />
+                  <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{overlayForm.type === 'crisis' ? t.crisisSubject : t.overlaySubject}</Label>
+                  <Input placeholder="..." value={overlayForm.title} onChange={(e) => setOverlayForm({...overlayForm, title: e.target.value})} className="rounded-xl border-primary/20 h-12" />
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={launchOverlay} className={overlayForm.type === 'crisis' ? "bg-red-600 hover:bg-red-700 w-full font-black uppercase" : "bg-primary w-full"}>
+                <Button onClick={launchOverlay} className={overlayForm.type === 'crisis' ? "bg-red-600 hover:bg-red-700 w-full font-black uppercase h-14 rounded-2xl" : "bg-primary w-full h-14 rounded-2xl"}>
                   {overlayForm.type === 'crisis' ? t.launchCrisis : t.launchEverywhere}
                 </Button>
               </DialogFooter>
@@ -541,95 +543,83 @@ export default function PresidentDashboard() {
           </Dialog>
 
           {activeOverlay && activeOverlay.type !== 'none' && (
-            <div className="flex items-center gap-4 bg-white/10 px-4 py-1.5 rounded-full border border-white/20 animate-in fade-in zoom-in duration-300">
-              <span className="text-xs font-bold uppercase tracking-widest truncate max-w-[150px]">{activeOverlay.title}</span>
-              {activeOverlay.type === 'vote' && (
-                <div className="flex gap-2 ml-2 border-l border-white/20 pl-4 items-center">
-                  <div className="flex items-center gap-1 bg-green-500/20 px-2 py-0.5 rounded border border-green-500/30">
-                    <ThumbsUp size={12} className="text-green-400" /><span className="font-bold tabular-nums text-xs">{activeOverlay.results?.pour || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1 bg-red-500/20 px-2 py-0.5 rounded border border-red-500/30">
-                    <ThumbsDown size={12} className="text-red-400" /><span className="font-bold tabular-nums text-xs">{activeOverlay.results?.contre || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1 bg-yellow-500/20 px-2 py-0.5 rounded border border-yellow-500/30">
-                    <CircleSlash size={12} className="text-yellow-400" /><span className="font-bold tabular-nums text-xs">{activeOverlay.results?.abstention || 0}</span>
-                  </div>
-                </div>
-              )}
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20 ml-2" onClick={stopOverlay}><X size={14} /></Button>
+            <div className="flex items-center gap-4 bg-primary/5 px-4 py-1.5 rounded-full border border-primary/20 animate-in fade-in zoom-in duration-300">
+              <span className="text-[10px] font-black uppercase tracking-widest truncate max-w-[150px] text-primary">{activeOverlay.title}</span>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10 rounded-full" onClick={stopOverlay}><X size={14} /></Button>
             </div>
           )}
 
-          <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
-            {allowResolutions ? <MessageSquare size={16} /> : <MessageSquareOff size={16} />}
-            <span className="text-xs font-bold uppercase tracking-tighter">Res.</span>
-            <Switch checked={allowResolutions} onCheckedChange={toggleResolutions} className="data-[state=checked]:bg-green-500" />
+          <div className="flex items-center gap-2 bg-secondary px-3 py-1.5 rounded-full border border-primary/10">
+            <span className="text-[10px] font-black uppercase tracking-tight text-primary">Res.</span>
+            <Switch checked={allowResolutions} onCheckedChange={toggleResolutions} className="data-[state=checked]:bg-primary" />
           </div>
-          <div className="h-6 w-px bg-white/20" />
-          <Button variant="destructive" onClick={toggleSuspension}>{isSuspended ? t.resume : t.suspend}</Button>
-          <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}><LogOut size={20} /></Button>
+          <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 rounded-full px-6 font-bold" onClick={toggleSuspension}>
+            {isSuspended ? t.resume : t.suspend}
+          </Button>
+          <Button variant="ghost" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-full h-10 w-10 p-0" onClick={handleLogout}><LogOut size={20} /></Button>
         </div>
       </header>
 
-      <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1600px] mx-auto w-full">
-        <div className="lg:col-span-4 space-y-6">
-          <Tabs defaultValue="actions">
-            <TabsList className="w-full">
-              <TabsTrigger value="actions" className="flex-1">{t.actions}</TabsTrigger>
-              <TabsTrigger value="delegates" className="flex-1">{t.countries}</TabsTrigger>
-              <TabsTrigger value="stats" className="flex-1">{t.stats}</TabsTrigger>
+      <main className="flex-1 p-6 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1600px] mx-auto w-full">
+        <div className="lg:col-span-4 space-y-8">
+          <Tabs defaultValue="actions" className="w-full">
+            <TabsList className="w-full bg-secondary/50 p-1 rounded-2xl border border-primary/5">
+              <TabsTrigger value="actions" className="flex-1 rounded-xl font-bold uppercase text-[10px] tracking-widest">{t.actions}</TabsTrigger>
+              <TabsTrigger value="delegates" className="flex-1 rounded-xl font-bold uppercase text-[10px] tracking-widest">{t.countries}</TabsTrigger>
+              <TabsTrigger value="stats" className="flex-1 rounded-xl font-bold uppercase text-[10px] tracking-widest">{t.stats}</TabsTrigger>
             </TabsList>
-            <TabsContent value="actions" className="space-y-6 mt-4">
-              <Card>
-                <CardHeader className="pb-4"><CardTitle className="text-lg">{t.newAction}</CardTitle></CardHeader>
+            
+            <TabsContent value="actions" className="space-y-8 mt-6 animate-in fade-in duration-300">
+              <Card className="rounded-3xl border-primary/10 glass-card">
+                <CardHeader className="pb-4"><CardTitle className="text-lg font-black uppercase tracking-tight text-gradient">{t.newAction}</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>{t.title}</Label>
-                    <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="..." />
+                    <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.title}</Label>
+                    <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="..." className="rounded-xl border-primary/10" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1"><Label className="text-[10px] uppercase">{t.duration}</Label><Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} /></div>
-                    <div className="space-y-1"><Label className="text-[10px] uppercase">{t.speakingTime}</Label><Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} placeholder="1:00" /></div>
+                    <div className="space-y-1"><Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.duration}</Label><Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} className="rounded-xl border-primary/10" /></div>
+                    <div className="space-y-1"><Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.speakingTime}</Label><Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} placeholder="1:00" className="rounded-xl border-primary/10" /></div>
                   </div>
-                  <div className="flex items-center space-x-2 p-2 border rounded-lg bg-muted/30">
-                    <Checkbox id="participation" checked={newAction.allowParticipation} onCheckedChange={(checked) => setNewAction({...newAction, allowParticipation: !!checked})} />
-                    <Label htmlFor="participation" className="text-sm cursor-pointer">{t.allowOptional}</Label>
+                  <div className="flex items-center space-x-3 p-4 border border-primary/5 rounded-2xl bg-primary/[0.02]">
+                    <Checkbox id="participation" checked={newAction.allowParticipation} onCheckedChange={(checked) => setNewAction({...newAction, allowParticipation: !!checked})} className="rounded-md" />
+                    <Label htmlFor="participation" className="text-xs font-bold text-foreground/70 cursor-pointer">{t.allowOptional}</Label>
                   </div>
-                  <Button className="w-full bg-primary" onClick={createAction}>{t.launchAction}</Button>
+                  <Button className="w-full bg-primary hover:bg-primary/90 h-12 rounded-xl font-bold uppercase tracking-widest text-xs" onClick={createAction}>{t.launchAction}</Button>
                 </CardContent>
               </Card>
 
               {currentAction && currentAction.status !== 'completed' && (
-                <Card className="border-primary/20 shadow-lg">
-                  <CardHeader className="bg-primary/5 pb-2">
+                <Card className="rounded-3xl border-primary/20 shadow-2xl glass-card overflow-hidden">
+                  <CardHeader className="bg-primary/[0.03] border-b border-primary/5 pb-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <Badge className="mb-1">{currentAction.status.toUpperCase()}</Badge>
-                        <CardTitle className="text-xl break-words">{currentAction.title}</CardTitle>
+                        <Badge className="bg-primary/10 text-primary border-primary/20 uppercase text-[9px] font-black tracking-widest px-2 mb-2">{currentAction.status}</Badge>
+                        <CardTitle className="text-2xl font-black uppercase tracking-tight text-gradient break-words leading-none">{currentAction.title}</CardTitle>
                       </div>
-                      <div className="flex items-center gap-1 bg-white/50 p-1 rounded-lg border">
-                        <Input type="number" className="w-12 h-8 p-1 text-center" value={customMinutes} onChange={(e) => setCustomMinutes(e.target.value)} />
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => extendTime(parseInt(customMinutes))}><Plus size={16} /></Button>
+                      <div className="flex items-center gap-1 bg-white p-1 rounded-xl shadow-inner border border-primary/10">
+                        <Input type="number" className="w-12 h-8 border-none p-1 text-center font-bold text-xs" value={customMinutes} onChange={(e) => setCustomMinutes(e.target.value)} />
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-primary hover:bg-primary/5 rounded-lg" onClick={() => extendTime(parseInt(customMinutes))}><Plus size={16} /></Button>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-6 space-y-6">
+                  <CardContent className="p-8 space-y-8">
                     <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-4">
                       {(currentAction.status === 'launched' || currentAction.status === 'paused') ? (
-                        <Button className="bg-green-600 hover:bg-green-700 h-12 gap-2" onClick={startTimer}><Play size={18} fill="currentColor" /> {t.start}</Button>
+                        <Button className="bg-primary hover:bg-primary/90 h-14 rounded-2xl gap-3 text-sm font-black uppercase tracking-widest shadow-lg shadow-primary/20" onClick={startTimer}><Play size={18} fill="currentColor" /> {t.start}</Button>
                       ) : (
-                        <Button variant="outline" className="border-amber-500 text-amber-600 h-12 gap-2" onClick={pauseTimer}><Pause size={18} fill="currentColor" /> {t.pause}</Button>
+                        <Button variant="outline" className="border-amber-400 text-amber-600 hover:bg-amber-50 h-14 rounded-2xl gap-3 text-sm font-black uppercase tracking-widest" onClick={pauseTimer}><Pause size={18} fill="currentColor" /> {t.pause}</Button>
                       )}
-                      <Button variant="destructive" className="h-12 gap-2" onClick={stopAction}><Square size={18} fill="currentColor" /> {t.stop}</Button>
+                      <Button variant="destructive" className="h-14 rounded-2xl gap-3 text-sm font-black uppercase tracking-widest shadow-lg shadow-destructive/20" onClick={stopAction}><Square size={18} fill="currentColor" /> {t.stop}</Button>
                     </div>
 
-                    <div className="pt-4 border-t space-y-4">
+                    <div className="pt-6 border-t border-primary/5 space-y-6">
                       <div className="flex justify-between items-center">
-                        <h3 className="font-bold text-[10px] text-muted-foreground uppercase flex items-center gap-2"><Timer size={14} /> {t.speakerChrono}</h3>
-                        <Badge variant="outline" className="text-[10px]">{currentAction.time_per_delegate}</Badge>
+                        <h3 className="font-black text-[10px] text-primary uppercase tracking-[0.2em] flex items-center gap-2"><Timer size={14} /> {t.speakerChrono}</h3>
+                        <Badge variant="outline" className="text-[10px] font-bold border-primary/10 bg-primary/5">{currentAction.time_per_delegate}</Badge>
                       </div>
-                      <div className="flex justify-center py-2">
+                      <div className="flex justify-center">
                         <SpeakingTimer 
                           status={currentAction.speaking_timer_status} 
                           startedAt={currentAction.speaking_timer_started_at} 
@@ -638,40 +628,35 @@ export default function PresidentDashboard() {
                           size="md" 
                         />
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-3">
                         {currentAction.speaking_timer_status === 'started' ? (
-                          <Button variant="outline" size="sm" className="border-amber-500 text-amber-600" onClick={pauseSpeakingTimer}><Pause size={14} /> {t.pause}</Button>
+                          <Button variant="outline" size="sm" className="border-amber-400 text-amber-600 h-10 rounded-xl font-bold uppercase text-[10px]" onClick={pauseSpeakingTimer}><Pause size={14} /> {t.pause}</Button>
                         ) : (
-                          <Button variant="secondary" size="sm" onClick={startSpeakingTimer}><Play size={14} /> {t.start}</Button>
+                          <Button variant="secondary" size="sm" className="bg-primary/10 text-primary hover:bg-primary/20 h-10 rounded-xl font-bold uppercase text-[10px]" onClick={startSpeakingTimer}><Play size={14} /> {t.start}</Button>
                         )}
-                        <Button variant="ghost" size="sm" className="border" onClick={resetSpeakingTimer}>Reset</Button>
-                        <Button variant="outline" size="sm" onClick={() => handleMarkAsSpoken(orateursInscrits[0]?.id)} disabled={!orateursInscrits[0]}><Check size={14} /></Button>
+                        <Button variant="ghost" size="sm" className="border border-primary/10 h-10 rounded-xl font-bold uppercase text-[10px]" onClick={resetSpeakingTimer}>Reset</Button>
+                        <Button variant="outline" size="sm" className="border-green-500/30 text-green-600 hover:bg-green-50 h-10 rounded-xl font-bold uppercase text-[10px]" onClick={() => handleMarkAsSpoken(orateursInscrits[0]?.id)} disabled={!orateursInscrits[0]}><Check size={14} /></Button>
                       </div>
                     </div>
 
-                    <div className="space-y-3 pt-4 border-t">
-                      <h3 className="font-bold text-sm text-muted-foreground uppercase flex items-center justify-between">
+                    <div className="space-y-4 pt-6 border-t border-primary/5">
+                      <h3 className="font-black text-[10px] text-primary uppercase tracking-[0.2em] flex items-center justify-between">
                         <span className="flex items-center gap-2"><ListOrdered size={14} /> {t.speakersList}</span>
-                        <Badge variant="secondary">{orateursInscrits.length}</Badge>
+                        <Badge className="bg-primary rounded-lg text-[10px]">{orateursInscrits.length}</Badge>
                       </h3>
-                      <ScrollArea className="h-[180px] border rounded-xl p-3 bg-muted/10">
-                        {orateursInscrits.length > 0 ? orateursInscrits.map((p, i) => (
-                          <div key={i} className="flex justify-between items-center p-3 mb-2 bg-white border rounded-lg shadow-sm">
-                            <span className="font-bold text-sm">{i + 1}. {p.country_name}</span>
-                            <div className="flex items-center gap-1">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:bg-green-50" onClick={() => handleMarkAsSpoken(p.id)}><Check size={16} /></Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent><p>{t.markAsSpoken}</p></TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                      <ScrollArea className="h-[200px] rounded-2xl border border-primary/5 bg-primary/[0.01] p-3">
+                        <div className="space-y-2">
+                          {orateursInscrits.length > 0 ? orateursInscrits.map((p, i) => (
+                            <div key={i} className="flex justify-between items-center p-4 bg-white border border-primary/5 rounded-xl shadow-sm group hover:border-primary/20 transition-all">
+                              <span className="font-bold text-sm text-foreground/80">{i + 1}. {p.country_name}</span>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:bg-green-50 rounded-lg" onClick={() => handleMarkAsSpoken(p.id)}><Check size={16} /></Button>
+                              </div>
                             </div>
-                          </div>
-                        )) : (
-                          <div className="text-center py-10 text-muted-foreground text-xs italic">{t.noSpeaker}</div>
-                        )}
+                          )) : (
+                            <div className="text-center py-12 text-muted-foreground text-xs italic opacity-50">{t.noSpeaker}</div>
+                          )}
+                        </div>
                       </ScrollArea>
                     </div>
                   </CardContent>
@@ -679,56 +664,32 @@ export default function PresidentDashboard() {
               )}
             </TabsContent>
 
-            <TabsContent value="delegates" className="space-y-6 mt-4">
-              <Card>
-                <CardHeader className="pb-3 flex flex-row items-center gap-2"><UserPlus size={18} className="text-secondary" /><CardTitle className="text-lg">{t.addCountry}</CardTitle></CardHeader>
+            <TabsContent value="delegates" className="space-y-8 mt-6 animate-in fade-in duration-300">
+              <Card className="rounded-3xl border-primary/10 glass-card">
+                <CardHeader className="pb-3 flex flex-row items-center gap-3"><UserPlus size={20} className="text-primary" /><CardTitle className="text-lg font-black uppercase tracking-tight text-gradient">{t.addCountry}</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2"><Label>{t.countryName}</Label><Input value={newDelegate.name} onChange={e => setNewDelegate({...newDelegate, name: e.target.value})} placeholder="..." /></div>
-                  <div className="space-y-2"><Label>{t.password}</Label><Input value={newDelegate.password} onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} placeholder="..." /></div>
-                  <Button className="w-full bg-secondary" onClick={handleAddDelegate}>{t.addToList}</Button>
+                  <div className="space-y-2"><Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.countryName}</Label><Input value={newDelegate.name} onChange={e => setNewDelegate({...newDelegate, name: e.target.value})} placeholder="..." className="rounded-xl border-primary/10 h-11" /></div>
+                  <div className="space-y-2"><Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.password}</Label><Input value={newDelegate.password} onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} placeholder="..." className="rounded-xl border-primary/10 h-11" /></div>
+                  <Button className="w-full bg-primary h-11 rounded-xl font-bold uppercase tracking-widest text-[10px]" onClick={handleAddDelegate}>{t.addToList}</Button>
                 </CardContent>
               </Card>
-              <Card>
-                <CardHeader><CardTitle className="text-lg">{t.registeredDelegates} ({delegates.length})</CardTitle></CardHeader>
+              <Card className="rounded-3xl border-primary/10 glass-card">
+                <CardHeader><CardTitle className="text-lg font-black uppercase tracking-tight text-gradient">{t.registeredDelegates} ({delegates.length})</CardTitle></CardHeader>
                 <CardContent>
-                  <ScrollArea className="h-[400px]">
-                    {delegates.map(d => (
-                      <div key={d.id} className={`flex justify-between items-center p-3 mb-2 rounded-lg border transition-colors ${d.is_suspended ? 'bg-destructive/5 border-destructive/20' : 'bg-muted/50 border-transparent'}`}>
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm break-words">{d.country_name}</span>
-                            {d.is_suspended && <Badge variant="destructive" className="h-4 text-[8px] px-1 uppercase"><ShieldAlert size={10} className="mr-0.5" /> {lang === 'fr' ? 'Suspendu' : 'Suspended'}</Badge>}
+                  <ScrollArea className="h-[450px]">
+                    <div className="space-y-3">
+                      {delegates.map(d => (
+                        <div key={d.id} className={`flex justify-between items-center p-4 rounded-2xl border transition-all duration-300 ${d.is_suspended ? 'bg-destructive/5 border-destructive/20 shadow-inner' : 'bg-white border-primary/5 shadow-sm hover:shadow-md'}`}>
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm text-foreground/80">{d.country_name}</span>
+                              {d.is_suspended && <Badge variant="destructive" className="h-4 text-[8px] px-1 uppercase font-black"><ShieldAlert size={10} className="mr-0.5" /> {lang === 'fr' ? 'Suspendu' : 'Suspended'}</Badge>}
+                            </div>
+                            <span className="text-[9px] text-muted-foreground font-mono uppercase tracking-widest mt-1 opacity-60">Pass: {d.password}</span>
                           </div>
-                          <span className="text-[10px] text-muted-foreground font-mono">Pass: {d.password}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className={`h-8 w-8 ${d.is_suspended ? 'text-green-600' : 'text-amber-600'}`} onClick={() => toggleDelegateSuspension(d.id, d.is_suspended)}>{d.is_suspended ? <ShieldOff size={16} /> : <ShieldAlert size={16} />}</Button>
-                          <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'delegates', d.id))}><Trash2 size={16} /></Button>
-                        </div>
-                      </div>
-                    ))}
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="stats" className="space-y-6 mt-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2"><Award size={18} className="text-primary" /><CardTitle className="text-lg">{t.gradingTitle}</CardTitle></CardHeader>
-                <CardContent className="px-2">
-                  <div className="px-4 mb-4"><Button onClick={handleCalculateRanks} className="w-full bg-primary gap-2 shadow-lg"><Calculator size={18} /> {t.calculate}</Button></div>
-                  <ScrollArea className="h-[500px]">
-                    <div className="space-y-6 p-2">
-                      {displayGradedDelegates.map((d, index) => (
-                        <div key={d.id} className="p-4 border rounded-xl bg-muted/20 relative">
-                          <div className="flex justify-between items-center mb-4">
-                            <div className="flex items-center gap-3"><Badge variant="secondary" className="h-8 w-8 rounded-full p-0 flex items-center justify-center font-black text-xs">{index + 1}</Badge><span className="font-black uppercase tracking-tight text-sm">{d.country_name}</span></div>
-                            <div className="flex flex-col items-end"><span className="text-[10px] font-bold text-muted-foreground uppercase">{t.average}</span><span className={`text-xl font-black tabular-nums ${d.average >= 7 ? 'text-green-600' : d.average >= 4 ? 'text-amber-600' : 'text-red-600'}`}>{d.average.toFixed(1)}/10</span></div>
-                          </div>
-                          <div className="grid grid-cols-1 gap-4">
-                            <div className="space-y-1"><Label className="text-[9px] uppercase font-bold text-muted-foreground">{t.speaking}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 text-xs font-bold" value={d.grades.speaking} onChange={(e) => handleUpdateGrade(d.id, 'speaking', Number(e.target.value))} /></div>
-                            <div className="space-y-1"><Label className="text-[9px] uppercase font-bold text-muted-foreground">{t.diplomacy}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 text-xs font-bold" value={d.grades.diplomacy} onChange={(e) => handleUpdateGrade(d.id, 'diplomacy', Number(e.target.value))} /></div>
-                            <div className="space-y-1"><Label className="text-[9px] uppercase font-bold text-muted-foreground">{t.knowledge}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 text-xs font-bold" value={d.grades.knowledge} onChange={(e) => handleUpdateGrade(d.id, 'knowledge', Number(e.target.value))} /></div>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className={`h-8 w-8 rounded-lg ${d.is_suspended ? 'text-green-600 hover:bg-green-50' : 'text-amber-600 hover:bg-amber-50'}`} onClick={() => toggleDelegateSuspension(d.id, d.is_suspended)}>{d.is_suspended ? <ShieldOff size={16} /> : <ShieldAlert size={16} />}</Button>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/5 h-8 w-8 rounded-lg" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'delegates', d.id))}><Trash2 size={16} /></Button>
                           </div>
                         </div>
                       ))}
@@ -736,45 +697,85 @@ export default function PresidentDashboard() {
                   </ScrollArea>
                 </CardContent>
               </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2"><BarChart3 size={18} className="text-primary" /><CardTitle className="text-lg">{t.participationStats}</CardTitle></CardHeader>
-                <CardContent className="h-[300px] pt-4">
+            </TabsContent>
+
+            <TabsContent value="stats" className="space-y-8 mt-6 animate-in fade-in duration-300">
+              <Card className="rounded-3xl border-primary/10 glass-card">
+                <CardHeader className="flex flex-row items-center gap-3"><Award size={20} className="text-primary" /><CardTitle className="text-lg font-black uppercase tracking-tight text-gradient">{t.gradingTitle}</CardTitle></CardHeader>
+                <CardContent className="px-2">
+                  <div className="px-4 mb-6"><Button onClick={handleCalculateRanks} className="w-full bg-primary hover:bg-primary/90 rounded-2xl h-14 font-black uppercase tracking-widest text-xs gap-3 shadow-lg shadow-primary/20"><Calculator size={18} /> {t.calculate}</Button></div>
+                  <ScrollArea className="h-[600px]">
+                    <div className="space-y-8 p-4">
+                      {displayGradedDelegates.map((d, index) => (
+                        <div key={d.id} className="p-6 border border-primary/5 rounded-3xl bg-white shadow-sm relative group hover:shadow-md transition-all">
+                          <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-4">
+                              <span className="h-10 w-10 bg-primary/5 text-primary rounded-2xl flex items-center justify-center font-black text-sm border border-primary/10 shadow-inner">{index + 1}</span>
+                              <span className="font-black uppercase tracking-tight text-sm text-foreground/80">{d.country_name}</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em] mb-1">{t.average}</span>
+                              <span className={`text-2xl font-black tabular-nums leading-none ${d.average >= 7 ? 'text-green-600' : d.average >= 4 ? 'text-amber-600' : 'text-red-600'}`}>{d.average.toFixed(1)}/10</span>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 gap-4">
+                            <div className="space-y-2"><Label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.speaking}</Label><Input type="number" min="0" max="10" step="0.5" className="h-10 text-xs font-black rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.speaking} onChange={(e) => handleUpdateGrade(d.id, 'speaking', Number(e.target.value))} /></div>
+                            <div className="space-y-2"><Label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.diplomacy}</Label><Input type="number" min="0" max="10" step="0.5" className="h-10 text-xs font-black rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.diplomacy} onChange={(e) => handleUpdateGrade(d.id, 'diplomacy', Number(e.target.value))} /></div>
+                            <div className="space-y-2"><Label className="text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.knowledge}</Label><Input type="number" min="0" max="10" step="0.5" className="h-10 text-xs font-black rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.knowledge} onChange={(e) => handleUpdateGrade(d.id, 'knowledge', Number(e.target.value))} /></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+              <Card className="rounded-3xl border-primary/10 glass-card overflow-hidden">
+                <CardHeader className="flex flex-row items-center gap-3"><BarChart3 size={20} className="text-primary" /><CardTitle className="text-lg font-black uppercase tracking-tight text-gradient">{t.participationStats}</CardTitle></CardHeader>
+                <CardContent className="h-[350px] pt-4">
                   {statsData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={statsData} layout="vertical">
                         <XAxis type="number" hide />
-                        <YAxis dataKey="name" type="category" width={100} fontSize={10} tick={{ fill: 'currentColor' }} />
+                        <YAxis dataKey="name" type="category" width={100} fontSize={10} tick={{ fill: 'currentColor', fontWeight: 700 }} />
                         <RechartsTooltip 
-                          cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                          cursor={{ fill: 'rgba(4, 89, 171, 0.05)' }}
                           content={({ active, payload }) => {
                             if (active && payload && payload.length) {
                               return (
-                                <div className="bg-white border p-2 rounded-lg shadow-xl text-xs">
-                                  <p className="font-bold">{payload[0].payload.name}</p>
-                                  <p className="text-primary">{payload[0].value} participation(s)</p>
+                                <div className="bg-white/95 backdrop-blur-md border border-primary/10 p-3 rounded-2xl shadow-2xl text-xs">
+                                  <p className="font-black text-primary uppercase mb-1">{payload[0].payload.name}</p>
+                                  <p className="font-bold text-muted-foreground">{payload[0].value} intervention(s)</p>
                                 </div>
                               );
                             }
                             return null;
                           }}
                         />
-                        <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                        <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={24}>
                           {statsData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'hsl(var(--secondary))'} />
+                            <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'rgba(4, 89, 171, 0.5)'} />
                           ))}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
-                  ) : <div className="h-full flex flex-col items-center justify-center text-muted-foreground italic">{lang === 'fr' ? 'Aucune donnée' : 'No data'}</div>}
+                  ) : <div className="h-full flex flex-col items-center justify-center text-muted-foreground italic opacity-50">{lang === 'fr' ? 'Données d\'activité insuffisantes' : 'Insufficient activity data'}</div>}
                 </CardContent>
               </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center gap-2"><History size={18} className="text-muted-foreground" /><CardTitle className="text-lg">{t.actionsHistory}</CardTitle></CardHeader>
+              <Card className="rounded-3xl border-primary/10 glass-card">
+                <CardHeader className="flex flex-row items-center gap-3"><History size={20} className="text-muted-foreground" /><CardTitle className="text-lg font-black uppercase tracking-tight text-gradient">{t.actionsHistory}</CardTitle></CardHeader>
                 <CardContent className="px-4">
                   <ScrollArea className="h-[300px]">
                     <div className="space-y-3">
                       {allActions.map(action => (
-                        <div key={action.id} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg border text-xs"><div className="flex flex-col gap-1"><span className="font-bold break-words">{action.title}</span><div className="flex gap-2"><Badge variant="outline" className="text-[10px]">{action.status}</Badge></div></div><Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => handleDeleteAction(action.id)}><Trash2 size={16} /></Button></div>
+                        <div key={action.id} className="flex justify-between items-center p-4 bg-white border border-primary/5 rounded-2xl text-xs shadow-sm hover:shadow-md transition-all">
+                          <div className="flex flex-col gap-1.5">
+                            <span className="font-black uppercase text-foreground/80 tracking-tight break-words">{action.title}</span>
+                            <div className="flex gap-2">
+                              <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest border-primary/10 text-primary/70">{action.status}</Badge>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/5 h-9 w-9 rounded-xl" onClick={() => handleDeleteAction(action.id)}><Trash2 size={16} /></Button>
+                        </div>
                       ))}
                     </div>
                   </ScrollArea>
@@ -784,27 +785,41 @@ export default function PresidentDashboard() {
           </Tabs>
         </div>
 
-        <div className="lg:col-span-8 space-y-6">
-          <Tabs defaultValue="resolutions">
-            <TabsList className="w-full">
-              <TabsTrigger value="resolutions" className="flex-1">{t.resolutionsTab}</TabsTrigger>
-              <TabsTrigger value="messages" className="flex-1 relative">{t.messagesTab}{unreadMessagesCount > 0 && <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full">{unreadMessagesCount}</Badge>}</TabsTrigger>
+        <div className="lg:col-span-8 space-y-8">
+          <Tabs defaultValue="resolutions" className="w-full">
+            <TabsList className="w-full bg-secondary/50 p-1 rounded-2xl border border-primary/5">
+              <TabsTrigger value="resolutions" className="flex-1 rounded-xl font-bold uppercase text-[10px] tracking-widest">{t.resolutionsTab}</TabsTrigger>
+              <TabsTrigger value="messages" className="flex-1 relative rounded-xl font-bold uppercase text-[10px] tracking-widest">{t.messagesTab}{unreadMessagesCount > 0 && <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[9px] font-black border-none animate-pulse">{unreadMessagesCount}</Badge>}</TabsTrigger>
             </TabsList>
-            <TabsContent value="resolutions" className="space-y-6 mt-4">
-              <Card>
-                <CardHeader className="bg-muted/30 flex flex-row items-center justify-between"><CardTitle className="flex items-center gap-2"><FileText /> {t.resolutionsSubmitted}</CardTitle><Badge variant="outline">{resolutions.length}</Badge></CardHeader>
-                <CardContent className="p-6 space-y-6">
+            
+            <TabsContent value="resolutions" className="space-y-8 mt-6 animate-in fade-in duration-300">
+              <Card className="rounded-3xl border-primary/10 glass-card overflow-hidden">
+                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 flex flex-row items-center justify-between py-6">
+                  <CardTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-tight text-gradient"><FileText className="text-primary" /> {t.resolutionsSubmitted}</CardTitle>
+                  <Badge variant="outline" className="h-8 w-8 rounded-xl flex items-center justify-center p-0 font-black border-primary/20 text-primary">{resolutions.length}</Badge>
+                </CardHeader>
+                <CardContent className="p-8 space-y-8">
                   {resolutions.map(res => (
-                    <Card key={res.id} className={`overflow-hidden border-2 ${res.is_displayed ? 'border-primary' : ''}`}>
-                      <div className="bg-muted/50 p-4 flex justify-between items-center"><div className="flex items-center gap-2"><span className="font-bold text-primary uppercase tracking-tight break-words">{res.title || "..."}</span>{res.is_displayed && <Badge className="bg-primary"><Monitor className="h-3 w-3 mr-1" /> {lang === 'fr' ? 'PROJETÉ' : 'PROJECTED'}</Badge>}</div><Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>{res.status?.toUpperCase()}</Badge></div>
-                      <CardContent className="p-4 space-y-4">
-                        <div className="flex flex-wrap gap-2 items-center mb-4"><Badge variant="outline" className="bg-primary/10 border-primary/30 text-primary py-1 px-2 text-[10px] font-bold uppercase">DE: {res.proposing_country}</Badge>{res.spokesperson && <Badge variant="outline" className="bg-secondary/10 border-secondary/30 text-secondary py-1 px-2 text-[10px] font-bold uppercase gap-1"><User size={10} /> {t.spokesperson}: {res.spokesperson}</Badge>}{res.sponsors && <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-muted-foreground py-1 px-2 text-[10px] font-bold uppercase gap-1"><Users size={10} /> {t.sponsors}: {res.sponsors}</Badge>}</div>
-                        <div className="text-sm leading-relaxed whitespace-pre-wrap break-words prose prose-sm max-w-none text-left" dangerouslySetInnerHTML={{ __html: res.content }} />
-                        <div className="flex gap-2 justify-end pt-4 border-t">
-                          <Button variant={res.is_displayed ? "default" : "outline"} size="sm" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}>{res.is_displayed ? <><EyeOff size={16} /> {t.hide}</> : <><Eye size={16} /> {t.show}</>}</Button>
-                          <Button variant="outline" size="sm" className="text-green-600" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}><CheckCircle size={16} /> {t.approve}</Button>
-                          <Button variant="outline" size="sm" className="text-red-600" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}><XCircle size={16} /> {t.reject}</Button>
-                          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id))}><Trash2 size={16} /></Button>
+                    <Card key={res.id} className={`overflow-hidden rounded-3xl border-2 transition-all duration-500 ${res.is_displayed ? 'border-primary shadow-2xl scale-[1.01]' : 'border-primary/5 shadow-sm'}`}>
+                      <div className="bg-muted/30 p-5 flex justify-between items-center border-b border-primary/5">
+                        <div className="flex items-center gap-3">
+                          <span className="font-black text-primary uppercase tracking-tight text-lg break-words">{res.title || "Projet Anonyme"}</span>
+                          {res.is_displayed && <Badge className="bg-primary animate-pulse rounded-lg text-[9px] font-black tracking-widest px-3"><Monitor className="h-3 w-3 mr-1" /> {lang === 'fr' ? 'PROJECTÉ' : 'PROJECTED'}</Badge>}
+                        </div>
+                        <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase font-black text-[9px] tracking-widest px-3">{res.status?.toUpperCase()}</Badge>
+                      </div>
+                      <CardContent className="p-8 space-y-6">
+                        <div className="flex flex-wrap gap-2 items-center mb-6">
+                          <Badge className="bg-primary/5 text-primary border-primary/10 rounded-lg py-1.5 px-3 text-[10px] font-black uppercase tracking-widest">DE: {res.proposing_country}</Badge>
+                          {res.spokesperson && <Badge className="bg-secondary text-foreground/70 border-primary/5 rounded-lg py-1.5 px-3 text-[10px] font-black uppercase tracking-widest gap-1.5"><User size={12} /> {t.spokesperson}: {res.spokesperson}</Badge>}
+                          {res.sponsors && <Badge className="bg-muted text-muted-foreground border-primary/5 rounded-lg py-1.5 px-3 text-[10px] font-black uppercase tracking-widest gap-1.5"><Users size={12} /> {t.sponsors}: {res.sponsors}</Badge>}
+                        </div>
+                        <div className="text-base leading-relaxed whitespace-pre-wrap break-words prose prose-slate max-w-none text-left font-medium text-foreground/80 italic p-6 bg-primary/[0.01] rounded-2xl border border-primary/5" dangerouslySetInnerHTML={{ __html: res.content }} />
+                        <div className="flex gap-3 justify-end pt-6 border-t border-primary/5">
+                          <Button variant={res.is_displayed ? "default" : "outline"} size="sm" className={`rounded-xl font-bold uppercase text-[10px] px-6 h-10 ${res.is_displayed ? 'bg-primary' : 'border-primary/20 text-primary hover:bg-primary/5'}`} onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}>{res.is_displayed ? <><EyeOff size={16} className="mr-2" /> {t.hide}</> : <><Eye size={16} className="mr-2" /> {t.show}</>}</Button>
+                          <Button variant="outline" size="sm" className="border-green-500/30 text-green-600 hover:bg-green-50 rounded-xl font-bold uppercase text-[10px] px-6 h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}><CheckCircle size={16} className="mr-2" /> {t.approve}</Button>
+                          <Button variant="outline" size="sm" className="border-red-500/30 text-red-600 hover:bg-red-50 rounded-xl font-bold uppercase text-[10px] px-6 h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}><XCircle size={16} className="mr-2" /> {t.reject}</Button>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/5 rounded-xl h-10 w-10 p-0" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id))}><Trash2 size={16} /></Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -812,18 +827,35 @@ export default function PresidentDashboard() {
                 </CardContent>
               </Card>
             </TabsContent>
-            <TabsContent value="messages" className="space-y-6 mt-4">
-              <Card>
-                <CardHeader className="bg-muted/30"><CardTitle className="flex items-center gap-2"><Bell size={18} /> {t.privateInbox}</CardTitle></CardHeader>
+
+            <TabsContent value="messages" className="space-y-8 mt-6 animate-in fade-in duration-300">
+              <Card className="rounded-3xl border-primary/10 glass-card overflow-hidden">
+                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 py-6"><CardTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-tight text-gradient"><Bell size={24} className="text-primary" /> {t.privateInbox}</CardTitle></CardHeader>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-[600px]">
-                    <div className="p-6 space-y-4">
+                  <ScrollArea className="h-[700px]">
+                    <div className="p-8 space-y-6">
                       {messages.map(msg => (
-                        <div key={msg.id} className={`p-4 border-l-4 rounded-r-xl shadow-sm flex flex-col gap-3 ${msg.is_read ? 'bg-muted/10 border-muted-foreground/30' : 'bg-secondary/5 border-secondary'}`}>
-                          <div className="flex justify-between items-start"><div className="flex items-center gap-2"><Badge variant={msg.type === 'privilege' ? 'destructive' : 'secondary'} className="uppercase text-[10px]">{msg.type}</Badge><span className="font-bold text-sm">{msg.sender_country}</span></div><div className="flex items-center gap-1">{!msg.is_read && <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => markMessageAsRead(msg.id)}><Check size={16} /></Button>}<Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteMessage(msg.id)}><Trash2 size={16} /></Button></div></div>
-                          <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                        <div key={msg.id} className={`p-6 border-l-8 rounded-3xl shadow-sm flex flex-col gap-4 transition-all duration-300 hover:shadow-md ${msg.is_read ? 'bg-muted/20 border-muted-foreground/30 opacity-70' : 'bg-primary/[0.02] border-primary shadow-primary/5'}`}>
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-4">
+                              <Badge className={`uppercase text-[9px] font-black tracking-widest px-3 py-1 rounded-full border-none shadow-sm ${msg.type === 'privilege' ? 'bg-destructive text-white' : 'bg-secondary text-primary'}`}>{msg.type}</Badge>
+                              <span className="font-black uppercase tracking-tight text-sm text-foreground/80">{msg.sender_country}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {!msg.is_read && <Button size="icon" variant="ghost" className="h-10 w-10 text-green-600 hover:bg-green-50 rounded-xl shadow-sm border border-green-100" onClick={() => markMessageAsRead(msg.id)}><Check size={18} /></Button>}
+                              <Button size="icon" variant="ghost" className="h-10 w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 size={18} /></Button>
+                            </div>
+                          </div>
+                          <p className="text-base font-semibold text-foreground/80 leading-relaxed whitespace-pre-wrap pl-2 italic">"{msg.content}"</p>
+                          <div className="flex justify-end opacity-40 text-[9px] font-black uppercase tracking-[0.2em]">{msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "Maintenant"}</div>
                         </div>
                       ))}
+                      {messages.length === 0 && (
+                        <div className="text-center py-40 opacity-30 flex flex-col items-center gap-6">
+                          <MessageSquareOff size={64} />
+                          <p className="text-lg font-black uppercase tracking-widest">{t.noMessage}</p>
+                        </div>
+                      )}
                     </div>
                   </ScrollArea>
                 </CardContent>
