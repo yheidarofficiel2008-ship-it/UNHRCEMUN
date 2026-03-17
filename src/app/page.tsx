@@ -98,7 +98,7 @@ export default function MUNOSHome() {
           rel="noopener noreferrer"
           className="text-primary font-black uppercase tracking-[0.3em] text-[11px] hover:opacity-70 transition-all duration-300 pb-1 border-b-2 border-primary/20 hover:border-primary"
         >
-          Propulsé par Youssef Heidar
+          Créé par Youssef Heidar
         </a>
       </footer>
     </div>

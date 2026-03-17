@@ -56,7 +56,7 @@ export default function DelegateDashboard() {
       waitingAction: "En attente de consignes...",
       globalChrono: "Chronomètre Global",
       speakerChrono: "Chrono Orateur",
-      participate: "S'inscrire",
+      participate: "Participer",
       pass: "Passer son tour",
       projected: "EN DIFFUSION SUR ÉCRAN GÉANT",
       submitResolution: "Rédaction de Résolution",
@@ -580,7 +580,7 @@ export default function DelegateDashboard() {
           ))}
 
           <Card className={`rounded-[2.5rem] shadow-xl overflow-hidden glass-card transition-all duration-500 ${(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
-            <CardHeader className="bg-secondary/50 border-b border-primary/5 p-8 flex flex-row items-center justify-between">
+            <CardHeader className="bg-secondary/5 border-b border-primary/5 p-8 flex flex-row items-center justify-between">
               <CardTitle className="text-3xl font-black uppercase tracking-tight text-[#0459ab]">{t.submitResolution}</CardTitle>
               {(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') && <Badge variant="destructive" className="font-black h-8 px-4"><Lock size={14} className="mr-2" /> {t.submissionsSuspended}</Badge>}
             </CardHeader>
