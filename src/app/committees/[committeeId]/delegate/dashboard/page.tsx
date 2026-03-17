@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from 'react';
@@ -161,6 +162,9 @@ export default function DelegateDashboard() {
 
     const qDisplayed = query(collection(db, 'committees', committeeId, 'resolutions'), where('is_displayed', '==', true));
     const unsubDisplayed = onSnapshot(qDisplayed, (snap) => {
+      snap.docs.forEach(doc => {
+        // Just keeping it for reference
+      });
       setDisplayedResolutions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
@@ -206,7 +210,7 @@ export default function DelegateDashboard() {
 
   const playCrisisAlarm = () => {
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
       const context = new AudioContextClass();
       const now = context.currentTime;
@@ -532,7 +536,7 @@ export default function DelegateDashboard() {
               <div className="flex justify-between items-center mb-4">
                 <Badge className="bg-[#0459ab] rounded-xl px-4 py-1 font-black text-[10px] tracking-widest">{t.currentSession}</Badge>
               </div>
-              <CardTitle className="text-4xl md:text-5xl font-black font-headline uppercase tracking-tighter text-[#0459ab] leading-none">{isActive ? currentAction.title : t.waitingAction}</CardTitle>
+              <CardTitle className="text-3xl md:text-4xl font-black font-headline uppercase tracking-tighter text-[#0459ab] leading-none">{isActive ? currentAction.title : t.waitingAction}</CardTitle>
             </CardHeader>
             <CardContent className="p-10 space-y-12">
               {isActive ? (
@@ -574,14 +578,14 @@ export default function DelegateDashboard() {
                   {res.spokesperson && <Badge variant="outline" className="bg-secondary text-foreground/60 border-primary/10 py-2 px-4 text-[10px] font-black uppercase tracking-widest gap-2"><User size={12} /> {t.spokesperson}: {res.spokesperson}</Badge>}
                   {res.sponsors && <Badge variant="outline" className="bg-muted text-muted-foreground border-primary/10 py-2 px-4 text-[10px] font-black uppercase tracking-widest gap-2"><Users size={12} /> {t.sponsors}: {res.sponsors}</Badge>}
                 </div>
-                <div className="text-xl leading-relaxed font-serif italic text-foreground/80 whitespace-pre-wrap break-words prose prose-xl max-w-none border-l-4 border-[#0459ab]/20 pl-8" dangerouslySetInnerHTML={{ __html: res.content }} />
+                <div className="text-xl leading-relaxed font-serif text-foreground/80 whitespace-pre-wrap break-words prose prose-xl max-w-none border-l-4 border-[#0459ab]/20 pl-8" dangerouslySetInnerHTML={{ __html: res.content }} />
               </CardContent>
             </Card>
           ))}
 
           <Card className={`rounded-[2.5rem] shadow-xl overflow-hidden glass-card transition-all duration-500 ${(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
             <CardHeader className="bg-secondary/5 border-b border-primary/5 p-8 flex flex-row items-center justify-between">
-              <CardTitle className="text-3xl font-black uppercase tracking-tight text-[#0459ab]">{t.submitResolution}</CardTitle>
+              <CardTitle className="text-3xl md:text-4xl font-black uppercase tracking-tight text-[#0459ab]">{t.submitResolution}</CardTitle>
               {(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') && <Badge variant="destructive" className="font-black h-8 px-4"><Lock size={14} className="mr-2" /> {t.submissionsSuspended}</Badge>}
             </CardHeader>
             <form onSubmit={submitResolution}>
@@ -617,7 +621,7 @@ export default function DelegateDashboard() {
                         <Eye size={16} /> {t.preview}
                       </div>
                       <div 
-                        className="text-xl font-serif leading-relaxed text-left italic text-foreground/60 whitespace-pre-wrap break-words prose prose-lg max-w-none"
+                        className="text-xl font-serif leading-relaxed text-left text-foreground/60 whitespace-pre-wrap break-words prose prose-lg max-w-none"
                         dangerouslySetInnerHTML={{ __html: resolutionForm.content }}
                       />
                     </div>
@@ -625,8 +629,8 @@ export default function DelegateDashboard() {
                 </div>
               </CardContent>
               <CardFooter className="p-8 pt-0">
-                <Button type="submit" disabled={!allowResolutions} className="w-full h-20 bg-[#0459ab] hover:bg-[#0459ab]/90 text-2xl font-black uppercase tracking-widest rounded-[2rem] gap-4 shadow-2xl shadow-[#0459ab]/20 transition-all hover:scale-[1.01]">
-                  <Send size={28} /> {t.transmit}
+                <Button type="submit" disabled={!allowResolutions} className="w-full bg-[#0459ab] hover:bg-[#0459ab]/90 h-11 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-[#0459ab]/20 transition-all">
+                  <Send size={16} className="mr-2" /> {t.transmit}
                 </Button>
               </CardFooter>
             </form>
@@ -636,3 +640,4 @@ export default function DelegateDashboard() {
     </div>
   );
 }
+
