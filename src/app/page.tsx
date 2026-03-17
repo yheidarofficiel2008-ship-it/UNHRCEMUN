@@ -85,8 +85,8 @@ export default function MUNOSHome() {
         </div>
       </div>
       
-      <footer className="mt-auto py-16 flex flex-col items-center gap-4">
-        <div className="bg-primary text-primary-foreground px-10 py-4 rounded-full shadow-[0_20px_50px_rgba(8,_112,_184,_0.7)] font-black uppercase tracking-[0.15em] text-sm border-4 border-white/20 transform hover:scale-110 transition-transform cursor-default">
+      <footer className="mt-auto py-12 flex flex-col items-center gap-4">
+        <div className="bg-primary text-primary-foreground px-6 py-2 rounded-full shadow-lg font-bold uppercase tracking-[0.1em] text-[10px] border-2 border-white/20 transform hover:scale-105 transition-transform cursor-default">
           Système créé par Youssef Heidar
         </div>
       </footer>
