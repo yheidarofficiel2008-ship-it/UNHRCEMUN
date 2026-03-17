@@ -374,61 +374,61 @@ export default function DelegateDashboard() {
         <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 transition-colors duration-700 ${activeOverlay.type === 'crisis' ? 'bg-red-700 text-white' : 'bg-white/95 backdrop-blur-3xl text-primary'}`}>
           <div className="max-w-5xl w-full text-center space-y-12">
             {activeOverlay.type === 'crisis' ? (
-              <div className="flex flex-col items-center gap-8 mb-4">
-                <AlertTriangle size={120} className="text-white animate-bounce" />
-                <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-tight border-4 border-white px-12 py-6 shadow-2xl">{t.urgency}</h2>
-                <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter drop-shadow-2xl">{activeOverlay.title}</h1>
+              <div className="flex flex-col items-center gap-6 mb-4">
+                <AlertTriangle size={80} className="text-white animate-bounce" />
+                <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-tight border-2 border-white px-8 py-4 shadow-2xl">{t.urgency}</h2>
+                <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter drop-shadow-2xl">{activeOverlay.title}</h1>
               </div>
             ) : (
-              <div className="space-y-16 animate-in fade-in slide-in-from-bottom-10 duration-700">
+              <div className="space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700">
                 <div className="space-y-4">
-                  <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase tracking-[0.4em] px-6 py-2 bg-primary/5">
+                  <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase tracking-[0.4em] px-4 py-1.5 bg-primary/5 text-[10px]">
                     {activeOverlay.type === 'vote' ? t.officialVote : t.officialAnnouncement}
                   </Badge>
-                  <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-none text-gradient py-2">
+                  <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-tight text-gradient py-2">
                     {activeOverlay.title}
                   </h1>
                 </div>
 
                 {activeOverlay.type === 'vote' && (
-                  <div className="space-y-16">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 max-w-4xl mx-auto">
-                      <div className="space-y-6">
+                  <div className="space-y-12">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10 max-w-3xl mx-auto">
+                      <div className="space-y-4">
                         <Button 
                           size="lg" 
-                          className="w-full h-24 md:h-32 bg-green-600 hover:bg-green-700 text-white text-3xl font-black rounded-3xl shadow-xl shadow-green-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
+                          className="w-full h-16 md:h-20 bg-green-600 hover:bg-green-700 text-white text-lg md:text-xl font-black rounded-2xl shadow-lg shadow-green-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
                           onClick={() => handleVote('pour')} 
                           disabled={hasVoted || isCountrySuspended}
                         >
                           {t.for}
                         </Button>
-                        <div className="text-5xl md:text-7xl font-black tabular-nums text-green-600">{activeOverlay.results?.pour || 0}</div>
+                        <div className="text-4xl md:text-5xl font-black tabular-nums text-green-600">{activeOverlay.results?.pour || 0}</div>
                       </div>
-                      <div className="space-y-6">
+                      <div className="space-y-4">
                         <Button 
                           size="lg" 
-                          className="w-full h-24 md:h-32 bg-red-600 hover:bg-red-700 text-white text-3xl font-black rounded-3xl shadow-xl shadow-red-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
+                          className="w-full h-16 md:h-20 bg-red-600 hover:bg-red-700 text-white text-lg md:text-xl font-black rounded-2xl shadow-lg shadow-red-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
                           onClick={() => handleVote('contre')} 
                           disabled={hasVoted || isCountrySuspended}
                         >
                           {t.against}
                         </Button>
-                        <div className="text-5xl md:text-7xl font-black tabular-nums text-red-600">{activeOverlay.results?.contre || 0}</div>
+                        <div className="text-4xl md:text-5xl font-black tabular-nums text-red-600">{activeOverlay.results?.contre || 0}</div>
                       </div>
-                      <div className="space-y-6">
+                      <div className="space-y-4">
                         <Button 
                           size="lg" 
-                          className="w-full h-24 md:h-32 bg-amber-500 hover:bg-amber-600 text-white text-3xl font-black rounded-3xl shadow-xl shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
+                          className="w-full h-16 md:h-20 bg-amber-500 hover:bg-amber-600 text-white text-lg md:text-xl font-black rounded-2xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
                           onClick={() => handleVote('abstention')} 
                           disabled={hasVoted || isCountrySuspended}
                         >
                           {t.abstention}
                         </Button>
-                        <div className="text-5xl md:text-7xl font-black tabular-nums text-amber-500">{activeOverlay.results?.abstention || 0}</div>
+                        <div className="text-4xl md:text-5xl font-black tabular-nums text-amber-500">{activeOverlay.results?.abstention || 0}</div>
                       </div>
                     </div>
                     {hasVoted && (
-                      <div className="text-xl font-black uppercase tracking-widest text-primary/40 animate-pulse border-y border-primary/10 py-6 max-w-md mx-auto">
+                      <div className="text-sm font-black uppercase tracking-widest text-primary/40 animate-pulse border-y border-primary/10 py-4 max-w-sm mx-auto">
                         {t.voteRecorded}
                       </div>
                     )}
