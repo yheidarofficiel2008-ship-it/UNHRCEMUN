@@ -538,10 +538,12 @@ export default function DelegateDashboard() {
             <CardContent className="p-10 space-y-12">
               {isActive ? (
                 <>
-                  <div className="flex flex-col items-center gap-10 max-w-xl mx-auto w-full">
-                    <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
+                  <div className="flex flex-col items-center gap-12 max-w-2xl mx-auto w-full">
+                    <div className="w-full">
+                      <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
+                    </div>
                     
-                    <div className="flex flex-col items-center gap-3">
+                    <div className="flex flex-col items-center gap-4">
                       <div className="flex items-center gap-2 px-4 py-1.5 bg-primary/5 border border-primary/10 rounded-full">
                         <Timer size={14} className="text-primary/60" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">{t.speakerChrono}</span>
