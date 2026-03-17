@@ -301,11 +301,11 @@ export default function DelegateDashboard() {
             {activeOverlay.type === 'crisis' && (
               <div className="flex flex-col items-center gap-4 mb-4 animate-pulse">
                 <AlertTriangle size={80} className="text-white" />
-                <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-10 py-3">URGENCE : CRISE</h2>
+                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-10 py-3">URGENCE : CRISE</h2>
               </div>
             )}
             
-            <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-tight border-b-4 md:border-b-8 border-white pb-6 break-words">
+            <h1 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-tight border-b-2 md:border-b-4 border-white pb-6 break-words">
               {activeOverlay.title}
             </h1>
             
