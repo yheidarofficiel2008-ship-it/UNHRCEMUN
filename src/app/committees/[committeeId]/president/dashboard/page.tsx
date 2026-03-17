@@ -509,6 +509,33 @@ export default function PresidentDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          {activeOverlay && activeOverlay.type === 'vote' && (
+            <div className="flex items-center gap-4 bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10">
+              <div className="flex items-center gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="text-[8px] font-black uppercase text-green-600">Pour</span>
+                  <span className="text-sm font-black tabular-nums text-green-600">{activeOverlay.results?.pour || 0}</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-[8px] font-black uppercase text-red-600">Contre</span>
+                  <span className="text-sm font-black tabular-nums text-red-600">{activeOverlay.results?.contre || 0}</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-[8px] font-black uppercase text-amber-600">Abs.</span>
+                  <span className="text-sm font-black tabular-nums text-amber-600">{activeOverlay.results?.abstention || 0}</span>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10 rounded-full" onClick={stopOverlay}><X size={14} /></Button>
+            </div>
+          )}
+
+          {activeOverlay && activeOverlay.type !== 'none' && activeOverlay.type !== 'vote' && (
+            <div className="flex items-center gap-4 bg-primary/5 px-4 py-1.5 rounded-full border border-primary/20 animate-in fade-in zoom-in duration-300">
+              <span className="text-[10px] font-black uppercase tracking-widest truncate max-w-[150px] text-primary">{activeOverlay.title}</span>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10 rounded-full" onClick={stopOverlay}><X size={14} /></Button>
+            </div>
+          )}
+
           <Dialog open={isOverlayDialogOpen} onOpenChange={setIsOverlayDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 text-white rounded-full font-bold gap-2 px-6">
@@ -541,13 +568,6 @@ export default function PresidentDashboard() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          {activeOverlay && activeOverlay.type !== 'none' && (
-            <div className="flex items-center gap-4 bg-primary/5 px-4 py-1.5 rounded-full border border-primary/20 animate-in fade-in zoom-in duration-300">
-              <span className="text-[10px] font-black uppercase tracking-widest truncate max-w-[150px] text-primary">{activeOverlay.title}</span>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10 rounded-full" onClick={stopOverlay}><X size={14} /></Button>
-            </div>
-          )}
 
           <div className="flex items-center gap-2 bg-secondary px-3 py-1.5 rounded-full border border-primary/10">
             <span className="text-[10px] font-black uppercase tracking-tight text-primary">Res.</span>

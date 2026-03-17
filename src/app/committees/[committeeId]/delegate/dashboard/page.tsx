@@ -76,7 +76,9 @@ export default function DelegateDashboard() {
       submissionsSuspended: "ENVOIS BLOQUÉS",
       preview: "Aperçu du rendu final (sans balises)",
       speakersList: "Liste des Orateurs inscrits",
-      noSpeaker: "Aucune inscription active"
+      noSpeaker: "Aucune inscription active",
+      officialVote: "SCRUTIN OFFICIEL",
+      officialAnnouncement: "ANNONCE OFFICIELLE"
     },
     en: {
       sessionActive: "Session Active",
@@ -114,7 +116,9 @@ export default function DelegateDashboard() {
       submissionsSuspended: "SUBMISSIONS BLOCKED",
       preview: "Live Preview (Clean rendering)",
       speakersList: "Registered Speakers List",
-      noSpeaker: "No active registrations"
+      noSpeaker: "No active registrations",
+      officialVote: "OFFICIAL VOTE",
+      officialAnnouncement: "OFFICIAL ANNOUNCEMENT"
     }
   }[lang];
   
@@ -328,7 +332,7 @@ export default function DelegateDashboard() {
         is_read: false
       });
       setMessageForm({ ...messageForm, content: '' });
-      toast({ title: lang === 'fr' ? "Message transmis" : "Message transmitted" });
+      toast({ title: lang === 'fr' ? "Message transmise" : "Message transmitted" });
     } catch (e) {
       toast({ title: "Error", variant: "destructive" });
     } finally {
@@ -367,40 +371,69 @@ export default function DelegateDashboard() {
         </div>
       )}
       {activeOverlay && activeOverlay.type !== 'none' && (
-        <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 text-white animate-in fade-in zoom-in duration-500 ${activeOverlay.type === 'crisis' ? 'bg-red-700' : 'bg-[#0459ab]'}`}>
-          <div className="max-w-4xl w-full text-center space-y-8">
-            {activeOverlay.type === 'crisis' && (
-              <div className="flex flex-col items-center gap-6 mb-4">
-                <AlertTriangle size={100} className="text-white animate-bounce" />
-                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-8 py-4 rounded-none shadow-[10px_10px_0px_0px_rgba(0,0,0,0.3)]">{t.urgency}</h2>
+        <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 transition-colors duration-700 ${activeOverlay.type === 'crisis' ? 'bg-red-700 text-white' : 'bg-white/95 backdrop-blur-3xl text-primary'}`}>
+          <div className="max-w-5xl w-full text-center space-y-12">
+            {activeOverlay.type === 'crisis' ? (
+              <div className="flex flex-col items-center gap-8 mb-4">
+                <AlertTriangle size={120} className="text-white animate-bounce" />
+                <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-tight border-4 border-white px-12 py-6 shadow-2xl">{t.urgency}</h2>
+                <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter drop-shadow-2xl">{activeOverlay.title}</h1>
               </div>
-            )}
-            <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-tight border-b-4 border-white/30 pb-8 break-words drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">
-              {activeOverlay.title}
-            </h1>
-            {activeOverlay.type === 'vote' && (
-              <div className="space-y-12">
-                <div className="grid grid-cols-3 gap-4 md:gap-8">
-                  <div className="flex flex-col items-center gap-4">
-                    <Button size="lg" className="w-full h-24 md:h-32 bg-green-500 hover:bg-green-600 text-xl md:text-3xl font-black rounded-none shadow-[5px_5px_0px_0px_rgba(0,0,0,0.2)] transition-all active:scale-95 disabled:opacity-50" onClick={() => handleVote('pour')} disabled={hasVoted || isCountrySuspended}>
-                      {t.for}
-                    </Button>
-                    <div className="text-4xl md:text-6xl font-black tabular-nums">{activeOverlay.results?.pour || 0}</div>
-                  </div>
-                  <div className="flex flex-col items-center gap-4">
-                    <Button size="lg" className="w-full h-24 md:h-32 bg-red-600 hover:bg-red-700 text-xl md:text-3xl font-black rounded-none shadow-[5px_5px_0px_0px_rgba(0,0,0,0.2)] transition-all active:scale-95 disabled:opacity-50" onClick={() => handleVote('contre')} disabled={hasVoted || isCountrySuspended}>
-                      {t.against}
-                    </Button>
-                    <div className="text-4xl md:text-6xl font-black tabular-nums">{activeOverlay.results?.contre || 0}</div>
-                  </div>
-                  <div className="flex flex-col items-center gap-4">
-                    <Button size="lg" className="w-full h-24 md:h-32 bg-amber-500 hover:bg-amber-600 text-xl md:text-3xl font-black rounded-none shadow-[5px_5px_0px_0px_rgba(0,0,0,0.2)] transition-all active:scale-95 disabled:opacity-50" onClick={() => handleVote('abstention')} disabled={hasVoted || isCountrySuspended}>
-                      {t.abstention}
-                    </Button>
-                    <div className="text-4xl md:text-6xl font-black tabular-nums">{activeOverlay.results?.abstention || 0}</div>
-                  </div>
+            ) : (
+              <div className="space-y-16 animate-in fade-in slide-in-from-bottom-10 duration-700">
+                <div className="space-y-4">
+                  <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase tracking-[0.4em] px-6 py-2 bg-primary/5">
+                    {activeOverlay.type === 'vote' ? t.officialVote : t.officialAnnouncement}
+                  </Badge>
+                  <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-none text-gradient py-2">
+                    {activeOverlay.title}
+                  </h1>
                 </div>
-                {hasVoted && <div className="text-xl font-black uppercase tracking-widest text-white animate-pulse bg-white/20 py-4 border-2 border-white/40">{t.voteRecorded}</div>}
+
+                {activeOverlay.type === 'vote' && (
+                  <div className="space-y-16">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 max-w-4xl mx-auto">
+                      <div className="space-y-6">
+                        <Button 
+                          size="lg" 
+                          className="w-full h-24 md:h-32 bg-green-600 hover:bg-green-700 text-white text-3xl font-black rounded-3xl shadow-xl shadow-green-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
+                          onClick={() => handleVote('pour')} 
+                          disabled={hasVoted || isCountrySuspended}
+                        >
+                          {t.for}
+                        </Button>
+                        <div className="text-5xl md:text-7xl font-black tabular-nums text-green-600">{activeOverlay.results?.pour || 0}</div>
+                      </div>
+                      <div className="space-y-6">
+                        <Button 
+                          size="lg" 
+                          className="w-full h-24 md:h-32 bg-red-600 hover:bg-red-700 text-white text-3xl font-black rounded-3xl shadow-xl shadow-red-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
+                          onClick={() => handleVote('contre')} 
+                          disabled={hasVoted || isCountrySuspended}
+                        >
+                          {t.against}
+                        </Button>
+                        <div className="text-5xl md:text-7xl font-black tabular-nums text-red-600">{activeOverlay.results?.contre || 0}</div>
+                      </div>
+                      <div className="space-y-6">
+                        <Button 
+                          size="lg" 
+                          className="w-full h-24 md:h-32 bg-amber-500 hover:bg-amber-600 text-white text-3xl font-black rounded-3xl shadow-xl shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
+                          onClick={() => handleVote('abstention')} 
+                          disabled={hasVoted || isCountrySuspended}
+                        >
+                          {t.abstention}
+                        </Button>
+                        <div className="text-5xl md:text-7xl font-black tabular-nums text-amber-500">{activeOverlay.results?.abstention || 0}</div>
+                      </div>
+                    </div>
+                    {hasVoted && (
+                      <div className="text-xl font-black uppercase tracking-widest text-primary/40 animate-pulse border-y border-primary/10 py-6 max-w-md mx-auto">
+                        {t.voteRecorded}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
