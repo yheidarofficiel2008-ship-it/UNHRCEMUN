@@ -98,7 +98,8 @@ export default function PresidentDashboard() {
       knowledge: "Connaissance & cohérence",
       average: "Moyenne",
       rank: "Rang",
-      saveGrade: "Note enregistrée"
+      saveGrade: "Note enregistrée",
+      calculate: "Calculer le classement"
     },
     en: {
       presidency: "Presidency",
@@ -158,7 +159,8 @@ export default function PresidentDashboard() {
       knowledge: "Knowledge & Coherence",
       average: "Average",
       rank: "Rank",
-      saveGrade: "Grade saved"
+      saveGrade: "Grade saved",
+      calculate: "Calculate Ranking"
     }
   }[lang];
 
@@ -188,6 +190,7 @@ export default function PresidentDashboard() {
   const [allParticipations, setAllParticipations] = useState<any[]>([]);
   const [allActions, setAllActions] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
+  const [displayGradedDelegates, setDisplayGradedDelegates] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -249,6 +252,34 @@ export default function PresidentDashboard() {
     return () => unsubPart();
   }, [db, currentAction?.id, committeeId]);
 
+  // Sync grading UI state without auto-sorting
+  useEffect(() => {
+    setDisplayGradedDelegates(prev => {
+      const currentDelegatesData = delegates.map(d => {
+        const g = d.grades || { speaking: 0, diplomacy: 0, knowledge: 0 };
+        const avg = (Number(g.speaking) + Number(g.diplomacy) + Number(g.knowledge)) / 3;
+        return { ...d, grades: g, average: avg };
+      });
+
+      // If it's the first load, sort by average
+      if (prev.length === 0) {
+        return [...currentDelegatesData].sort((a, b) => b.average - a.average);
+      }
+
+      // Maintain the existing order of display, but update the data (grades/averages)
+      return prev.map(p => {
+        const updated = currentDelegatesData.find(d => d.id === p.id);
+        return updated || p;
+      });
+    });
+  }, [delegates]);
+
+  const handleCalculateRanks = () => {
+    const sorted = [...displayGradedDelegates].sort((a, b) => b.average - a.average);
+    setDisplayGradedDelegates(sorted);
+    toast({ title: t.calculate + " : OK" });
+  };
+
   const statsData = useMemo(() => {
     const counts: Record<string, number> = {};
     delegates.forEach(d => {
@@ -263,14 +294,6 @@ export default function PresidentDashboard() {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
   }, [allParticipations, delegates]);
-
-  const gradedDelegates = useMemo(() => {
-    return delegates.map(d => {
-      const g = d.grades || { speaking: 0, diplomacy: 0, knowledge: 0 };
-      const avg = (Number(g.speaking) + Number(g.diplomacy) + Number(g.knowledge)) / 3;
-      return { ...d, grades: g, average: avg };
-    }).sort((a, b) => b.average - a.average);
-  }, [delegates]);
 
   const toggleSuspension = () => {
     if (!db) return;
@@ -762,9 +785,14 @@ export default function PresidentDashboard() {
                   <CardTitle className="text-lg">{t.gradingTitle}</CardTitle>
                 </CardHeader>
                 <CardContent className="px-2">
+                  <div className="px-4 mb-4">
+                    <Button onClick={handleCalculateRanks} className="w-full bg-primary gap-2 shadow-lg">
+                      <Calculator size={18} /> {t.calculate}
+                    </Button>
+                  </div>
                   <ScrollArea className="h-[500px]">
                     <div className="space-y-6 p-2">
-                      {gradedDelegates.map((d, index) => (
+                      {displayGradedDelegates.map((d, index) => (
                         <div key={d.id} className="p-4 border rounded-xl bg-muted/20 relative">
                           <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center gap-3">
