@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from 'react';
@@ -244,7 +243,6 @@ export default function PresidentDashboard() {
     }
 
     const partRef = collection(db, 'committees', committeeId, 'participations');
-    // On filtre et trie côté client pour éviter les erreurs d'index compositeFirestore
     const unsubPart = onSnapshot(query(partRef, where('action_id', '==', currentAction.id)), (snapshot) => {
       const parts = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() as any }))
@@ -263,11 +261,23 @@ export default function PresidentDashboard() {
         const avg = (Number(g.speaking) + Number(g.diplomacy) + Number(g.knowledge)) / 3;
         return { ...d, grades: g, average: avg };
       });
-      if (prev.length === 0) return [...currentDelegatesData].sort((a, b) => b.average - a.average);
-      return prev.map(p => {
-        const updated = currentDelegatesData.find(d => d.id === p.id);
-        return updated || p;
-      });
+
+      // Identifier les IDs déjà présents
+      const existingIds = new Set(prev.map(p => p.id));
+      
+      // Filtrer pour garder uniquement ceux qui existent encore dans currentDelegatesData
+      const currentIds = new Set(currentDelegatesData.map(d => d.id));
+      const updatedPrev = prev
+        .filter(p => currentIds.has(p.id))
+        .map(p => {
+          const updated = currentDelegatesData.find(d => d.id === p.id);
+          return updated || p;
+        });
+
+      // Ajouter les nouveaux délégués
+      const newDelegates = currentDelegatesData.filter(d => !existingIds.has(d.id));
+      
+      return [...updatedPrev, ...newDelegates];
     });
   }, [delegates]);
 
@@ -414,6 +424,19 @@ export default function PresidentDashboard() {
     updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), {
       speaking_timer_status: 'started',
       speaking_timer_started_at: new Date().toISOString()
+    });
+  };
+
+  const pauseSpeakingTimer = () => {
+    if (!db || !currentAction || currentAction.speaking_timer_status !== 'started') return;
+    const now = new Date().getTime();
+    const start = new Date(currentAction.speaking_timer_started_at).getTime();
+    const elapsed = Math.floor((now - start) / 1000);
+    const total = (currentAction.speaking_timer_total_elapsed || 0) + elapsed;
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), {
+      speaking_timer_status: 'paused',
+      speaking_timer_total_elapsed: total,
+      speaking_timer_started_at: null
     });
   };
 
@@ -594,11 +617,22 @@ export default function PresidentDashboard() {
                         <Badge variant="outline" className="text-[10px]">{currentAction.time_per_delegate}</Badge>
                       </div>
                       <div className="flex justify-center py-2">
-                        <SpeakingTimer status={currentAction.speaking_timer_status} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} size="md" />
+                        <SpeakingTimer 
+                          status={currentAction.speaking_timer_status} 
+                          startedAt={currentAction.speaking_timer_started_at} 
+                          totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} 
+                          limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} 
+                          size="md" 
+                        />
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button variant="secondary" size="sm" onClick={startSpeakingTimer} disabled={currentAction.speaking_timer_status === 'started'}>{t.start}</Button>
+                      <div className="grid grid-cols-3 gap-2">
+                        {currentAction.speaking_timer_status === 'started' ? (
+                          <Button variant="outline" size="sm" className="border-amber-500 text-amber-600" onClick={pauseSpeakingTimer}><Pause size={14} /> {t.pause}</Button>
+                        ) : (
+                          <Button variant="secondary" size="sm" onClick={startSpeakingTimer}><Play size={14} /> {t.start}</Button>
+                        )}
                         <Button variant="ghost" size="sm" className="border" onClick={resetSpeakingTimer}>Reset</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleMarkAsSpoken(orateursInscrits[0]?.id)} disabled={!orateursInscrits[0]}><Check size={14} /></Button>
                       </div>
                     </div>
 
@@ -694,7 +728,29 @@ export default function PresidentDashboard() {
                 <CardContent className="h-[300px] pt-4">
                   {statsData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={statsData} layout="vertical"><XAxis type="number" hide /><YAxis dataKey="name" type="category" width={100} fontSize={10} tick={{ fill: 'currentColor' }} /><Bar dataKey="count" radius={[0, 4, 4, 0]}>{statsData.map((entry, index) => (<Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'hsl(var(--secondary))'} />))}</Bar></BarChart>
+                      <BarChart data={statsData} layout="vertical">
+                        <XAxis type="number" hide />
+                        <YAxis dataKey="name" type="category" width={100} fontSize={10} tick={{ fill: 'currentColor' }} />
+                        <RechartsTooltip 
+                          cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              return (
+                                <div className="bg-white border p-2 rounded-lg shadow-xl text-xs">
+                                  <p className="font-bold">{payload[0].payload.name}</p>
+                                  <p className="text-primary">{payload[0].value} participation(s)</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                          {statsData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'hsl(var(--secondary))'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
                     </ResponsiveContainer>
                   ) : <div className="h-full flex flex-col items-center justify-center text-muted-foreground italic">{lang === 'fr' ? 'Aucune donnée' : 'No data'}</div>}
                 </CardContent>

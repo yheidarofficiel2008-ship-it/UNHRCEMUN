@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react';
-import { Timer } from 'lucide-react';
+import { Timer, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SpeakingTimerProps {
-  status: 'started' | 'stopped';
+  status: 'started' | 'paused' | 'stopped';
   startedAt: string | null;
   totalElapsedSeconds: number;
   limitSeconds: number;
@@ -44,6 +44,12 @@ export function SpeakingTimer({ status, startedAt, totalElapsedSeconds, limitSec
       return;
     }
 
+    if (status === 'paused') {
+      const remaining = limitSeconds - totalElapsedSeconds;
+      setTimeLeft(remaining > 0 ? remaining : 0);
+      return;
+    }
+
     const interval = setInterval(() => {
       let currentElapsed = totalElapsedSeconds;
       if (status === 'started' && startedAt) {
@@ -79,10 +85,11 @@ export function SpeakingTimer({ status, startedAt, totalElapsedSeconds, limitSec
   return (
     <div className={cn(
       "inline-flex items-center rounded-full border shadow-sm transition-all duration-300 tabular-nums",
-      status === 'started' ? (isOverTime ? "bg-destructive text-white border-destructive animate-pulse" : "bg-primary/5 text-primary border-primary/20") : "bg-muted/50 text-muted-foreground opacity-40",
+      status === 'started' ? (isOverTime ? "bg-destructive text-white border-destructive animate-pulse" : "bg-primary/5 text-primary border-primary/20") : 
+      status === 'paused' ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-muted/50 text-muted-foreground opacity-40",
       sizeClasses[size]
     )}>
-      <Timer className={cn(size === 'sm' ? "h-3 w-3" : "h-4 w-4", status === 'started' && !isOverTime && "animate-pulse")} />
+      {status === 'paused' ? <Pause className={size === 'sm' ? "h-3 w-3" : "h-4 w-4"} /> : <Timer className={cn(size === 'sm' ? "h-3 w-3" : "h-4 w-4", status === 'started' && !isOverTime && "animate-pulse")} />}
       <span className="font-code tracking-tighter">
         {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
       </span>
