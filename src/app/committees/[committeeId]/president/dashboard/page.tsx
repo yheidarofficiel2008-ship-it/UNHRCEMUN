@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle, Languages } from 'lucide-react';
+import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle, Languages, Award, Calculator, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -89,9 +89,16 @@ export default function PresidentDashboard() {
       auth: "Authentification...",
       actions: "Actions",
       countries: "Pays",
-      stats: "Stats",
+      stats: "Stats & Notation",
       resolutionsTab: "Projets de Résolution",
-      messagesTab: "Messages Privés"
+      messagesTab: "Messages Privés",
+      gradingTitle: "Notation des Délégués",
+      speaking: "Prise de parole",
+      diplomacy: "Diplomatie & participation",
+      knowledge: "Connaissance & cohérence",
+      average: "Moyenne",
+      rank: "Rang",
+      saveGrade: "Note enregistrée"
     },
     en: {
       presidency: "Presidency",
@@ -142,9 +149,16 @@ export default function PresidentDashboard() {
       auth: "Authentication...",
       actions: "Actions",
       countries: "Countries",
-      stats: "Stats",
+      stats: "Stats & Grading",
       resolutionsTab: "Draft Resolutions",
-      messagesTab: "Private Messages"
+      messagesTab: "Private Messages",
+      gradingTitle: "Delegate Grading",
+      speaking: "Speaking",
+      diplomacy: "Diplomacy & Participation",
+      knowledge: "Knowledge & Coherence",
+      average: "Average",
+      rank: "Rank",
+      saveGrade: "Grade saved"
     }
   }[lang];
 
@@ -250,6 +264,14 @@ export default function PresidentDashboard() {
       .sort((a, b) => b.count - a.count);
   }, [allParticipations, delegates]);
 
+  const gradedDelegates = useMemo(() => {
+    return delegates.map(d => {
+      const g = d.grades || { speaking: 0, diplomacy: 0, knowledge: 0 };
+      const avg = (Number(g.speaking) + Number(g.diplomacy) + Number(g.knowledge)) / 3;
+      return { ...d, grades: g, average: avg };
+    }).sort((a, b) => b.average - a.average);
+  }, [delegates]);
+
   const toggleSuspension = () => {
     if (!db) return;
     const sessionRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
@@ -326,6 +348,7 @@ export default function PresidentDashboard() {
         country_name: newDelegate.name,
         password: newDelegate.password,
         is_suspended: false,
+        grades: { speaking: 0, diplomacy: 0, knowledge: 0 },
         created_at: serverTimestamp()
       });
       setNewDelegate({ name: '', password: '' });
@@ -333,6 +356,12 @@ export default function PresidentDashboard() {
     } catch (e) {
       toast({ title: "Erreur", variant: "destructive" });
     }
+  };
+
+  const handleUpdateGrade = (delegateId: string, field: string, value: number) => {
+    if (!db) return;
+    const delegateRef = doc(db, 'committees', committeeId, 'delegates', delegateId);
+    updateDocumentNonBlocking(delegateRef, { [`grades.${field}`]: value });
   };
 
   const toggleDelegateSuspension = (delegateId: string, currentStatus: boolean) => {
@@ -727,6 +756,66 @@ export default function PresidentDashboard() {
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-6 mt-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-2">
+                  <Award size={18} className="text-primary" />
+                  <CardTitle className="text-lg">{t.gradingTitle}</CardTitle>
+                </CardHeader>
+                <CardContent className="px-2">
+                  <ScrollArea className="h-[500px]">
+                    <div className="space-y-6 p-2">
+                      {gradedDelegates.map((d, index) => (
+                        <div key={d.id} className="p-4 border rounded-xl bg-muted/20 relative">
+                          <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center gap-3">
+                              <Badge variant="secondary" className="h-8 w-8 rounded-full p-0 flex items-center justify-center font-black text-xs">
+                                {index + 1}
+                              </Badge>
+                              <span className="font-black uppercase tracking-tight text-sm">{d.country_name}</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase">{t.average}</span>
+                              <span className={`text-xl font-black tabular-nums ${d.average >= 7 ? 'text-green-600' : d.average >= 4 ? 'text-amber-600' : 'text-red-600'}`}>
+                                {d.average.toFixed(1)}/10
+                              </span>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 gap-4">
+                            <div className="space-y-1">
+                              <Label className="text-[9px] uppercase font-bold text-muted-foreground">{t.speaking}</Label>
+                              <Input 
+                                type="number" min="0" max="10" step="0.5" 
+                                className="h-8 text-xs font-bold" 
+                                value={d.grades.speaking} 
+                                onChange={(e) => handleUpdateGrade(d.id, 'speaking', Number(e.target.value))}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[9px] uppercase font-bold text-muted-foreground">{t.diplomacy}</Label>
+                              <Input 
+                                type="number" min="0" max="10" step="0.5" 
+                                className="h-8 text-xs font-bold" 
+                                value={d.grades.diplomacy} 
+                                onChange={(e) => handleUpdateGrade(d.id, 'diplomacy', Number(e.target.value))}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[9px] uppercase font-bold text-muted-foreground">{t.knowledge}</Label>
+                              <Input 
+                                type="number" min="0" max="10" step="0.5" 
+                                className="h-8 text-xs font-bold" 
+                                value={d.grades.knowledge} 
+                                onChange={(e) => handleUpdateGrade(d.id, 'knowledge', Number(e.target.value))}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader className="flex flex-row items-center gap-2">
                   <BarChart3 size={18} className="text-primary" />
