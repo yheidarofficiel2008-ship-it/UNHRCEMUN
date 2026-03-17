@@ -37,6 +37,7 @@ export default function DelegateDashboard() {
   const [hasVoted, setHasVoted] = useState(false);
   const [isCountrySuspended, setIsCountrySuspended] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const lastOverlayType = useRef<string | null>(null);
 
   const lang = committee?.language || 'fr';
   const t = {
@@ -167,6 +168,52 @@ export default function DelegateDashboard() {
     });
     return () => unsub();
   }, [currentAction, delegate, db, committeeId]);
+
+  // Alarme de crise et gestion des votes
+  useEffect(() => {
+    if (activeOverlay?.type === 'crisis' && lastOverlayType.current !== 'crisis') {
+      playCrisisAlarm();
+    }
+    lastOverlayType.current = activeOverlay?.type || null;
+  }, [activeOverlay]);
+
+  useEffect(() => {
+    setHasVoted(false);
+  }, [activeOverlay?.voteId]);
+
+  const playCrisisAlarm = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const context = new AudioContextClass();
+      const now = context.currentTime;
+      
+      const playPulse = (startTime: number) => {
+        const osc = context.createOscillator();
+        const gain = context.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(440, startTime);
+        osc.frequency.exponentialRampToValueAtTime(880, startTime + 0.4);
+        
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.2, startTime + 0.1);
+        gain.gain.linearRampToValueAtTime(0, startTime + 0.5);
+        
+        osc.connect(gain);
+        gain.connect(context.destination);
+        
+        osc.start(startTime);
+        osc.stop(startTime + 0.5);
+      };
+
+      // 8 pulsations à 0.5s d'intervalle = 4 secondes
+      for(let i = 0; i < 8; i++) {
+        playPulse(now + i * 0.5);
+      }
+    } catch (e) {
+      console.warn("Audio Context blocked or failed");
+    }
+  };
 
   const handleParticipation = async (status: 'participating' | 'passing') => {
     if (!currentAction || !delegate || isCountrySuspended || !db) return;
