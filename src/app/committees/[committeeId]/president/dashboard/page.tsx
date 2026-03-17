@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle, Languages, Award, Calculator, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -195,6 +196,10 @@ export default function PresidentDashboard() {
   const [messages, setMessages] = useState<any[]>([]);
   const [displayGradedDelegates, setDisplayGradedDelegates] = useState<any[]>([]);
 
+  // Refs for tracking new items and playing sounds
+  const initialResolutionsCount = useRef<number | null>(null);
+  const initialMessagesCount = useRef<number | null>(null);
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push(`/committees/${committeeId}/president/login`);
@@ -211,12 +216,24 @@ export default function PresidentDashboard() {
 
     const resolutionsRef = collection(db, 'committees', committeeId, 'resolutions');
     const unsubRes = onSnapshot(query(resolutionsRef, orderBy('created_at', 'desc')), (snapshot) => {
-      setResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      if (initialResolutionsCount.current !== null && data.length > initialResolutionsCount.current) {
+        playNotificationSound();
+      }
+      initialResolutionsCount.current = data.length;
+      setResolutions(data);
     });
 
     const messagesRef = collection(db, 'committees', committeeId, 'messages');
     const unsubMessages = onSnapshot(query(messagesRef, orderBy('timestamp', 'desc')), (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      if (initialMessagesCount.current !== null && data.length > initialMessagesCount.current) {
+        playNotificationSound();
+      }
+      initialMessagesCount.current = data.length;
+      setMessages(data);
     });
 
     const partRef = collection(db, 'committees', committeeId, 'participations');
@@ -277,6 +294,29 @@ export default function PresidentDashboard() {
       return [...updatedPrev, ...newDelegates];
     });
   }, [delegates]);
+
+  const playNotificationSound = () => {
+    try {
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const context = new AudioContextClass();
+      const now = context.currentTime;
+      const osc = context.createOscillator();
+      const gain = context.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, now); // D5
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.1, now + 0.05);
+      gain.gain.linearRampToValueAtTime(0, now + 0.2);
+      osc.connect(gain);
+      gain.connect(context.destination);
+      osc.start(now);
+      osc.stop(now + 0.2);
+    } catch (e) {
+      console.warn("Audio blocked");
+    }
+  };
 
   const handleCalculateRanks = () => {
     const sorted = [...displayGradedDelegates].sort((a, b) => b.average - a.average);

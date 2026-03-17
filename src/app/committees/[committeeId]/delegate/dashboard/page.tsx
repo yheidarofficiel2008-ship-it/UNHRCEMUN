@@ -97,8 +97,8 @@ export default function DelegateDashboard() {
       waitingAction: "Waiting for instructions...",
       globalChrono: "Global Chronometer",
       speakerChrono: "Speaker Timer",
-      participate: "Sign Up",
-      pass: "Pass Turn",
+      participate: "Participer",
+      pass: "Passer son tour",
       projected: "PROJECTED ON MAIN SCREEN",
       submitResolution: "Resolution Drafting",
       title: "Project Title",
@@ -162,9 +162,6 @@ export default function DelegateDashboard() {
 
     const qDisplayed = query(collection(db, 'committees', committeeId, 'resolutions'), where('is_displayed', '==', true));
     const unsubDisplayed = onSnapshot(qDisplayed, (snap) => {
-      snap.docs.forEach(doc => {
-        // Just keeping it for reference
-      });
       setDisplayedResolutions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
@@ -541,18 +538,19 @@ export default function DelegateDashboard() {
             <CardContent className="p-10 space-y-12">
               {isActive ? (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-                    <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
-                    <div className="bg-primary/[0.02] p-10 rounded-[2.5rem] border-2 border-dashed border-primary/10 flex flex-col items-center justify-center gap-6 shadow-inner">
-                      <div className="flex items-center gap-3 text-[10px] font-black text-[#0459ab]/60 uppercase tracking-[0.3em]"><Timer size={20} /> {t.speakerChrono}</div>
-                      <SpeakingTimer status={currentAction.speaking_timer_status} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} size="lg" />
+                  <div className="flex flex-col items-center gap-6 max-w-xl mx-auto">
+                    <div className="relative w-full">
+                      <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
+                      <div className="absolute -bottom-4 left-1/2 -translate-x-1/2">
+                        <SpeakingTimer status={currentAction.speaking_timer_status} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} size="md" />
+                      </div>
                     </div>
                   </div>
                   {currentAction.allow_participation && currentAction.status === 'launched' && (
                     <div className="pt-10 border-t border-primary/5 text-center">
-                      <div className="grid grid-cols-2 gap-8 max-w-xl mx-auto">
-                        <Button size="lg" className={`h-24 md:h-28 text-2xl font-black uppercase tracking-tight rounded-[2rem] gap-4 shadow-xl transition-all hover:scale-[1.03] ${participationStatus === 'participating' ? 'bg-green-600 shadow-green-600/20' : 'bg-[#0459ab] shadow-[#0459ab]/20'}`} onClick={() => handleParticipation('participating')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><CheckCircle2 size={32} /> {t.participate}</Button>
-                        <Button size="lg" variant="outline" className={`h-24 md:h-28 text-2xl font-black uppercase tracking-tight rounded-[2rem] gap-4 border-2 transition-all hover:scale-[1.03] ${participationStatus === 'passing' ? 'border-destructive text-destructive bg-destructive/5' : 'border-primary/20 text-[#0459ab]/60 hover:bg-primary/5'}`} onClick={() => handleParticipation('passing')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><XCircle size={32} /> {t.pass}</Button>
+                      <div className="grid grid-cols-2 gap-8 max-w-md mx-auto">
+                        <Button size="sm" className={`h-11 rounded-xl font-black uppercase tracking-widest text-[10px] gap-2 shadow-lg transition-all hover:scale-[1.03] ${participationStatus === 'participating' ? 'bg-green-600 shadow-green-600/20' : 'bg-[#0459ab] shadow-[#0459ab]/20'}`} onClick={() => handleParticipation('participating')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><CheckCircle2 size={16} /> {t.participate}</Button>
+                        <Button size="sm" variant="outline" className={`h-11 rounded-xl font-black uppercase tracking-widest text-[10px] gap-2 border-2 transition-all hover:scale-[1.03] ${participationStatus === 'passing' ? 'border-destructive text-destructive bg-destructive/5' : 'border-primary/20 text-[#0459ab]/60 hover:bg-primary/5'}`} onClick={() => handleParticipation('passing')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><XCircle size={16} /> {t.pass}</Button>
                       </div>
                     </div>
                   )}
@@ -640,4 +638,3 @@ export default function DelegateDashboard() {
     </div>
   );
 }
-
