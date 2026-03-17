@@ -244,8 +244,12 @@ export default function PresidentDashboard() {
     }
 
     const partRef = collection(db, 'committees', committeeId, 'participations');
-    const unsubPart = onSnapshot(query(partRef, where('action_id', '==', currentAction.id), where('status', '==', 'participating'), orderBy('updated_at', 'asc')), (snapshot) => {
-      const parts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // On filtre et trie côté client pour éviter les erreurs d'index compositeFirestore
+    const unsubPart = onSnapshot(query(partRef, where('action_id', '==', currentAction.id)), (snapshot) => {
+      const parts = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() as any }))
+        .filter(p => p.status === 'participating')
+        .sort((a, b) => (a.updated_at?.seconds || 0) - (b.updated_at?.seconds || 0));
       setParticipants(parts);
     });
 

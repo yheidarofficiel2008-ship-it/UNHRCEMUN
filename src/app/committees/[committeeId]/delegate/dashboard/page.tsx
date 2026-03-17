@@ -180,8 +180,13 @@ export default function DelegateDashboard() {
       return;
     }
     const partRef = collection(db, 'committees', committeeId, 'participations');
-    const unsub = onSnapshot(query(partRef, where('action_id', '==', currentAction.id), where('status', '==', 'participating'), orderBy('updated_at', 'asc')), (snapshot) => {
-      setActiveSpeakers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    // On récupère toutes les participations de l'action et on filtre/trie côté client pour éviter les erreurs d'index
+    const unsub = onSnapshot(query(partRef, where('action_id', '==', currentAction.id)), (snapshot) => {
+      const speakers = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() as any }))
+        .filter(p => p.status === 'participating')
+        .sort((a, b) => (a.updated_at?.seconds || 0) - (b.updated_at?.seconds || 0));
+      setActiveSpeakers(speakers);
     });
     return () => unsub();
   }, [db, currentAction?.id, committeeId]);
