@@ -3,12 +3,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert, Plus, Trash2, Key, Home, AlertCircle, Globe } from 'lucide-react';
+import { ShieldAlert, Plus, Trash2, Key, Home, AlertCircle, Globe, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirebase, useCollection } from '@/firebase';
 import { useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, serverTimestamp, doc } from 'firebase/firestore';
@@ -36,7 +37,8 @@ export default function AdminPage() {
   const [newCommittee, setNewCommittee] = useState({
     name: '',
     president_email: '',
-    president_password: ''
+    president_password: '',
+    language: 'fr'
   });
 
   const committeesQuery = useMemoFirebase(() => {
@@ -48,7 +50,6 @@ export default function AdminPage() {
 
   const checkKey = (e: React.FormEvent) => {
     e.preventDefault();
-    // La clé reste MUN-X26 en interne
     if (securityKey === 'MUN-X26') {
       setIsAuthorized(true);
       toast({ title: "Accès Autorisé", description: "Bienvenue dans le panneau d'administration." });
@@ -65,7 +66,7 @@ export default function AdminPage() {
         ...newCommittee,
         created_at: serverTimestamp()
       });
-      setNewCommittee({ name: '', president_email: '', president_password: '' });
+      setNewCommittee({ name: '', president_email: '', president_password: '', language: 'fr' });
       toast({ title: "Comité créé avec succès" });
     } catch (e) {
       toast({ title: "Erreur de création", variant: "destructive" });
@@ -144,8 +145,21 @@ export default function AdminPage() {
               <form onSubmit={handleCreate}>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Nom du Comité (ex: ECOSOC)</Label>
+                    <Label>Nom du Comité</Label>
                     <Input placeholder="ECOSOC" value={newCommittee.name} onChange={e => setNewCommittee({...newCommittee, name: e.target.value})} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Langue du Comité</Label>
+                    <Select value={newCommittee.language} onValueChange={(val) => setNewCommittee({...newCommittee, language: val})}>
+                      <SelectTrigger>
+                        <Languages className="mr-2 h-4 w-4" />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fr">Français</SelectItem>
+                        <SelectItem value="en">English</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Email du Président</Label>
@@ -172,7 +186,10 @@ export default function AdminPage() {
                 <Card key={c.id} className="group hover:border-destructive transition-all hover:shadow-lg">
                   <CardContent className="p-6 flex justify-between items-center">
                     <div className="space-y-1">
-                      <h3 className="text-xl font-black uppercase tracking-tight group-hover:text-primary transition-colors">{c.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-black uppercase tracking-tight group-hover:text-primary transition-colors">{c.name}</h3>
+                        <Badge variant="outline" className="uppercase text-[10px]">{c.language || 'fr'}</Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded w-fit">ID: {c.id}</p>
                       <p className="text-xs text-muted-foreground font-medium pt-1">Président : {c.president_email}</p>
                     </div>
@@ -187,7 +204,7 @@ export default function AdminPage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Supprimer le comité {c.name} ?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Cette action est irréversible. Toutes les données (délégués, résolutions, actions) liées à ce comité seront perdues.
+                            Cette action est irréversible. Toutes les données liées à ce comité seront perdues.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -196,7 +213,7 @@ export default function AdminPage() {
                             onClick={() => handleDelete(c.id)}
                             className="bg-destructive hover:bg-destructive/90"
                           >
-                            Supprimer définitivement
+                            Supprimer
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

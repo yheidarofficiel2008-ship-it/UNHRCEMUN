@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle } from 'lucide-react';
+import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,116 @@ export default function PresidentDashboard() {
   
   const committeeRef = useMemoFirebase(() => db ? doc(db, 'committees', committeeId) : null, [db, committeeId]);
   const { data: committee } = useDoc(committeeRef);
+
+  const lang = committee?.language || 'fr';
+  const t = {
+    fr: {
+      presidency: "Présidence",
+      specialAction: "Action Spéciale",
+      crisisMode: "Mode Crise Actif",
+      voteLaunched: "Vote lancé",
+      crisisTriggered: "CRISE DÉCLENCHÉE",
+      messageDisplayed: "Message affiché",
+      resolutionsAllowed: "Résolutions autorisées",
+      resolutionsBlocked: "Résolutions bloquées",
+      resume: "Reprendre",
+      suspend: "Suspendre",
+      newAction: "Nouvelle Action",
+      title: "Titre",
+      duration: "Durée (min)",
+      speakingTime: "Temps de parole",
+      allowOptional: "Autoriser participation facultative",
+      launchAction: "Lancer l'Action",
+      start: "Démarrer",
+      pause: "Pause",
+      stop: "Arrêter",
+      speakerChrono: "Chrono Orateur",
+      speakersList: "Liste des Orateurs",
+      noSpeaker: "Aucun orateur",
+      addCountry: "Ajouter un Pays",
+      countryName: "Nom du Pays",
+      password: "Mot de passe",
+      addToList: "Ajouter à la liste",
+      registeredDelegates: "Délégués Enregistrés",
+      participationStats: "Participations aux Débats",
+      actionsHistory: "Historique des Actions",
+      resolutionsSubmitted: "Resolutions Soumises",
+      privateInbox: "Boîte de réception Privée",
+      noResolution: "Aucune résolution soumise",
+      noMessage: "Aucun message",
+      approve: "Approuver",
+      reject: "Rejeter",
+      hide: "Masquer",
+      show: "Afficher",
+      spokesperson: "Porte-parole",
+      sponsors: "Sponsors",
+      specialTitle: "Annonce, Vote ou Crise",
+      overlayType: "Type d'affichage",
+      overlaySubject: "Titre / Sujet",
+      crisisSubject: "Sujet de la Crise",
+      launchEverywhere: "Lancer sur tous les écrans",
+      launchCrisis: "Lancer la Crise",
+      auth: "Authentification...",
+      actions: "Actions",
+      countries: "Pays",
+      stats: "Stats",
+      resolutionsTab: "Projets de Résolution",
+      messagesTab: "Messages Privés"
+    },
+    en: {
+      presidency: "Presidency",
+      specialAction: "Special Action",
+      crisisMode: "Crisis Mode Active",
+      voteLaunched: "Vote launched",
+      crisisTriggered: "CRISIS TRIGGERED",
+      messageDisplayed: "Message displayed",
+      resolutionsAllowed: "Resolutions allowed",
+      resolutionsBlocked: "Resolutions blocked",
+      resume: "Resume",
+      suspend: "Suspend",
+      newAction: "New Action",
+      title: "Title",
+      duration: "Duration (min)",
+      speakingTime: "Speaking time",
+      allowOptional: "Allow optional participation",
+      launchAction: "Launch Action",
+      start: "Start",
+      pause: "Pause",
+      stop: "Stop",
+      speakerChrono: "Speaker Timer",
+      speakersList: "Speakers List",
+      noSpeaker: "No speaker",
+      addCountry: "Add Country",
+      countryName: "Country Name",
+      password: "Password",
+      addToList: "Add to list",
+      registeredDelegates: "Registered Delegates",
+      participationStats: "Debate Participation",
+      actionsHistory: "Actions History",
+      resolutionsSubmitted: "Submitted Resolutions",
+      privateInbox: "Private Inbox",
+      noResolution: "No resolution submitted",
+      noMessage: "No message",
+      approve: "Approve",
+      reject: "Reject",
+      hide: "Hide",
+      show: "Show",
+      spokesperson: "Spokesperson",
+      sponsors: "Sponsors",
+      specialTitle: "Announcement, Vote or Crisis",
+      overlayType: "Display Type",
+      overlaySubject: "Title / Subject",
+      crisisSubject: "Crisis Subject",
+      launchEverywhere: "Launch on all screens",
+      launchCrisis: "Launch Crisis",
+      auth: "Authentication...",
+      actions: "Actions",
+      countries: "Countries",
+      stats: "Stats",
+      resolutionsTab: "Draft Resolutions",
+      messagesTab: "Private Messages"
+    }
+  }[lang];
 
   const [customMinutes, setCustomMinutes] = useState('1');
   const [newAction, setNewAction] = useState({
@@ -150,7 +260,7 @@ export default function PresidentDashboard() {
     if (!db) return;
     const sessionRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
     setDocumentNonBlocking(sessionRef, { allowResolutions: val, lastUpdated: new Date().toISOString() }, { merge: true });
-    toast({ title: val ? "Résolutions autorisées" : "Résolutions bloquées" });
+    toast({ title: val ? t.resolutionsAllowed : t.resolutionsBlocked });
   };
 
   const launchOverlay = () => {
@@ -166,7 +276,7 @@ export default function PresidentDashboard() {
     setDocumentNonBlocking(sessionRef, { activeOverlay: overlayData }, { merge: true });
     setIsOverlayDialogOpen(false);
     toast({ 
-      title: overlayForm.type === 'vote' ? "Vote lancé" : overlayForm.type === 'crisis' ? "CRISE DÉCLENCHÉE" : "Message affiché",
+      title: overlayForm.type === 'vote' ? t.voteLaunched : overlayForm.type === 'crisis' ? t.crisisTriggered : t.messageDisplayed,
       variant: overlayForm.type === 'crisis' ? "destructive" : "default"
     });
   };
@@ -199,7 +309,7 @@ export default function PresidentDashboard() {
       };
       
       await addDocumentNonBlocking(collection(db, 'committees', committeeId, 'actions'), actionData);
-      toast({ title: "Action lancée" });
+      toast({ title: lang === 'fr' ? "Action lancée" : "Action launched" });
       setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
     } catch (e) {
       toast({ title: "Erreur", description: "Impossible de créer l'action.", variant: "destructive" });
@@ -208,7 +318,7 @@ export default function PresidentDashboard() {
 
   const handleAddDelegate = async () => {
     if (!db || !newDelegate.name || !newDelegate.password) {
-      toast({ title: "Champs manquants", description: "Veuillez saisir un pays et un mot de passe.", variant: "destructive" });
+      toast({ title: "Champs manquants", variant: "destructive" });
       return;
     }
     try {
@@ -219,19 +329,15 @@ export default function PresidentDashboard() {
         created_at: serverTimestamp()
       });
       setNewDelegate({ name: '', password: '' });
-      toast({ title: "Pays ajouté avec succès" });
+      toast({ title: lang === 'fr' ? "Pays ajouté avec succès" : "Country added successfully" });
     } catch (e) {
-      toast({ title: "Erreur", description: "Échec de l'ajout.", variant: "destructive" });
+      toast({ title: "Erreur", variant: "destructive" });
     }
   };
 
   const toggleDelegateSuspension = (delegateId: string, currentStatus: boolean) => {
     if (!db) return;
     updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'delegates', delegateId), { is_suspended: !currentStatus });
-    toast({ 
-      title: currentStatus ? "Délégation rétablie" : "Délégation suspendue",
-      description: currentStatus ? "Le pays peut à nouveau interagir." : "Le pays ne peut plus interagir."
-    });
   };
 
   const extendTime = (mins: number) => {
@@ -240,7 +346,6 @@ export default function PresidentDashboard() {
     updateDocumentNonBlocking(actionRef, { 
       duration_minutes: increment(mins)
     });
-    toast({ title: `+${mins} minute(s) ajoutée(s)` });
   };
 
   const startTimer = () => {
@@ -289,7 +394,6 @@ export default function PresidentDashboard() {
     if (!db || !currentAction) return;
     const actionRef = doc(db, 'committees', committeeId, 'actions', currentAction.id);
     updateDocumentNonBlocking(actionRef, { status: 'completed' });
-    toast({ title: "Action terminée" });
   };
 
   const markMessageAsRead = (messageId: string) => {
@@ -305,7 +409,6 @@ export default function PresidentDashboard() {
   const handleDeleteAction = (actionId: string) => {
     if (!db) return;
     deleteDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', actionId));
-    toast({ title: "Action supprimée de l'historique" });
   };
 
   const handleLogout = async () => {
@@ -314,7 +417,7 @@ export default function PresidentDashboard() {
     router.push('/');
   };
 
-  if (isUserLoading) return <div className="min-h-screen flex items-center justify-center font-bold uppercase tracking-widest animate-pulse">Authentification...</div>;
+  if (isUserLoading) return <div className="min-h-screen flex items-center justify-center font-bold uppercase tracking-widest animate-pulse">{t.auth}</div>;
 
   const orateursInscrits = participants.filter(p => p.status === 'participating');
   const unreadMessagesCount = messages.filter(m => !m.is_read).length;
@@ -329,39 +432,39 @@ export default function PresidentDashboard() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="bg-primary text-white p-4 shadow-md flex justify-between items-center z-50">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold font-headline uppercase tracking-widest">{committee?.name || "Comité"} - Présidence</h1>
-          {isSuspended && <Badge variant="destructive" className="animate-pulse">SÉANCE SUSPENDUE</Badge>}
-          {activeOverlay?.type === 'crisis' && <Badge variant="destructive" className="bg-red-600 animate-bounce uppercase font-black px-4 shadow-2xl">Mode Crise Actif</Badge>}
+          <h1 className="text-xl font-bold font-headline uppercase tracking-widest">{committee?.name || "Comité"} - {t.presidency}</h1>
+          {isSuspended && <Badge variant="destructive" className="animate-pulse">{lang === 'fr' ? 'SÉANCE SUSPENDUE' : 'SESSION SUSPENDED'}</Badge>}
+          {activeOverlay?.type === 'crisis' && <Badge variant="destructive" className="bg-red-600 animate-bounce uppercase font-black px-4 shadow-2xl">{t.crisisMode}</Badge>}
         </div>
         <div className="flex items-center gap-6">
           <Dialog open={isOverlayDialogOpen} onOpenChange={setIsOverlayDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-amber-500 hover:bg-amber-600 font-bold gap-2">
-                <Stars size={18} /> Action Spéciale
+                <Stars size={18} /> {t.specialAction}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Annonce, Vote ou Crise</DialogTitle>
+                <DialogTitle>{t.specialTitle}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label>Type d'affichage</Label>
+                  <Label>{t.overlayType}</Label>
                   <Select value={overlayForm.type} onValueChange={(val) => setOverlayForm({...overlayForm, type: val})}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="message">Message à afficher (Bleu)</SelectItem>
-                      <SelectItem value="vote">Procédure de vote</SelectItem>
-                      <SelectItem value="crisis" className="text-red-600 font-bold">🚨 CRISE (Écran rouge + Alarme)</SelectItem>
+                      <SelectItem value="message">{lang === 'fr' ? 'Message à afficher' : 'Message to display'}</SelectItem>
+                      <SelectItem value="vote">{lang === 'fr' ? 'Procédure de vote' : 'Voting procedure'}</SelectItem>
+                      <SelectItem value="crisis" className="text-red-600 font-bold">🚨 {lang === 'fr' ? 'CRISE (Écran rouge + Alarme)' : 'CRISIS (Red screen + Alarm)'}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>{overlayForm.type === 'crisis' ? 'Sujet de la Crise' : 'Titre / Sujet'}</Label>
+                  <Label>{overlayForm.type === 'crisis' ? t.crisisSubject : t.overlaySubject}</Label>
                   <Input 
-                    placeholder={overlayForm.type === 'crisis' ? "Décrivez la situation d'urgence..." : "Ex: Vote sur la résolution A-12"} 
+                    placeholder={overlayForm.type === 'crisis' ? (lang === 'fr' ? "Situation d'urgence..." : "Emergency situation...") : "..."} 
                     value={overlayForm.title} 
                     onChange={(e) => setOverlayForm({...overlayForm, title: e.target.value})} 
                   />
@@ -369,7 +472,7 @@ export default function PresidentDashboard() {
               </div>
               <DialogFooter>
                 <Button onClick={launchOverlay} className={overlayForm.type === 'crisis' ? "bg-red-600 hover:bg-red-700 w-full font-black uppercase" : "bg-primary w-full"}>
-                  {overlayForm.type === 'crisis' ? 'Lancer la Crise' : 'Lancer sur tous les écrans'}
+                  {overlayForm.type === 'crisis' ? t.launchCrisis : t.launchEverywhere}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -402,7 +505,7 @@ export default function PresidentDashboard() {
 
           <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
             {allowResolutions ? <MessageSquare size={16} /> : <MessageSquareOff size={16} />}
-            <span className="text-xs font-bold uppercase tracking-tighter">Résolutions</span>
+            <span className="text-xs font-bold uppercase tracking-tighter">Res.</span>
             <Switch 
               checked={allowResolutions} 
               onCheckedChange={toggleResolutions}
@@ -412,7 +515,7 @@ export default function PresidentDashboard() {
           <div className="h-6 w-px bg-white/20" />
 
           <Button variant="destructive" onClick={toggleSuspension}>
-            {isSuspended ? "Reprendre" : "Suspendre"}
+            {isSuspended ? t.resume : t.suspend}
           </Button>
           <Button variant="ghost" className="text-white hover:bg-white/10" onClick={handleLogout}>
             <LogOut size={20} />
@@ -424,26 +527,26 @@ export default function PresidentDashboard() {
         <div className="lg:col-span-4 space-y-6">
           <Tabs defaultValue="actions">
             <TabsList className="w-full">
-              <TabsTrigger value="actions" className="flex-1">Actions</TabsTrigger>
-              <TabsTrigger value="delegates" className="flex-1">Pays</TabsTrigger>
-              <TabsTrigger value="stats" className="flex-1">Stats</TabsTrigger>
+              <TabsTrigger value="actions" className="flex-1">{t.actions}</TabsTrigger>
+              <TabsTrigger value="delegates" className="flex-1">{t.countries}</TabsTrigger>
+              <TabsTrigger value="stats" className="flex-1">{t.stats}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="actions" className="space-y-6 mt-4">
               <Card>
-                <CardHeader className="pb-4"><CardTitle className="text-lg">Nouvelle Action</CardTitle></CardHeader>
+                <CardHeader className="pb-4"><CardTitle className="text-lg">{t.newAction}</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Titre</Label>
-                    <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="Ex: Débat Général" />
+                    <Label>{t.title}</Label>
+                    <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="..." />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase">Durée (min)</Label>
+                      <Label className="text-[10px] uppercase">{t.duration}</Label>
                       <Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase">Temps de parole</Label>
+                      <Label className="text-[10px] uppercase">{t.speakingTime}</Label>
                       <Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} placeholder="1:00" />
                     </div>
                   </div>
@@ -453,9 +556,9 @@ export default function PresidentDashboard() {
                       checked={newAction.allowParticipation} 
                       onCheckedChange={(checked) => setNewAction({...newAction, allowParticipation: !!checked})} 
                     />
-                    <Label htmlFor="participation" className="text-sm cursor-pointer">Autoriser participation facultative</Label>
+                    <Label htmlFor="participation" className="text-sm cursor-pointer">{t.allowOptional}</Label>
                   </div>
-                  <Button className="w-full bg-primary" onClick={createAction}>Lancer l'Action</Button>
+                  <Button className="w-full bg-primary" onClick={createAction}>{t.launchAction}</Button>
                 </CardContent>
               </Card>
 
@@ -492,22 +595,22 @@ export default function PresidentDashboard() {
                     <div className="grid grid-cols-2 gap-3">
                       {(currentAction.status === 'launched' || currentAction.status === 'paused') ? (
                         <Button className="bg-green-600 hover:bg-green-700 h-12 gap-2" onClick={startTimer}>
-                          <Play size={18} fill="currentColor" /> Démarrer
+                          <Play size={18} fill="currentColor" /> {t.start}
                         </Button>
                       ) : (
                         <Button variant="outline" className="border-amber-500 text-amber-600 h-12 gap-2" onClick={pauseTimer}>
-                          <Pause size={18} fill="currentColor" /> Pause
+                          <Pause size={18} fill="currentColor" /> {t.pause}
                         </Button>
                       )}
                       <Button variant="destructive" className="h-12 gap-2" onClick={stopAction}>
-                        <Square size={18} fill="currentColor" /> Arrêter
+                        <Square size={18} fill="currentColor" /> {t.stop}
                       </Button>
                     </div>
 
                     <div className="pt-4 border-t space-y-4">
                       <div className="flex justify-between items-center">
                         <h3 className="font-bold text-[10px] text-muted-foreground uppercase flex items-center gap-2">
-                          <Timer size={14} /> Chrono Orateur (À rebours)
+                          <Timer size={14} /> {t.speakerChrono}
                         </h3>
                         <Badge variant="outline" className="text-[10px]">{currentAction.time_per_delegate}</Badge>
                       </div>
@@ -529,7 +632,7 @@ export default function PresidentDashboard() {
                           onClick={startSpeakingTimer}
                           disabled={currentAction.speaking_timer_status === 'started'}
                         >
-                          Lancer
+                          {t.start}
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -544,17 +647,17 @@ export default function PresidentDashboard() {
 
                     <div className="space-y-3 pt-4 border-t">
                       <h3 className="font-bold text-sm text-muted-foreground uppercase flex items-center justify-between">
-                        <span className="flex items-center gap-2"><ListOrdered size={14} /> Liste des Orateurs</span>
+                        <span className="flex items-center gap-2"><ListOrdered size={14} /> {t.speakersList}</span>
                         <Badge variant="secondary">{orateursInscrits.length}</Badge>
                       </h3>
                       <ScrollArea className="h-[180px] border rounded-xl p-3 bg-muted/10">
                         {orateursInscrits.length > 0 ? orateursInscrits.map((p, i) => (
                           <div key={i} className="flex justify-between items-center p-3 mb-2 bg-white border rounded-lg shadow-sm">
                             <span className="font-bold text-sm">{i + 1}. {p.country_name}</span>
-                            <Badge className="bg-green-500">Prêt</Badge>
+                            <Badge className="bg-green-500">{lang === 'fr' ? 'Prêt' : 'Ready'}</Badge>
                           </div>
                         )) : (
-                          <div className="text-center py-10 text-muted-foreground text-xs italic">Aucun orateur</div>
+                          <div className="text-center py-10 text-muted-foreground text-xs italic">{t.noSpeaker}</div>
                         )}
                       </ScrollArea>
                     </div>
@@ -567,31 +670,31 @@ export default function PresidentDashboard() {
               <Card>
                 <CardHeader className="pb-3 flex flex-row items-center gap-2">
                   <UserPlus size={18} className="text-secondary" />
-                  <CardTitle className="text-lg">Ajouter un Pays</CardTitle>
+                  <CardTitle className="text-lg">{t.addCountry}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Nom du Pays</Label>
+                    <Label>{t.countryName}</Label>
                     <Input 
                       value={newDelegate.name} 
                       onChange={e => setNewDelegate({...newDelegate, name: e.target.value})} 
-                      placeholder="Ex: Canada" 
+                      placeholder="..." 
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Mot de passe</Label>
+                    <Label>{t.password}</Label>
                     <Input 
                       value={newDelegate.password} 
                       onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} 
-                      placeholder="Secret123" 
+                      placeholder="..." 
                     />
                   </div>
-                  <Button className="w-full bg-secondary" onClick={handleAddDelegate}>Ajouter à la liste</Button>
+                  <Button className="w-full bg-secondary" onClick={handleAddDelegate}>{t.addToList}</Button>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader><CardTitle className="text-lg">Délégués Enregistrés ({delegates.length})</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">{t.registeredDelegates} ({delegates.length})</CardTitle></CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[400px]">
                     {delegates.map(d => (
@@ -599,36 +702,25 @@ export default function PresidentDashboard() {
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-sm break-words">{d.country_name}</span>
-                            {d.is_suspended && <Badge variant="destructive" className="h-4 text-[8px] px-1 uppercase"><ShieldAlert size={10} className="mr-0.5" /> Suspendu</Badge>}
+                            {d.is_suspended && <Badge variant="destructive" className="h-4 text-[8px] px-1 uppercase"><ShieldAlert size={10} className="mr-0.5" /> {lang === 'fr' ? 'Suspendu' : 'Suspended'}</Badge>}
                           </div>
                           <span className="text-[10px] text-muted-foreground font-mono">Pass: {d.password}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className={`h-8 w-8 ${d.is_suspended ? 'text-green-600 hover:text-green-700' : 'text-amber-600 hover:text-amber-700'}`} 
-                                  onClick={() => toggleDelegateSuspension(d.id, d.is_suspended)}
-                                >
-                                  {d.is_suspended ? <ShieldOff size={16} /> : <ShieldAlert size={16} />}
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{d.is_suspended ? 'Rétablir le pays' : 'Suspendre le pays'}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={`h-8 w-8 ${d.is_suspended ? 'text-green-600' : 'text-amber-600'}`} 
+                            onClick={() => toggleDelegateSuspension(d.id, d.is_suspended)}
+                          >
+                            {d.is_suspended ? <ShieldOff size={16} /> : <ShieldAlert size={16} />}
+                          </Button>
                           <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'delegates', d.id))}>
                             <Trash2 size={16} />
                           </Button>
                         </div>
                       </div>
                     ))}
-                    {delegates.length === 0 && <p className="text-xs text-center text-muted-foreground italic py-4">Aucun pays enregistré.</p>}
                   </ScrollArea>
                 </CardContent>
               </Card>
@@ -638,34 +730,14 @@ export default function PresidentDashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center gap-2">
                   <BarChart3 size={18} className="text-primary" />
-                  <CardTitle className="text-lg">Participations aux Débats</CardTitle>
+                  <CardTitle className="text-lg">{t.participationStats}</CardTitle>
                 </CardHeader>
                 <CardContent className="h-[300px] pt-4">
                   {statsData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={statsData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                      <BarChart data={statsData} layout="vertical">
                         <XAxis type="number" hide />
-                        <YAxis 
-                          dataKey="name" 
-                          type="category" 
-                          width={100} 
-                          fontSize={10} 
-                          tick={{ fill: 'currentColor' }} 
-                        />
-                        <RechartsTooltip 
-                          cursor={{ fill: 'transparent' }}
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              return (
-                                <div className="bg-popover border p-2 rounded-lg shadow-xl text-xs">
-                                  <p className="font-bold">{payload[0].payload.name}</p>
-                                  <p className="text-primary">{payload[0].value} participation(s)</p>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
+                        <YAxis dataKey="name" type="category" width={100} fontSize={10} tick={{ fill: 'currentColor' }} />
                         <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                           {statsData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'hsl(var(--secondary))'} />
@@ -674,10 +746,7 @@ export default function PresidentDashboard() {
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground italic gap-2">
-                      <BarChart3 size={40} className="opacity-20" />
-                      <p>Aucune donnée de participation enregistrée.</p>
-                    </div>
+                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground italic">{lang === 'fr' ? 'Aucune donnée' : 'No data'}</div>
                   )}
                 </CardContent>
               </Card>
@@ -685,7 +754,7 @@ export default function PresidentDashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center gap-2">
                   <History size={18} className="text-muted-foreground" />
-                  <CardTitle className="text-lg">Historique des Actions</CardTitle>
+                  <CardTitle className="text-lg">{t.actionsHistory}</CardTitle>
                 </CardHeader>
                 <CardContent className="px-4">
                   <ScrollArea className="h-[300px]">
@@ -696,24 +765,13 @@ export default function PresidentDashboard() {
                             <span className="font-bold break-words">{action.title}</span>
                             <div className="flex gap-2">
                               <Badge variant="outline" className="text-[10px]">{action.status}</Badge>
-                              <span className="text-muted-foreground">
-                                {action.created_at?.toDate ? action.created_at.toDate().toLocaleDateString() : 'Date inconnue'}
-                              </span>
                             </div>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive hover:bg-destructive/10 h-8 w-8"
-                            onClick={() => handleDeleteAction(action.id)}
-                          >
+                          <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => handleDeleteAction(action.id)}>
                             <Trash2 size={16} />
                           </Button>
                         </div>
                       ))}
-                      {allActions.length === 0 && (
-                        <p className="text-center py-10 text-muted-foreground italic">Aucun historique disponible.</p>
-                      )}
                     </div>
                   </ScrollArea>
                 </CardContent>
@@ -725,21 +783,17 @@ export default function PresidentDashboard() {
         <div className="lg:col-span-8 space-y-6">
           <Tabs defaultValue="resolutions">
             <TabsList className="w-full">
-              <TabsTrigger value="resolutions" className="flex-1">Projets de Résolution</TabsTrigger>
+              <TabsTrigger value="resolutions" className="flex-1">{t.resolutionsTab}</TabsTrigger>
               <TabsTrigger value="messages" className="flex-1 relative">
-                Messages Privés
-                {unreadMessagesCount > 0 && (
-                  <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full">
-                    {unreadMessagesCount}
-                  </Badge>
-                )}
+                {t.messagesTab}
+                {unreadMessagesCount > 0 && <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full">{unreadMessagesCount}</Badge>}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="resolutions" className="space-y-6 mt-4">
               <Card>
                 <CardHeader className="bg-muted/30 flex flex-row items-center justify-between">
-                  <CardTitle className="flex items-center gap-2"><FileText /> Resolutions Soumises</CardTitle>
+                  <CardTitle className="flex items-center gap-2"><FileText /> {t.resolutionsSubmitted}</CardTitle>
                   <Badge variant="outline">{resolutions.length}</Badge>
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
@@ -747,8 +801,8 @@ export default function PresidentDashboard() {
                     <Card key={res.id} className={`overflow-hidden border-2 ${res.is_displayed ? 'border-primary' : ''}`}>
                       <div className="bg-muted/50 p-4 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-primary uppercase tracking-tight break-words">{res.title || "SANS TITRE"}</span>
-                          {res.is_displayed && <Badge className="bg-primary"><Monitor className="h-3 w-3 mr-1" /> PROJETÉ</Badge>}
+                          <span className="font-bold text-primary uppercase tracking-tight break-words">{res.title || "..."}</span>
+                          {res.is_displayed && <Badge className="bg-primary"><Monitor className="h-3 w-3 mr-1" /> {lang === 'fr' ? 'PROJETÉ' : 'PROJECTED'}</Badge>}
                         </div>
                         <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'}>
                           {res.status?.toUpperCase()}
@@ -756,95 +810,53 @@ export default function PresidentDashboard() {
                       </div>
                       <CardContent className="p-4 space-y-4">
                         <div className="flex flex-wrap gap-2 items-center mb-4">
-                          <Badge variant="outline" className="bg-primary/10 border-primary/30 text-primary py-1 px-2 text-[10px] font-bold uppercase tracking-widest break-words">
-                            DE: {res.proposing_country}
-                          </Badge>
-                          {res.spokesperson && (
-                            <Badge variant="outline" className="bg-secondary/10 border-secondary/30 text-secondary py-1 px-2 text-[10px] font-bold uppercase tracking-widest break-words gap-1">
-                              <User size={10} /> Porte-parole: {res.spokesperson}
-                            </Badge>
-                          )}
-                          {res.sponsors && (
-                            <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-muted-foreground py-1 px-2 text-[10px] font-bold uppercase tracking-widest break-words gap-1">
-                              <Users size={10} /> Sponsors: {res.sponsors}
-                            </Badge>
-                          )}
+                          <Badge variant="outline" className="bg-primary/10 border-primary/30 text-primary py-1 px-2 text-[10px] font-bold uppercase">DE: {res.proposing_country}</Badge>
+                          {res.spokesperson && <Badge variant="outline" className="bg-secondary/10 border-secondary/30 text-secondary py-1 px-2 text-[10px] font-bold uppercase gap-1"><User size={10} /> {t.spokesperson}: {res.spokesperson}</Badge>}
+                          {res.sponsors && <Badge variant="outline" className="bg-muted border-muted-foreground/30 text-muted-foreground py-1 px-2 text-[10px] font-bold uppercase gap-1"><Users size={10} /> {t.sponsors}: {res.sponsors}</Badge>}
                         </div>
-                        <div 
-                          className="text-sm leading-relaxed whitespace-pre-wrap break-words prose prose-sm max-w-none text-left"
-                          dangerouslySetInnerHTML={{ __html: res.content }}
-                        />
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap break-words prose prose-sm max-w-none text-left" dangerouslySetInnerHTML={{ __html: res.content }} />
                         <div className="flex gap-2 justify-end pt-4 border-t">
-                          <Button 
-                            variant={res.is_displayed ? "default" : "outline"} 
-                            size="sm" 
-                            className="gap-2"
-                            onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}
-                          >
-                            {res.is_displayed ? <><EyeOff size={16} /> Masquer</> : <><Eye size={16} /> Afficher</>}
+                          <Button variant={res.is_displayed ? "default" : "outline"} size="sm" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}>
+                            {res.is_displayed ? <><EyeOff size={16} /> {t.hide}</> : <><Eye size={16} /> {t.show}</>}
                           </Button>
-                          <Button variant="outline" size="sm" className="text-green-600 gap-1" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}>
-                            <CheckCircle size={16} /> Approuver
+                          <Button variant="outline" size="sm" className="text-green-600" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}>
+                            <CheckCircle size={16} /> {t.approve}
                           </Button>
-                          <Button variant="outline" size="sm" className="text-red-600 gap-1" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}>
-                            <XCircle size={16} /> Rejeter
+                          <Button variant="outline" size="sm" className="text-red-600" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}>
+                            <XCircle size={16} /> {t.reject}
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id))}>
+                          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id))}>
                             <Trash2 size={16} />
                           </Button>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
-                  {resolutions.length === 0 && (
-                    <div className="text-center py-20 text-muted-foreground italic">Aucune résolution soumise</div>
-                  )}
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6 mt-4">
               <Card>
-                <CardHeader className="bg-muted/30">
-                  <CardTitle className="flex items-center gap-2"><Bell size={18} /> Boîte de réception Privée</CardTitle>
-                </CardHeader>
+                <CardHeader className="bg-muted/30"><CardTitle className="flex items-center gap-2"><Bell size={18} /> {t.privateInbox}</CardTitle></CardHeader>
                 <CardContent className="p-0">
                   <ScrollArea className="h-[600px]">
                     <div className="p-6 space-y-4">
                       {messages.map(msg => (
-                        <div 
-                          key={msg.id} 
-                          className={`p-4 border-l-4 rounded-r-xl shadow-sm flex flex-col gap-3 ${
-                            msg.is_read ? 'bg-muted/10 border-muted-foreground/30' : 'bg-secondary/5 border-secondary'
-                          }`}
-                        >
+                        <div key={msg.id} className={`p-4 border-l-4 rounded-r-xl shadow-sm flex flex-col gap-3 ${msg.is_read ? 'bg-muted/10 border-muted-foreground/30' : 'bg-secondary/5 border-secondary'}`}>
                           <div className="flex justify-between items-start">
                             <div className="flex items-center gap-2">
-                              <Badge variant={msg.type === 'privilege' ? 'destructive' : 'secondary'} className="uppercase text-[10px]">
-                                {msg.type === 'privilege' ? 'Point de privilège' : 'Message général'}
-                              </Badge>
-                              <span className="font-bold text-sm break-words">{msg.sender_country}</span>
+                              <Badge variant={msg.type === 'privilege' ? 'destructive' : 'secondary'} className="uppercase text-[10px]">{msg.type}</Badge>
+                              <span className="font-bold text-sm">{msg.sender_country}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              {!msg.is_read && (
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => markMessageAsRead(msg.id)}>
-                                  <Check size={16} />
-                                </Button>
-                              )}
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteMessage(msg.id)}>
-                                <Trash2 size={16} />
-                              </Button>
+                              {!msg.is_read && <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => markMessageAsRead(msg.id)}><Check size={16} /></Button>}
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteMessage(msg.id)}><Trash2 size={16} /></Button>
                             </div>
                           </div>
-                          <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
-                          <span className="text-[10px] text-muted-foreground self-end">
-                            {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "À l'instant"}
-                          </span>
+                          <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                         </div>
                       ))}
-                      {messages.length === 0 && (
-                        <div className="text-center py-20 text-muted-foreground italic">Aucun message</div>
-                      )}
                     </div>
                   </ScrollArea>
                 </CardContent>
