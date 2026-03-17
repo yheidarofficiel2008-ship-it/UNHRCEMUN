@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert, Plus, Trash2, Key, Home, AlertCircle, Globe, Languages, LogIn } from 'lucide-react';
+import { ShieldAlert, Plus, Trash2, Key, Home, AlertCircle, Globe, Languages, LogIn, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
