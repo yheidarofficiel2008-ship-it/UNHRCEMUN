@@ -262,10 +262,7 @@ export default function PresidentDashboard() {
         return { ...d, grades: g, average: avg };
       });
 
-      // Identifier les IDs déjà présents
       const existingIds = new Set(prev.map(p => p.id));
-      
-      // Filtrer pour garder uniquement ceux qui existent encore dans currentDelegatesData
       const currentIds = new Set(currentDelegatesData.map(d => d.id));
       const updatedPrev = prev
         .filter(p => currentIds.has(p.id))
@@ -274,9 +271,7 @@ export default function PresidentDashboard() {
           return updated || p;
         });
 
-      // Ajouter les nouveaux délégués
       const newDelegates = currentDelegatesData.filter(d => !existingIds.has(d.id));
-      
       return [...updatedPrev, ...newDelegates];
     });
   }, [delegates]);
@@ -291,7 +286,10 @@ export default function PresidentDashboard() {
     const counts: Record<string, number> = {};
     delegates.forEach(d => { counts[d.country_name] = 0; });
     allParticipations.forEach(p => {
-      if (p.status === 'participating' && counts[p.country_name] !== undefined) counts[p.country_name]++;
+      // Include both 'participating' and 'spoken' to maintain stats integrity
+      if ((p.status === 'participating' || p.status === 'spoken') && counts[p.country_name] !== undefined) {
+        counts[p.country_name]++;
+      }
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
   }, [allParticipations, delegates]);
