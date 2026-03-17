@@ -86,9 +86,14 @@ export default function MUNOSHome() {
       </div>
       
       <footer className="mt-auto py-12 flex flex-col items-center gap-4">
-        <p className="text-primary font-black uppercase tracking-[0.2em] text-[10px] hover:opacity-80 transition-opacity cursor-default">
+        <a 
+          href="https://www.instagram.com/youssef_heidar/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-primary font-black uppercase tracking-[0.2em] text-[10px] hover:opacity-80 transition-opacity"
+        >
           Système créé par Youssef Heidar
-        </p>
+        </a>
       </footer>
     </div>
   );
