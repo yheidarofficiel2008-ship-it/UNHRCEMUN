@@ -362,45 +362,45 @@ export default function DelegateDashboard() {
       {isCountrySuspended && (
         <div className="fixed inset-0 z-[10000] bg-destructive flex flex-col items-center justify-center p-8 text-white animate-in fade-in duration-500">
           <ShieldAlert size={150} className="mb-8 animate-pulse" />
-          <h1 className="text-6xl md:text-8xl font-black uppercase text-center mb-6 tracking-tight">{t.suspended}</h1>
-          <p className="text-2xl md:text-3xl text-center opacity-80 max-w-2xl font-medium leading-relaxed">{t.suspendedDesc}</p>
+          <h1 className="text-5xl md:text-7xl font-black uppercase text-center mb-6 tracking-tight">{t.suspended}</h1>
+          <p className="text-xl md:text-2xl text-center opacity-80 max-w-2xl font-medium leading-relaxed">{t.suspendedDesc}</p>
         </div>
       )}
       {activeOverlay && activeOverlay.type !== 'none' && (
         <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 text-white animate-in fade-in zoom-in duration-500 ${activeOverlay.type === 'crisis' ? 'bg-red-700' : 'bg-[#0459ab]'}`}>
-          <div className="max-w-4xl w-full text-center space-y-12">
+          <div className="max-w-4xl w-full text-center space-y-8">
             {activeOverlay.type === 'crisis' && (
-              <div className="flex flex-col items-center gap-8 mb-4">
-                <AlertTriangle size={150} className="text-white animate-bounce" />
-                <h2 className="text-7xl md:text-9xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-16 py-6 rounded-none shadow-[20px_20px_0px_0px_rgba(0,0,0,0.3)]">{t.urgency}</h2>
+              <div className="flex flex-col items-center gap-6 mb-4">
+                <AlertTriangle size={100} className="text-white animate-bounce" />
+                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-tight bg-white text-red-700 px-8 py-4 rounded-none shadow-[10px_10px_0px_0px_rgba(0,0,0,0.3)]">{t.urgency}</h2>
               </div>
             )}
-            <h1 className="text-6xl md:text-9xl font-black uppercase tracking-tighter leading-tight border-b-8 border-white/30 pb-12 break-words drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
+            <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-tight border-b-4 border-white/30 pb-8 break-words drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">
               {activeOverlay.title}
             </h1>
             {activeOverlay.type === 'vote' && (
-              <div className="space-y-16">
-                <div className="grid grid-cols-3 gap-8 md:gap-16">
-                  <div className="flex flex-col items-center gap-8">
-                    <Button size="lg" className="w-full h-40 md:h-56 bg-green-500 hover:bg-green-600 text-3xl md:text-6xl font-black rounded-none shadow-[10px_10px_0px_0px_rgba(0,0,0,0.2)] transition-all active:scale-95 disabled:opacity-50" onClick={() => handleVote('pour')} disabled={hasVoted || isCountrySuspended}>
+              <div className="space-y-12">
+                <div className="grid grid-cols-3 gap-4 md:gap-8">
+                  <div className="flex flex-col items-center gap-4">
+                    <Button size="lg" className="w-full h-24 md:h-32 bg-green-500 hover:bg-green-600 text-xl md:text-3xl font-black rounded-none shadow-[5px_5px_0px_0px_rgba(0,0,0,0.2)] transition-all active:scale-95 disabled:opacity-50" onClick={() => handleVote('pour')} disabled={hasVoted || isCountrySuspended}>
                       {t.for}
                     </Button>
-                    <div className="text-6xl md:text-9xl font-black tabular-nums">{activeOverlay.results?.pour || 0}</div>
+                    <div className="text-4xl md:text-6xl font-black tabular-nums">{activeOverlay.results?.pour || 0}</div>
                   </div>
-                  <div className="flex flex-col items-center gap-8">
-                    <Button size="lg" className="w-full h-40 md:h-56 bg-red-600 hover:bg-red-700 text-3xl md:text-6xl font-black rounded-none shadow-[10px_10px_0px_0px_rgba(0,0,0,0.2)] transition-all active:scale-95 disabled:opacity-50" onClick={() => handleVote('contre')} disabled={hasVoted || isCountrySuspended}>
+                  <div className="flex flex-col items-center gap-4">
+                    <Button size="lg" className="w-full h-24 md:h-32 bg-red-600 hover:bg-red-700 text-xl md:text-3xl font-black rounded-none shadow-[5px_5px_0px_0px_rgba(0,0,0,0.2)] transition-all active:scale-95 disabled:opacity-50" onClick={() => handleVote('contre')} disabled={hasVoted || isCountrySuspended}>
                       {t.against}
                     </Button>
-                    <div className="text-6xl md:text-9xl font-black tabular-nums">{activeOverlay.results?.contre || 0}</div>
+                    <div className="text-4xl md:text-6xl font-black tabular-nums">{activeOverlay.results?.contre || 0}</div>
                   </div>
-                  <div className="flex flex-col items-center gap-8">
-                    <Button size="lg" className="w-full h-40 md:h-56 bg-amber-500 hover:bg-amber-600 text-3xl md:text-6xl font-black rounded-none shadow-[10px_10px_0px_0px_rgba(0,0,0,0.2)] transition-all active:scale-95 disabled:opacity-50" onClick={() => handleVote('abstention')} disabled={hasVoted || isCountrySuspended}>
+                  <div className="flex flex-col items-center gap-4">
+                    <Button size="lg" className="w-full h-24 md:h-32 bg-amber-500 hover:bg-amber-600 text-xl md:text-3xl font-black rounded-none shadow-[5px_5px_0px_0px_rgba(0,0,0,0.2)] transition-all active:scale-95 disabled:opacity-50" onClick={() => handleVote('abstention')} disabled={hasVoted || isCountrySuspended}>
                       {t.abstention}
                     </Button>
-                    <div className="text-6xl md:text-9xl font-black tabular-nums">{activeOverlay.results?.abstention || 0}</div>
+                    <div className="text-4xl md:text-6xl font-black tabular-nums">{activeOverlay.results?.abstention || 0}</div>
                   </div>
                 </div>
-                {hasVoted && <div className="text-3xl font-black uppercase tracking-widest text-white animate-pulse bg-white/20 py-8 border-4 border-white/40">{t.voteRecorded}</div>}
+                {hasVoted && <div className="text-xl font-black uppercase tracking-widest text-white animate-pulse bg-white/20 py-4 border-2 border-white/40">{t.voteRecorded}</div>}
               </div>
             )}
           </div>
