@@ -32,7 +32,7 @@ export default function MUNOSHome() {
             MUN-OS
           </h1>
           <p className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed">
-            L'excellence numérique au service de la diplomatie. Plateforme centralisée de gestion pour vos simulations onusiennes.
+            Plateforme centralisée de gestion pour vos simulations onusiennes.
           </p>
         </div>
 
