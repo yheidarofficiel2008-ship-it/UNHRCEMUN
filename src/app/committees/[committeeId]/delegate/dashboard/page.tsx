@@ -357,7 +357,7 @@ export default function DelegateDashboard() {
   if (!delegate) return null;
 
   const isActive = currentAction && currentAction.status !== 'completed';
-  const myEnvois = [...myResolutions, ...myMessages].sort((a: any, b: any) => {
+  const myEnvois = [...myResolutions, ...myMessages.filter(m => m.type !== 'gossip')].sort((a: any, b: any) => {
     const timeA = a.created_at?.seconds || a.timestamp?.seconds || 0;
     const timeB = b.created_at?.seconds || b.timestamp?.seconds || 0;
     return timeB - timeA;
@@ -530,7 +530,7 @@ export default function DelegateDashboard() {
                         {item._type === 'resolution' ? <Badge variant={item.status === 'approved' ? 'default' : item.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase text-[9px] font-black">{item.status.toUpperCase()}</Badge> : <Badge variant="ghost" className="opacity-60">{item.is_read ? <Check size={14} className="text-green-500" /> : <Clock size={14} />}</Badge>}
                       </div>
                       {item._type === 'resolution' && <div className="mb-2 font-black uppercase text-[#0459ab] tracking-tight text-sm break-words">{item.title}</div>}
-                      <div className="text-xs font-medium text-foreground/70 whitespace-pre-wrap break-words italic" dangerouslySetInnerHTML={{ __html: item.content }} />
+                      <div className="text-xs font-medium text-foreground/70 whitespace-pre-wrap break-words prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: item.content }} />
                     </div>
                   ))}
                 </div>

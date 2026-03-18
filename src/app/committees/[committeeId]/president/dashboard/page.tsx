@@ -167,7 +167,7 @@ export default function PresidentDashboard() {
       gossipTab: "Gossip",
       gradingTitle: "Evaluation Rubric",
       speaking: "Elocution",
-      diplomacy: "Diplomacy",
+      diplomacy: "Diplomatie",
       knowledge: "Expertise",
       average: "General Average",
       rank: "Rank",
@@ -903,7 +903,7 @@ export default function PresidentDashboard() {
                         <div className="flex gap-3 justify-end pt-6 border-t border-primary/5">
                           <Button variant={res.is_displayed ? "default" : "outline"} size="sm" className={`rounded-xl font-bold uppercase text-[10px] px-6 h-10 ${res.is_displayed ? 'bg-primary' : 'border-primary/20 text-primary hover:bg-primary/5'}`} onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}>{res.is_displayed ? <><EyeOff size={16} className="mr-2" /> {t.hide}</> : <><Eye size={16} className="mr-2" /> {t.show}</>}</Button>
                           <Button variant="outline" size="sm" className="border-green-500/30 text-green-600 hover:bg-green-50 rounded-xl font-bold uppercase text-[10px] px-6 h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}><CheckCircle size={16} className="mr-2" /> {t.approve}</Button>
-                          <Button variant="outline" size="sm" className="border-red-500/30 text-red-600 hover:bg-red-50 rounded-xl font-bold uppercase text-[10px] px-6 h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}><XCircle size={16} className="mr-2" /> {t.reject}</Button>
+                          <Button variant="outline" size="sm" className="border-red-500/30 text-red-600 hover:bg-green-50 rounded-xl font-bold uppercase text-[10px] px-6 h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}><XCircle size={16} className="mr-2" /> {t.reject}</Button>
                           <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/5 rounded-xl h-10 w-10 p-0" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id))}><Trash2 size={16} /></Button>
                         </div>
                       </CardContent>
@@ -957,7 +957,21 @@ export default function PresidentDashboard() {
                         <div key={msg.id} className="p-6 border-l-8 border-primary rounded-3xl shadow-sm flex flex-col gap-4 transition-all duration-300 hover:shadow-md bg-primary/[0.02]">
                           <div className="flex justify-between items-start">
                             <Badge className="bg-primary text-white uppercase text-[9px] font-black tracking-widest px-3 py-1 rounded-full border-none shadow-sm">GOSSIP ANONYME</Badge>
-                            <Button size="icon" variant="ghost" className="h-10 w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 size={18} /></Button>
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="rounded-xl font-bold uppercase text-[10px] px-6 h-10 border-primary/20 text-primary hover:bg-primary/5"
+                                onClick={() => {
+                                  const sessionRef = doc(db!, 'committees', committeeId, 'sessionState', 'current');
+                                  setDocumentNonBlocking(sessionRef, { activeOverlay: { type: 'message', title: msg.content, status: 'active' } }, { merge: true });
+                                  toast({ title: t.messageDisplayed });
+                                }}
+                              >
+                                <Eye size={16} className="mr-2" /> {t.show}
+                              </Button>
+                              <Button size="icon" variant="ghost" className="h-10 w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 size={18} /></Button>
+                            </div>
                           </div>
                           <p className="text-base font-semibold text-foreground/80 leading-relaxed whitespace-pre-wrap pl-2 italic">"{msg.content}"</p>
                           <div className="flex justify-end opacity-40 text-[9px] font-black uppercase tracking-[0.2em]">{msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "Maintenant"}</div>
