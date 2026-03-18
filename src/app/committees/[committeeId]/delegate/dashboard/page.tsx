@@ -81,7 +81,8 @@ export default function DelegateDashboard() {
       speakersList: "Liste des Orateurs inscrits",
       noSpeaker: "Aucune inscription active",
       officialVote: "SCRUTIN OFFICIEL",
-      officialAnnouncement: "ANNONCE OFFICIELLE"
+      officialAnnouncement: "ANNONCE OFFICIELLE",
+      gossipTitle: "✨ GOSSIP ANONYME ✨"
     },
     en: {
       sessionActive: "Session Active",
@@ -101,8 +102,8 @@ export default function DelegateDashboard() {
       waitingAction: "Waiting for instructions...",
       globalChrono: "Global Chronometer",
       speakerChrono: "Speaker Timer",
-      participate: "Participer",
-      pass: "Passer son tour",
+      participate: "Participate",
+      pass: "Pass",
       projected: "PROJECTED ON MAIN SCREEN",
       submitResolution: "Resolution Drafting",
       title: "Project Title",
@@ -123,7 +124,8 @@ export default function DelegateDashboard() {
       speakersList: "Registered Speakers List",
       noSpeaker: "No active registrations",
       officialVote: "OFFICIAL VOTE",
-      officialAnnouncement: "OFFICIAL ANNOUNCEMENT"
+      officialAnnouncement: "OFFICIAL ANNOUNCEMENT",
+      gossipTitle: "✨ ANONYMOUS GOSSIP ✨"
     }
   }[lang];
   
@@ -389,18 +391,33 @@ export default function DelegateDashboard() {
                 <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter drop-shadow-2xl">{activeOverlay.title}</h1>
               </div>
             ) : (
-              <div className="space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700">
+              <div className="space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700 w-full flex flex-col items-center">
                 <div className="space-y-4">
-                  <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase tracking-[0.4em] px-4 py-1.5 bg-primary/5 text-[10px]">
-                    {activeOverlay.type === 'vote' ? t.officialVote : t.officialAnnouncement}
+                  <Badge variant="outline" className={`font-black uppercase tracking-[0.4em] px-4 py-1.5 text-[10px] ${activeOverlay.type === 'gossip' ? 'border-primary bg-primary/10 text-primary' : 'border-primary/20 text-primary bg-primary/5'}`}>
+                    {activeOverlay.type === 'vote' ? t.officialVote : activeOverlay.type === 'gossip' ? t.gossipTitle : t.officialAnnouncement}
                   </Badge>
-                  <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-tight text-gradient py-2">
-                    {activeOverlay.title}
-                  </h1>
+                  {activeOverlay.type !== 'gossip' && (
+                    <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-tight text-gradient py-2">
+                      {activeOverlay.title}
+                    </h1>
+                  )}
                 </div>
 
+                {activeOverlay.type === 'gossip' && (
+                  <div className="w-full max-w-4xl p-10 rounded-[2.5rem] bg-white border-4 border-primary shadow-2xl relative overflow-hidden text-left animate-in zoom-in duration-500">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-primary/50 to-transparent opacity-30"></div>
+                    <div className="mb-8 flex items-center gap-3">
+                      <Badge className="bg-primary rounded-xl px-4 py-1.5 font-black text-[10px] tracking-widest uppercase">GOSSIP OFFICIAL</Badge>
+                      <Badge variant="outline" className="border-primary/20 text-primary/60 rounded-xl px-4 py-1.5 font-black text-[10px] tracking-widest uppercase">ANONYMOUS SOURCE</Badge>
+                    </div>
+                    <div className="text-2xl md:text-4xl font-serif italic leading-relaxed text-primary break-words whitespace-pre-wrap border-l-4 border-primary/20 pl-8 py-2">
+                      "{activeOverlay.title}"
+                    </div>
+                  </div>
+                )}
+
                 {activeOverlay.type === 'vote' && (
-                  <div className="space-y-12">
+                  <div className="space-y-12 w-full">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10 max-w-3xl mx-auto">
                       <div className="space-y-4">
                         <Button 

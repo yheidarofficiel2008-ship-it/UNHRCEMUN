@@ -964,7 +964,7 @@ export default function PresidentDashboard() {
                                 className="rounded-xl font-bold uppercase text-[10px] px-6 h-10 border-primary/20 text-primary hover:bg-primary/5"
                                 onClick={() => {
                                   const sessionRef = doc(db!, 'committees', committeeId, 'sessionState', 'current');
-                                  setDocumentNonBlocking(sessionRef, { activeOverlay: { type: 'message', title: msg.content, status: 'active' } }, { merge: true });
+                                  setDocumentNonBlocking(sessionRef, { activeOverlay: { type: 'gossip', title: msg.content, status: 'active' } }, { merge: true });
                                   toast({ title: t.messageDisplayed });
                                 }}
                               >
