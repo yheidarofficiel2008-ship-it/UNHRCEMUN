@@ -959,16 +959,20 @@ export default function PresidentDashboard() {
                             <Badge className="bg-primary text-white uppercase text-[9px] font-black tracking-widest px-3 py-1 rounded-full border-none shadow-sm">GOSSIP ANONYME</Badge>
                             <div className="flex items-center gap-2">
                               <Button 
-                                variant="outline" 
+                                variant={activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? "default" : "outline"} 
                                 size="sm" 
-                                className="rounded-xl font-bold uppercase text-[10px] px-6 h-10 border-primary/20 text-primary hover:bg-primary/5"
+                                className={`rounded-xl font-bold uppercase text-[10px] px-6 h-10 ${activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? 'bg-primary' : 'border-primary/20 text-primary hover:bg-primary/5'}`}
                                 onClick={() => {
-                                  const sessionRef = doc(db!, 'committees', committeeId, 'sessionState', 'current');
-                                  setDocumentNonBlocking(sessionRef, { activeOverlay: { type: 'gossip', title: msg.content, status: 'active' } }, { merge: true });
-                                  toast({ title: t.messageDisplayed });
+                                  if (activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content) {
+                                    stopOverlay();
+                                  } else {
+                                    const sessionRef = doc(db!, 'committees', committeeId, 'sessionState', 'current');
+                                    setDocumentNonBlocking(sessionRef, { activeOverlay: { type: 'gossip', title: msg.content, status: 'active' } }, { merge: true });
+                                    toast({ title: t.messageDisplayed });
+                                  }
                                 }}
                               >
-                                <Eye size={16} className="mr-2" /> {t.show}
+                                {activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? <><EyeOff size={16} className="mr-2" /> {t.hide}</> : <><Eye size={16} className="mr-2" /> {t.show}</>}
                               </Button>
                               <Button size="icon" variant="ghost" className="h-10 w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 size={18} /></Button>
                             </div>

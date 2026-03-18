@@ -162,7 +162,10 @@ export default function DelegateDashboard() {
     const msgRef = collection(db, 'committees', committeeId, 'messages');
     const qMsg = query(msgRef, where('sender_country', '==', del.country_name));
     const unsubMsg = onSnapshot(qMsg, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), _type: 'message' }));
+      // Filtrer les messages de type gossip de l'historique du délégué pour l'anonymat
+      const data = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data(), _type: 'message' }))
+        .filter((m: any) => m.type !== 'gossip');
       setMyMessages(data.sort((a: any, b: any) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)));
     });
 
@@ -359,7 +362,7 @@ export default function DelegateDashboard() {
   if (!delegate) return null;
 
   const isActive = currentAction && currentAction.status !== 'completed';
-  const myEnvois = [...myResolutions, ...myMessages.filter(m => m.type !== 'gossip')].sort((a: any, b: any) => {
+  const myEnvois = [...myResolutions, ...myMessages].sort((a: any, b: any) => {
     const timeA = a.created_at?.seconds || a.timestamp?.seconds || 0;
     const timeB = b.created_at?.seconds || b.timestamp?.seconds || 0;
     return timeB - timeA;
@@ -381,7 +384,9 @@ export default function DelegateDashboard() {
           <p className="text-xl md:text-2xl text-center opacity-80 max-w-2xl font-medium leading-relaxed">{t.suspendedDesc}</p>
         </div>
       )}
-      {activeOverlay && activeOverlay.type !== 'none' && (
+      
+      {/* Overlay pour Vote et Crise (Bloquants) */}
+      {activeOverlay && (activeOverlay.type === 'crisis' || activeOverlay.type === 'vote' || activeOverlay.type === 'message') && (
         <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 transition-colors duration-700 ${activeOverlay.type === 'crisis' ? 'bg-red-700 text-white' : 'bg-white/95 backdrop-blur-3xl text-primary'}`}>
           <div className="max-w-5xl w-full text-center space-y-12">
             {activeOverlay.type === 'crisis' ? (
@@ -393,28 +398,13 @@ export default function DelegateDashboard() {
             ) : (
               <div className="space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700 w-full flex flex-col items-center">
                 <div className="space-y-4">
-                  <Badge variant="outline" className={`font-black uppercase tracking-[0.4em] px-4 py-1.5 text-[10px] ${activeOverlay.type === 'gossip' ? 'border-primary bg-primary/10 text-primary' : 'border-primary/20 text-primary bg-primary/5'}`}>
-                    {activeOverlay.type === 'vote' ? t.officialVote : activeOverlay.type === 'gossip' ? t.gossipTitle : t.officialAnnouncement}
+                  <Badge variant="outline" className={`font-black uppercase tracking-[0.4em] px-4 py-1.5 text-[10px] border-primary/20 text-primary bg-primary/5`}>
+                    {activeOverlay.type === 'vote' ? t.officialVote : t.officialAnnouncement}
                   </Badge>
-                  {activeOverlay.type !== 'gossip' && (
-                    <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-tight text-gradient py-2">
-                      {activeOverlay.title}
-                    </h1>
-                  )}
+                  <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-tight text-gradient py-2">
+                    {activeOverlay.title}
+                  </h1>
                 </div>
-
-                {activeOverlay.type === 'gossip' && (
-                  <div className="w-full max-w-4xl p-10 rounded-[2.5rem] bg-white border-4 border-primary shadow-2xl relative overflow-hidden text-left animate-in zoom-in duration-500">
-                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-primary/50 to-transparent opacity-30"></div>
-                    <div className="mb-8 flex items-center gap-3">
-                      <Badge className="bg-primary rounded-xl px-4 py-1.5 font-black text-[10px] tracking-widest uppercase">GOSSIP OFFICIAL</Badge>
-                      <Badge variant="outline" className="border-primary/20 text-primary/60 rounded-xl px-4 py-1.5 font-black text-[10px] tracking-widest uppercase">ANONYMOUS SOURCE</Badge>
-                    </div>
-                    <div className="text-2xl md:text-4xl font-serif italic leading-relaxed text-primary break-words whitespace-pre-wrap border-l-4 border-primary/20 pl-8 py-2">
-                      "{activeOverlay.title}"
-                    </div>
-                  </div>
-                )}
 
                 {activeOverlay.type === 'vote' && (
                   <div className="space-y-12 w-full">
@@ -422,7 +412,7 @@ export default function DelegateDashboard() {
                       <div className="space-y-4">
                         <Button 
                           size="lg" 
-                          className="w-full h-16 md:h-20 bg-green-600 hover:bg-green-700 text-white text-lg md:text-xl font-black rounded-2xl shadow-lg shadow-green-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
+                          className="w-full h-12 md:h-14 bg-green-600 hover:bg-green-700 text-white text-xs font-black rounded-xl shadow-lg shadow-green-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
                           onClick={() => handleVote('pour')} 
                           disabled={hasVoted || isCountrySuspended}
                         >
@@ -433,7 +423,7 @@ export default function DelegateDashboard() {
                       <div className="space-y-4">
                         <Button 
                           size="lg" 
-                          className="w-full h-16 md:h-20 bg-red-600 hover:bg-red-700 text-white text-lg md:text-xl font-black rounded-2xl shadow-lg shadow-red-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
+                          className="w-full h-12 md:h-14 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl shadow-lg shadow-red-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
                           onClick={() => handleVote('contre')} 
                           disabled={hasVoted || isCountrySuspended}
                         >
@@ -444,7 +434,7 @@ export default function DelegateDashboard() {
                       <div className="space-y-4">
                         <Button 
                           size="lg" 
-                          className="w-full h-16 md:h-20 bg-amber-500 hover:bg-amber-600 text-white text-lg md:text-xl font-black rounded-2xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
+                          className="w-full h-12 md:h-14 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black rounded-xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
                           onClick={() => handleVote('abstention')} 
                           disabled={hasVoted || isCountrySuspended}
                         >
@@ -592,6 +582,26 @@ export default function DelegateDashboard() {
               ) : <div className="py-24 text-center opacity-20"><Monitor size={80} className="mx-auto mb-6" /></div>}
             </CardContent>
           </Card>
+
+          {/* Affichage du Gossip Box comme une section type résolution */}
+          {activeOverlay?.type === 'gossip' && (
+            <Card className="rounded-[2.5rem] border-primary border-4 bg-primary/[0.02] shadow-2xl animate-in fade-in zoom-in duration-500 overflow-hidden relative">
+              <CardHeader className="border-b border-primary/10 p-10 bg-white/60 backdrop-blur-sm">
+                <div className="space-y-3">
+                  <Badge className="bg-[#0459ab] rounded-xl px-4 py-1 font-black text-[10px] tracking-widest"><Monitor size={14} className="mr-2" /> {t.projected}</Badge>
+                  <CardTitle className="text-4xl font-black text-[#0459ab] uppercase tracking-tight break-words">{t.gossipTitle}</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-10 text-left">
+                <div className="mb-8 flex flex-wrap gap-3 items-center">
+                  <Badge variant="outline" className="border-primary/20 text-primary/60 rounded-xl px-4 py-1.5 font-black text-[10px] tracking-widest uppercase">ANONYMOUS SOURCE</Badge>
+                </div>
+                <div className="text-2xl leading-relaxed font-serif italic text-primary/80 whitespace-pre-wrap break-words prose prose-xl max-w-none border-l-4 border-primary/20 pl-8">
+                  "{activeOverlay.title}"
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {displayedResolutions.map((res) => (
             <Card key={res.id} className="rounded-[2.5rem] border-[#0459ab] border-4 bg-primary/[0.02] shadow-2xl animate-in fade-in zoom-in duration-500 overflow-hidden relative">
