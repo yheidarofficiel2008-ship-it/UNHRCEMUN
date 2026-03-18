@@ -9,6 +9,7 @@ export function useRealtime(committeeId?: string) {
   const { firestore: db } = useFirebase();
   const [isSuspended, setIsSuspended] = useState(false);
   const [allowResolutions, setAllowResolutions] = useState(true);
+  const [allowGossip, setAllowGossip] = useState(true);
   const [currentAction, setCurrentAction] = useState<any>(null);
   const [activeOverlay, setActiveOverlay] = useState<any>(null);
 
@@ -22,11 +23,13 @@ export function useRealtime(committeeId?: string) {
         const data = docSnap.data();
         setIsSuspended(data.isSuspended === true);
         setAllowResolutions(data.allowResolutions !== false);
+        setAllowGossip(data.allowGossip !== false);
         setActiveOverlay(data.activeOverlay || { type: 'none' });
       } else {
         // Initialiser si n'existe pas
         setIsSuspended(false);
         setAllowResolutions(true);
+        setAllowGossip(true);
         setActiveOverlay({ type: 'none' });
       }
     }, (error) => {
@@ -59,5 +62,5 @@ export function useRealtime(committeeId?: string) {
     };
   }, [db, committeeId]);
 
-  return { isSuspended, allowResolutions, currentAction, activeOverlay };
+  return { isSuspended, allowResolutions, allowGossip, currentAction, activeOverlay };
 }

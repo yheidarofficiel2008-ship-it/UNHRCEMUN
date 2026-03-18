@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert, AlertTriangle, User, Users, Lock, ListOrdered } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert, AlertTriangle, User, Users, Lock, ListOrdered, Ghost } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -27,7 +27,7 @@ export default function DelegateDashboard() {
   const committeeId = params.committeeId as string;
   const { toast } = useToast();
   const { firestore: db } = useFirebase();
-  const { isSuspended: isGlobalSuspended, allowResolutions, currentAction, activeOverlay } = useRealtime(committeeId);
+  const { isSuspended: isGlobalSuspended, allowResolutions, allowGossip, currentAction, activeOverlay } = useRealtime(committeeId);
   
   const committeeRef = useMemoFirebase(() => db ? doc(db, 'committees', committeeId) : null, [db, committeeId]);
   const { data: committee } = useDoc(committeeRef);
@@ -47,6 +47,8 @@ export default function DelegateDashboard() {
       msgToPresidency: "Bureau de la Présidence",
       personalPrivilege: "Point de Privilège Personnel",
       generalMsg: "Communication Générale",
+      gossipMsg: "Gossip Box (Anonyme)",
+      anonymousHint: "Ce message sera transmis de manière totalement anonyme.",
       yourMsg: "Rédigez votre message ici...",
       send: "Transmettre",
       sending: "Transmission...",
@@ -87,6 +89,8 @@ export default function DelegateDashboard() {
       msgToPresidency: "Presidency Office",
       personalPrivilege: "Personal Privilege Point",
       generalMsg: "General Communication",
+      gossipMsg: "Gossip Box (Anonymous)",
+      anonymousHint: "This message will be transmitted completely anonymously.",
       yourMsg: "Type your message here...",
       send: "Transmit",
       sending: "Transmitting...",
@@ -323,6 +327,10 @@ export default function DelegateDashboard() {
   const submitMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!delegate || !messageForm.content || isCountrySuspended || !db) return;
+    if (messageForm.type === 'gossip' && !allowGossip) {
+      toast({ title: "Gossip Box suspendue", variant: "destructive" });
+      return;
+    }
     setIsSendingMessage(true);
     try {
       await addDoc(collection(db, 'committees', committeeId, 'messages'), {
@@ -333,7 +341,7 @@ export default function DelegateDashboard() {
         is_read: false
       });
       setMessageForm({ ...messageForm, content: '' });
-      toast({ title: lang === 'fr' ? "Message transmise" : "Message transmitted" });
+      toast({ title: lang === 'fr' ? "Message transmis" : "Message transmitted" });
     } catch (e) {
       toast({ title: "Error", variant: "destructive" });
     } finally {
@@ -466,12 +474,16 @@ export default function DelegateDashboard() {
                   <SelectContent>
                     <SelectItem value="privilege">{t.personalPrivilege}</SelectItem>
                     <SelectItem value="general">{t.generalMsg}</SelectItem>
+                    <SelectItem value="gossip" className="text-primary font-bold">✨ {t.gossipMsg}</SelectItem>
                   </SelectContent>
                 </Select>
-                <Textarea placeholder={t.yourMsg} className="min-h-[80px] text-xs resize-none rounded-xl border-primary/10 bg-white p-4" value={messageForm.content} onChange={(e) => setMessageForm({...messageForm, content: e.target.value})} required disabled={isCountrySuspended || activeOverlay?.type === 'crisis'} />
+                {messageForm.type === 'gossip' && (
+                  <p className="text-[10px] font-bold text-primary/60 px-2 italic">{t.anonymousHint}</p>
+                )}
+                <Textarea placeholder={t.yourMsg} className="min-h-[80px] text-xs resize-none rounded-xl border-primary/10 bg-white p-4" value={messageForm.content} onChange={(e) => setMessageForm({...messageForm, content: e.target.value})} required disabled={isCountrySuspended || activeOverlay?.type === 'crisis' || (messageForm.type === 'gossip' && !allowGossip)} />
               </CardContent>
               <CardFooter className="px-6 pb-6 pt-0">
-                <Button size="sm" type="submit" className="w-full bg-[#0459ab] hover:bg-[#0459ab]/90 h-11 rounded-xl font-black uppercase tracking-widest text-[10px]" disabled={isSendingMessage || isCountrySuspended || activeOverlay?.type === 'crisis'}>
+                <Button size="sm" type="submit" className="w-full bg-[#0459ab] hover:bg-[#0459ab]/90 h-11 rounded-xl font-black uppercase tracking-widest text-[10px]" disabled={isSendingMessage || isCountrySuspended || activeOverlay?.type === 'crisis' || (messageForm.type === 'gossip' && !allowGossip)}>
                   {isSendingMessage ? t.sending : t.send}
                 </Button>
               </CardFooter>

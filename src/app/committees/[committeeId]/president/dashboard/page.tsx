@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle, Languages, Award, Calculator, TrendingUp } from 'lucide-react';
+import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle, Languages, Award, Calculator, TrendingUp, Ghost } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,7 @@ export default function PresidentDashboard() {
   const committeeId = params.committeeId as string;
   const { toast } = useToast();
   const { firestore: db, auth, user, isUserLoading } = useFirebase();
-  const { isSuspended, allowResolutions, currentAction, activeOverlay } = useRealtime(committeeId);
+  const { isSuspended, allowResolutions, allowGossip, currentAction, activeOverlay } = useRealtime(committeeId);
   
   const committeeRef = useMemoFirebase(() => db ? doc(db, 'committees', committeeId) : null, [db, committeeId]);
   const { data: committee } = useDoc(committeeRef);
@@ -49,6 +49,8 @@ export default function PresidentDashboard() {
       messageDisplayed: "Message affiché",
       resolutionsAllowed: "Résolutions autorisées",
       resolutionsBlocked: "Résolutions bloquées",
+      gossipAllowed: "Gossip Box activée",
+      gossipBlocked: "Gossip Box suspendue",
       resume: "Rétablir la Séance",
       suspend: "Suspendre la Séance",
       newAction: "Nouvelle Procédure",
@@ -72,8 +74,10 @@ export default function PresidentDashboard() {
       actionsHistory: "Journal des Procédures",
       resolutionsSubmitted: "Projets de Résolution",
       privateInbox: "Communications Privées",
+      gossipBoxTitle: "Gossip Box (Anonyme)",
       noResolution: "Aucune résolution soumise",
       noMessage: "Aucun message en attente",
+      noGossip: "La Gossip Box est vide",
       approve: "Valider",
       reject: "Rejeter",
       hide: "Masquer",
@@ -92,6 +96,7 @@ export default function PresidentDashboard() {
       stats: "Notation & Stats",
       resolutionsTab: "Résolutions",
       messagesTab: "Messages",
+      gossipTab: "Gossip",
       gradingTitle: "Barème d'Évaluation",
       speaking: "Élocution",
       diplomacy: "Diplomatie",
@@ -112,6 +117,8 @@ export default function PresidentDashboard() {
       messageDisplayed: "Message displayed",
       resolutionsAllowed: "Resolutions allowed",
       resolutionsBlocked: "Resolutions blocked",
+      gossipAllowed: "Gossip Box enabled",
+      gossipBlocked: "Gossip Box suspended",
       resume: "Resume Session",
       suspend: "Suspend Session",
       newAction: "New Procedure",
@@ -135,8 +142,10 @@ export default function PresidentDashboard() {
       actionsHistory: "Procedure Log",
       resolutionsSubmitted: "Draft Resolutions",
       privateInbox: "Private Communications",
+      gossipBoxTitle: "Gossip Box (Anonymous)",
       noResolution: "No resolutions submitted",
       noMessage: "No messages pending",
+      noGossip: "The Gossip Box is empty",
       approve: "Approve",
       reject: "Reject",
       hide: "Hide",
@@ -155,6 +164,7 @@ export default function PresidentDashboard() {
       stats: "Grading & Stats",
       resolutionsTab: "Resolutions",
       messagesTab: "Messages",
+      gossipTab: "Gossip",
       gradingTitle: "Evaluation Rubric",
       speaking: "Elocution",
       diplomacy: "Diplomacy",
@@ -351,6 +361,13 @@ export default function PresidentDashboard() {
     toast({ title: val ? t.resolutionsAllowed : t.resolutionsBlocked });
   };
 
+  const toggleGossip = (val: boolean) => {
+    if (!db) return;
+    const sessionRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
+    setDocumentNonBlocking(sessionRef, { allowGossip: val, lastUpdated: new Date().toISOString() }, { merge: true });
+    toast({ title: val ? t.gossipAllowed : t.gossipBlocked });
+  };
+
   const launchOverlay = () => {
     if (!db || !overlayForm.title) return;
     const sessionRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
@@ -529,7 +546,8 @@ export default function PresidentDashboard() {
   if (isUserLoading) return <div className="min-h-screen flex items-center justify-center font-bold uppercase tracking-widest animate-pulse">{t.auth}</div>;
 
   const orateursInscrits = participants;
-  const unreadMessagesCount = messages.filter(m => !m.is_read).length;
+  const unreadMessagesCount = messages.filter(m => !m.is_read && m.type !== 'gossip').length;
+  const gossipMessages = messages.filter(m => m.type === 'gossip');
 
   const parseTimePerDelegate = (timeStr: string) => {
     if (!timeStr) return 60;
@@ -549,6 +567,12 @@ export default function PresidentDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 bg-secondary px-3 py-1.5 rounded-full border border-primary/10">
+            <Ghost size={14} className="text-primary" />
+            <span className="text-[10px] font-black uppercase tracking-tight text-primary">Gossip</span>
+            <Switch checked={allowGossip} onCheckedChange={toggleGossip} className="data-[state=checked]:bg-primary" />
+          </div>
+
           {activeOverlay && activeOverlay.type === 'vote' && (
             <div className="flex items-center gap-4 bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10">
               <div className="flex items-center gap-4">
@@ -739,7 +763,7 @@ export default function PresidentDashboard() {
                   <ScrollArea className="h-[450px]">
                     <div className="space-y-3">
                       {delegates.map(d => (
-                        <div key={d.id} className={`flex justify-between items-center p-4 rounded-2xl border transition-all duration-300 ${d.is_suspended ? 'bg-destructive/5 border-destructive/20 shadow-inner' : 'bg-white border-primary/5 shadow-sm hover:shadow-md'}`}>
+                        <div key={d.id} className={`flex justify-between items-center p-4 rounded-2xl border transition-all duration-300 ${d.is_suspended ? 'bg-destructive/5 border-destructive/20' : 'bg-white border-primary/5 shadow-sm hover:shadow-md'}`}>
                           <div className="flex flex-col">
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-sm text-foreground/80">{d.country_name}</span>
@@ -850,6 +874,7 @@ export default function PresidentDashboard() {
             <TabsList className="w-full bg-secondary/50 p-1 rounded-2xl border border-primary/5">
               <TabsTrigger value="resolutions" className="flex-1 rounded-xl font-bold uppercase text-[10px] tracking-widest">{t.resolutionsTab}</TabsTrigger>
               <TabsTrigger value="messages" className="flex-1 relative rounded-xl font-bold uppercase text-[10px] tracking-widest">{t.messagesTab}{unreadMessagesCount > 0 && <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[9px] font-black border-none animate-pulse">{unreadMessagesCount}</Badge>}</TabsTrigger>
+              <TabsTrigger value="gossip" className="flex-1 relative rounded-xl font-bold uppercase text-[10px] tracking-widest">{t.gossipTab}{gossipMessages.length > 0 && <Badge className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[9px] font-black bg-primary text-white border-none">{gossipMessages.length}</Badge>}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="resolutions" className="space-y-8 mt-6 animate-in fade-in duration-300">
@@ -874,7 +899,7 @@ export default function PresidentDashboard() {
                           {res.spokesperson && <Badge className="bg-secondary text-foreground/70 border-primary/5 rounded-lg py-1.5 px-3 text-[10px] font-black uppercase tracking-widest gap-1.5"><User size={12} /> {t.spokesperson}: {res.spokesperson}</Badge>}
                           {res.sponsors && <Badge className="bg-muted text-muted-foreground border-primary/5 rounded-lg py-1.5 px-3 text-[10px] font-black uppercase tracking-widest gap-1.5"><Users size={12} /> {t.sponsors}: {res.sponsors}</Badge>}
                         </div>
-                        <div className="text-base leading-relaxed whitespace-pre-wrap break-words prose prose-slate max-w-none text-left font-medium text-foreground/80 italic p-6 bg-primary/[0.01] rounded-2xl border border-primary/5" dangerouslySetInnerHTML={{ __html: res.content }} />
+                        <div className="text-base leading-relaxed whitespace-pre-wrap break-words prose prose-slate max-w-none text-left font-medium text-foreground/80 p-6 bg-primary/[0.01] rounded-2xl border border-primary/5" dangerouslySetInnerHTML={{ __html: res.content }} />
                         <div className="flex gap-3 justify-end pt-6 border-t border-primary/5">
                           <Button variant={res.is_displayed ? "default" : "outline"} size="sm" className={`rounded-xl font-bold uppercase text-[10px] px-6 h-10 ${res.is_displayed ? 'bg-primary' : 'border-primary/20 text-primary hover:bg-primary/5'}`} onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}>{res.is_displayed ? <><EyeOff size={16} className="mr-2" /> {t.hide}</> : <><Eye size={16} className="mr-2" /> {t.show}</>}</Button>
                           <Button variant="outline" size="sm" className="border-green-500/30 text-green-600 hover:bg-green-50 rounded-xl font-bold uppercase text-[10px] px-6 h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}><CheckCircle size={16} className="mr-2" /> {t.approve}</Button>
@@ -894,7 +919,7 @@ export default function PresidentDashboard() {
                 <CardContent className="p-0">
                   <ScrollArea className="h-[700px]">
                     <div className="p-8 space-y-6">
-                      {messages.map(msg => (
+                      {messages.filter(m => m.type !== 'gossip').map(msg => (
                         <div key={msg.id} className={`p-6 border-l-8 rounded-3xl shadow-sm flex flex-col gap-4 transition-all duration-300 hover:shadow-md ${msg.is_read ? 'bg-muted/20 border-muted-foreground/30 opacity-70' : 'bg-primary/[0.02] border-primary shadow-primary/5'}`}>
                           <div className="flex justify-between items-start">
                             <div className="flex items-center gap-4">
@@ -910,10 +935,38 @@ export default function PresidentDashboard() {
                           <div className="flex justify-end opacity-40 text-[9px] font-black uppercase tracking-[0.2em]">{msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "Maintenant"}</div>
                         </div>
                       ))}
-                      {messages.length === 0 && (
+                      {messages.filter(m => m.type !== 'gossip').length === 0 && (
                         <div className="text-center py-40 opacity-30 flex flex-col items-center gap-6">
                           <MessageSquareOff size={64} />
                           <p className="text-lg font-black uppercase tracking-widest">{t.noMessage}</p>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="gossip" className="space-y-8 mt-6 animate-in fade-in duration-300">
+              <Card className="rounded-3xl border-primary/10 glass-card overflow-hidden">
+                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 py-6"><CardTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-tight text-gradient"><Ghost size={24} className="text-primary" /> {t.gossipBoxTitle}</CardTitle></CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[700px]">
+                    <div className="p-8 space-y-6">
+                      {gossipMessages.map(msg => (
+                        <div key={msg.id} className="p-6 border-l-8 border-primary rounded-3xl shadow-sm flex flex-col gap-4 transition-all duration-300 hover:shadow-md bg-primary/[0.02]">
+                          <div className="flex justify-between items-start">
+                            <Badge className="bg-primary text-white uppercase text-[9px] font-black tracking-widest px-3 py-1 rounded-full border-none shadow-sm">GOSSIP ANONYME</Badge>
+                            <Button size="icon" variant="ghost" className="h-10 w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 size={18} /></Button>
+                          </div>
+                          <p className="text-base font-semibold text-foreground/80 leading-relaxed whitespace-pre-wrap pl-2 italic">"{msg.content}"</p>
+                          <div className="flex justify-end opacity-40 text-[9px] font-black uppercase tracking-[0.2em]">{msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "Maintenant"}</div>
+                        </div>
+                      ))}
+                      {gossipMessages.length === 0 && (
+                        <div className="text-center py-40 opacity-30 flex flex-col items-center gap-6">
+                          <Ghost size={64} />
+                          <p className="text-lg font-black uppercase tracking-widest">{t.noGossip}</p>
                         </div>
                       )}
                     </div>
