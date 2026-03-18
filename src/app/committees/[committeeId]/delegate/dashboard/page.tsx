@@ -605,13 +605,18 @@ export default function DelegateDashboard() {
 
           {displayedResolutions.map((res) => (
             <Card key={res.id} className="rounded-[2.5rem] border-[#0459ab] border-4 bg-primary/[0.02] shadow-2xl animate-in fade-in zoom-in duration-500 overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-8">
-                <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase font-black px-4 h-8 text-[10px] tracking-widest">{res.status.toUpperCase()}</Badge>
+              <div className="absolute top-10 right-10 z-30">
+                <Badge 
+                  variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} 
+                  className="uppercase font-black px-6 h-10 text-[11px] tracking-[0.2em] shadow-xl border-none antialiased"
+                >
+                  {res.status.toUpperCase()}
+                </Badge>
               </div>
               <CardHeader className="border-b border-primary/10 p-10 bg-white/60 backdrop-blur-sm">
                 <div className="space-y-3">
                   <Badge className="bg-[#0459ab] rounded-xl px-4 py-1 font-black text-[10px] tracking-widest"><Monitor size={14} className="mr-2" /> {t.projected}</Badge>
-                  <CardTitle className="text-4xl font-black text-[#0459ab] uppercase tracking-tight break-words pr-24">{res.title}</CardTitle>
+                  <CardTitle className="text-4xl font-black text-[#0459ab] uppercase tracking-tight break-words pr-32">{res.title}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="p-10 text-left">
