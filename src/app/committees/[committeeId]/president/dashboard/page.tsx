@@ -237,6 +237,21 @@ export default function PresidentDashboard() {
     return () => unsubPart();
   }, [db, currentAction?.id, committeeId]);
 
+  const statsData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    delegates.forEach(d => {
+      counts[d.country_name] = 0;
+    });
+    allParticipations.forEach((p: any) => {
+      if (p.status === 'participating' && counts[p.country_name] !== undefined) {
+        counts[p.country_name]++;
+      }
+    });
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [allParticipations, delegates]);
+
   const toggleSuspension = () => {
     if (!db) return;
     updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { isSuspended: !isSuspended });
@@ -515,6 +530,50 @@ export default function PresidentDashboard() {
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-6 mt-4 md:mt-6">
+              <Card className="rounded-2xl border-primary/10 glass-card">
+                <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><BarChart3 className="size-4 md:size-5 text-primary" /><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">Participations aux Débats</CardTitle></CardHeader>
+                <CardContent className="h-[300px] pt-4">
+                  {statsData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={statsData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                        <XAxis type="number" hide />
+                        <YAxis 
+                          dataKey="name" 
+                          type="category" 
+                          width={100} 
+                          fontSize={10} 
+                          tick={{ fill: 'currentColor' }} 
+                        />
+                        <RechartsTooltip 
+                          cursor={{ fill: 'transparent' }}
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              return (
+                                <div className="bg-popover border p-2 rounded-lg shadow-xl text-xs">
+                                  <p className="font-bold">{payload[0].payload.name}</p>
+                                  <p className="text-primary">{payload[0].value} participation(s)</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                          {statsData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'hsl(var(--secondary))'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground italic gap-2">
+                      <BarChart3 size={40} className="opacity-20" />
+                      <p>Aucune donnée de participation enregistrée.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               <Card className="rounded-2xl border-primary/10 glass-card">
                 <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><Award className="size-4 md:size-5 text-primary" /><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">{t.gradingTitle}</CardTitle></CardHeader>
                 <CardContent className="px-2 md:px-4 pb-4">
