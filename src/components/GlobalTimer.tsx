@@ -13,7 +13,9 @@ interface GlobalTimerProps {
 }
 
 export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, durationMinutes }: GlobalTimerProps) {
-  const [timeLeft, setTimeLeft] = useState<number>(durationMinutes * 60);
+  // Sécurisation de la durée initiale
+  const safeDuration = Number(durationMinutes) || 0;
+  const [timeLeft, setTimeLeft] = useState<number>(safeDuration * 60);
   const hasPlayedAlarm = useRef(false);
 
   const playAlarm = () => {
@@ -41,8 +43,10 @@ export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, 
   };
 
   useEffect(() => {
+    const currentSafeDuration = Number(durationMinutes) || 0;
+
     if (status === 'launched') {
-      setTimeLeft(durationMinutes * 60);
+      setTimeLeft(currentSafeDuration * 60);
       hasPlayedAlarm.current = false;
       return;
     }
@@ -53,15 +57,17 @@ export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, 
     }
 
     const interval = setInterval(() => {
-      let elapsed = totalElapsedSeconds || 0;
+      let elapsed = Number(totalElapsedSeconds) || 0;
       
       if (status === 'started' && startedAt) {
         const start = new Date(startedAt).getTime();
         const now = new Date().getTime();
-        elapsed += Math.floor((now - start) / 1000);
+        if (!isNaN(start)) {
+          elapsed += Math.floor((now - start) / 1000);
+        }
       }
 
-      const remaining = (durationMinutes * 60) - elapsed;
+      const remaining = (currentSafeDuration * 60) - elapsed;
       const finalRemaining = remaining > 0 ? remaining : 0;
       
       setTimeLeft(finalRemaining);
@@ -77,6 +83,10 @@ export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, 
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
+
+  // Sécurisation de l'affichage pour éviter NaN
+  const displayMinutes = isNaN(minutes) ? "00" : String(minutes).padStart(2, '0');
+  const displaySeconds = isNaN(seconds) ? "00" : String(seconds).padStart(2, '0');
 
   const isWarning = timeLeft < 60 && timeLeft > 0;
   const isFinished = timeLeft === 0 && status !== 'launched';
@@ -97,7 +107,7 @@ export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, 
         isFinished ? 'text-destructive' : 
         status === 'paused' ? 'text-amber-600' : 'text-primary'
       }`}>
-        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+        {displayMinutes}:{displaySeconds}
       </div>
     </div>
   );
