@@ -243,7 +243,8 @@ export default function PresidentDashboard() {
       counts[d.country_name] = 0;
     });
     allParticipations.forEach((p: any) => {
-      if (p.status === 'participating' && counts[p.country_name] !== undefined) {
+      // On compte les participations tant qu'elles ne sont pas explicitement supprimées via l'action
+      if ((p.status === 'participating' || p.status === 'spoken') && counts[p.country_name] !== undefined) {
         counts[p.country_name]++;
       }
     });
