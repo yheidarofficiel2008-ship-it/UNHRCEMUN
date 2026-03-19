@@ -50,7 +50,8 @@ export default function PresidentLogin() {
           <div className="space-y-1.5 md:space-y-2">
             <CardTitle className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-gradient leading-none">Portail Président</CardTitle>
             <CardDescription className="font-bold uppercase tracking-[0.2em] text-[8px] md:text-[10px] text-primary/60">Accès réservé EMUN UNHRC</CardDescription>
-          </CardHeader>
+          </div>
+        </CardHeader>
         
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4 md:space-y-6 pt-2 md:pt-4">
