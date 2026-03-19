@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from 'react';
@@ -86,28 +85,29 @@ export default function AdminPage() {
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <Card className="w-full max-w-md border-none glass-card rounded-[1.5rem] md:rounded-[2.5rem] p-4 md:p-8">
-          <CardHeader className="text-center space-y-4 md:space-y-6">
-            <div className="p-3 md:p-4 bg-destructive/10 rounded-2xl md:rounded-3xl w-fit mx-auto border border-destructive/20">
-              <ShieldAlert className="size-8 md:size-10 text-destructive" />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 md:p-6">
+        <Card className="w-full max-w-md border-none glass-card rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1.5 md:h-2 bg-gradient-to-r from-destructive to-black"></div>
+          <CardHeader className="text-center space-y-4 md:space-y-6 pt-4 md:pt-6">
+            <div className="p-3 md:p-4 bg-destructive/10 rounded-[1.5rem] md:rounded-[2.5rem] w-fit mx-auto border border-destructive/20">
+              <ShieldAlert className="size-8 md:size-12 text-destructive" />
             </div>
             <div className="space-y-1.5 md:space-y-2">
-              <CardTitle className="text-xl md:text-3xl lg:text-4xl font-black uppercase tracking-tight text-gradient leading-none">Accès Restreint</CardTitle>
-              <CardDescription className="text-[8px] md:text-xs lg:text-sm font-medium uppercase tracking-widest opacity-60">Authentifiez votre session</CardDescription>
+              <CardTitle className="text-2xl md:text-4xl font-black uppercase tracking-tight text-gradient leading-none">Accès Restreint</CardTitle>
+              <CardDescription className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest opacity-60">Authentification Administrative</CardDescription>
             </div>
           </CardHeader>
           <form onSubmit={checkKey}>
-            <CardContent className="space-y-4 md:space-y-6 py-2 md:py-6">
+            <CardContent className="space-y-4 md:space-y-6 py-2 md:py-4">
               <div className="space-y-1.5 md:space-y-2">
                 <Label htmlFor="key" className="text-[8px] md:text-[10px] uppercase font-black tracking-widest text-primary/60 ml-1">Clé Administrative</Label>
                 <div className="relative">
-                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 size-4 md:size-5 text-primary/40" />
+                  <Key className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 size-4 md:size-5 text-primary/40" />
                   <Input 
                     id="key" 
                     type="password" 
                     placeholder="••••••••"
-                    className="pl-10 md:pl-12 h-11 md:h-14 font-mono rounded-xl md:rounded-2xl border-primary/10 transition-all text-base md:text-xl tracking-[0.2em] md:tracking-[0.5em]" 
+                    className="pl-10 md:pl-12 h-11 md:h-14 font-mono rounded-xl md:rounded-2xl border-primary/10 transition-all text-base md:text-xl tracking-[0.2em] md:tracking-[0.5em] text-center" 
                     value={securityKey} 
                     onChange={(e) => setSecurityKey(e.target.value)} 
                     required 
@@ -115,12 +115,12 @@ export default function AdminPage() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex flex-col gap-3 md:gap-4">
-              <Button type="submit" className="w-full h-11 md:h-14 bg-primary hover:bg-primary/90 rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[9px] md:text-xs shadow-lg shadow-primary/20 group">
+            <CardFooter className="flex flex-col gap-3 md:gap-4 mt-4">
+              <Button type="submit" className="w-full h-12 md:h-16 bg-primary hover:bg-primary/90 rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[10px] md:text-xs shadow-lg shadow-primary/20 group transition-all active:scale-95">
                 Déverrouiller
                 <LogIn className="ml-2 size-3.5 md:size-4 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button asChild variant="ghost" className="w-full text-muted-foreground hover:text-primary h-9 md:h-12 rounded-xl text-[9px] md:text-sm">
+              <Button asChild variant="ghost" className="w-full text-muted-foreground hover:text-primary h-10 md:h-12 rounded-xl text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
                 <Link href="/"><Home className="mr-2 size-3.5 md:size-4" /> Retour au Hub</Link>
               </Button>
             </CardFooter>

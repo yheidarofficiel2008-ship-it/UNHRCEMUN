@@ -84,49 +84,49 @@ export default function PresidentLogin() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6">
-      <Card className="w-full max-w-md border-none glass-card rounded-[2.5rem] p-10 overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-black"></div>
-        <CardHeader className="text-center space-y-6 pt-6">
-          <div className="p-4 bg-primary/5 rounded-[2rem] w-fit mx-auto border border-primary/10 shadow-inner">
-            <Shield size={48} className="text-primary" />
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-6 bg-background">
+      <Card className="w-full max-w-md border-none glass-card rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-10 overflow-hidden relative shadow-2xl">
+        <div className="absolute top-0 left-0 w-full h-1.5 md:h-2 bg-gradient-to-r from-primary to-black"></div>
+        <CardHeader className="text-center space-y-4 md:space-y-6 pt-4 md:pt-6">
+          <div className="p-3 md:p-4 bg-primary/5 rounded-[1.5rem] md:rounded-[2rem] w-fit mx-auto border border-primary/10 shadow-inner">
+            <Shield className="size-8 md:size-12 text-primary" />
           </div>
-          <div className="space-y-2">
-            <CardTitle className="text-4xl font-black uppercase tracking-tight text-gradient leading-none">{t.portal}</CardTitle>
-            <CardDescription className="font-bold uppercase tracking-[0.2em] text-[10px] text-primary/60">
+          <div className="space-y-1.5 md:space-y-2">
+            <CardTitle className="text-2xl md:text-4xl font-black uppercase tracking-tight text-gradient leading-none">{t.portal}</CardTitle>
+            <CardDescription className="font-bold uppercase tracking-[0.2em] text-[8px] md:text-[10px] text-primary/60">
               {committee ? `${t.committeeLabel} ${committee.name}` : t.loading}
             </CardDescription>
           </div>
         </CardHeader>
         
         <form onSubmit={handleLogin}>
-          <CardContent className="space-y-6 pt-4">
-            <div className="space-y-2">
-              <Label className="text-[10px] uppercase font-black tracking-widest text-primary/60 ml-1">{t.emailLabel}</Label>
+          <CardContent className="space-y-4 md:space-y-6 pt-2 md:pt-4">
+            <div className="space-y-1.5 md:space-y-2">
+              <Label className="text-[8px] md:text-[10px] uppercase font-black tracking-widest text-primary/60 ml-1">{t.emailLabel}</Label>
               <div className="relative">
-                <Mail className="absolute left-4 top-4 h-5 w-5 text-primary/30" />
-                <Input className="pl-12 h-14 rounded-2xl border-primary/10 bg-primary/[0.01] font-medium" type="email" placeholder="president@mun-os.org" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Mail className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 size-4 md:size-5 text-primary/30" />
+                <Input className="pl-10 md:pl-12 h-11 md:h-14 rounded-xl md:rounded-2xl border-primary/10 bg-primary/[0.01] font-medium text-sm md:text-base" type="email" placeholder="president@mun-os.org" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] uppercase font-black tracking-widest text-primary/60 ml-1">{t.passLabel}</Label>
+            <div className="space-y-1.5 md:space-y-2">
+              <Label className="text-[8px] md:text-[10px] uppercase font-black tracking-widest text-primary/60 ml-1">{t.passLabel}</Label>
               <div className="relative">
-                <Lock className="absolute left-4 top-4 h-5 w-5 text-primary/30" />
-                <Input type="password" className="pl-12 h-14 rounded-2xl border-primary/10 bg-primary/[0.01] font-mono tracking-widest" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Lock className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 size-4 md:size-5 text-primary/30" />
+                <Input type="password" className="pl-10 md:pl-12 h-11 md:h-14 rounded-xl md:rounded-2xl border-primary/10 bg-primary/[0.01] font-mono tracking-widest text-sm md:text-base" value={password} onChange={(e) => setPassword(e.target.value)} required />
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4 mt-6">
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-16 text-xs font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95" disabled={loading}>
-              {loading ? t.loading : <><LogIn className="mr-3 h-5 w-5" /> {t.accessButton}</>}
+          <CardFooter className="flex flex-col gap-3 md:gap-4 mt-4 md:mt-6">
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-12 md:h-16 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] rounded-xl md:rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95" disabled={loading}>
+              {loading ? t.loading : <><LogIn className="mr-2 md:mr-3 size-4 md:size-5" /> {t.accessButton}</>}
             </Button>
-            <Button asChild variant="ghost" className="w-full text-muted-foreground hover:text-primary rounded-xl h-12 font-bold uppercase tracking-widest text-[10px]">
-              <Link href="/"><ArrowLeft className="mr-2 h-4 w-4" /> {t.backHub}</Link>
+            <Button asChild variant="ghost" className="w-full text-muted-foreground hover:text-primary rounded-xl h-10 md:h-12 font-bold uppercase tracking-widest text-[9px] md:text-[10px]">
+              <Link href="/"><ArrowLeft className="mr-2 size-3.5 md:size-4" /> {t.backHub}</Link>
             </Button>
           </CardFooter>
         </form>
       </Card>
-      <p className="mt-12 text-[10px] text-primary/30 font-black uppercase tracking-[0.5em]">MUN-OS Excellence v2.0</p>
+      <p className="mt-8 md:mt-12 text-[8px] md:text-[10px] text-primary/30 font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-center">MUN-OS Excellence v2.0</p>
     </div>
   );
 }
