@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle, Languages, Award, Calculator, TrendingUp, Ghost, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle, Languages, Award, Calculator, Ghost, ChevronDown, ChevronUp, FileSignature } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,7 +34,7 @@ export default function PresidentDashboard() {
   const committeeId = params.committeeId as string;
   const { toast } = useToast();
   const { firestore: db, auth, user, isUserLoading } = useFirebase();
-  const { isSuspended, allowResolutions, allowGossip, currentAction, activeOverlay } = useRealtime(committeeId);
+  const { isSuspended, allowResolutions, allowGossip, allowPositionPapers, currentAction, activeOverlay } = useRealtime(committeeId);
   
   const committeeRef = useMemoFirebase(() => db ? doc(db, 'committees', committeeId) : null, [db, committeeId]);
   const { data: committee } = useDoc(committeeRef);
@@ -58,7 +58,6 @@ export default function PresidentDashboard() {
       title: "Intitulé",
       duration: "Durée (minutes)",
       speakingTime: "Temps de parole",
-      allowOptional: "Participation facultative",
       launchAction: "Initier l'Action",
       start: "Démarrer",
       pause: "Pause",
@@ -74,11 +73,9 @@ export default function PresidentDashboard() {
       participationStats: "Analytique des Participations",
       actionsHistory: "Journal des Procédures",
       resolutionsSubmitted: "Projets de Résolution",
+      positionsSubmitted: "Textes de Positionnement",
       privateInbox: "Communications Privées",
       gossipBoxTitle: "Gossip Box (Anonyme)",
-      noResolution: "Aucune résolution soumise",
-      noMessage: "Aucun message en attente",
-      noGossip: "La Gossip Box est vide",
       approve: "Valider",
       reject: "Rejeter",
       hide: "Masquer",
@@ -91,11 +88,11 @@ export default function PresidentDashboard() {
       crisisSubject: "Nature de la Crise",
       launchEverywhere: "Diffuser sur tous les écrans",
       launchCrisis: "DÉCLENCHER LA CRISE",
-      auth: "Vérification des accès...",
       actions: "Session",
       countries: "Membres",
       stats: "Notation & Stats",
       resolutionsTab: "Résolutions",
+      positionsTab: "Positionnement",
       messagesTab: "Messages",
       gossipTab: "Gossip",
       gradingTitle: "Barème d'Évaluation",
@@ -126,7 +123,6 @@ export default function PresidentDashboard() {
       title: "Title",
       duration: "Duration (min)",
       speakingTime: "Speaking time",
-      allowOptional: "Optional participation",
       launchAction: "Initiate Action",
       start: "Start",
       pause: "Pause",
@@ -142,11 +138,9 @@ export default function PresidentDashboard() {
       participationStats: "Participation Analytics",
       actionsHistory: "Procedure Log",
       resolutionsSubmitted: "Draft Resolutions",
+      positionsSubmitted: "Position Papers",
       privateInbox: "Private Communications",
       gossipBoxTitle: "Gossip Box (Anonymous)",
-      noResolution: "No resolutions submitted",
-      noMessage: "No messages pending",
-      noGossip: "The Gossip Box is empty",
       approve: "Approve",
       reject: "Reject",
       hide: "Hide",
@@ -159,11 +153,11 @@ export default function PresidentDashboard() {
       crisisSubject: "Crisis Nature",
       launchEverywhere: "Broadcast to all screens",
       launchCrisis: "TRIGGER CRISIS",
-      auth: "Checking access...",
       actions: "Session",
       countries: "Members",
       stats: "Grading & Stats",
       resolutionsTab: "Resolutions",
+      positionsTab: "Positions",
       messagesTab: "Messages",
       gossipTab: "Gossip",
       gradingTitle: "Evaluation Rubric",
@@ -180,192 +174,88 @@ export default function PresidentDashboard() {
   }[lang];
 
   const [customMinutes, setCustomMinutes] = useState('1');
-  const [newAction, setNewAction] = useState({
-    title: '',
-    duration: 15,
-    timePerDelegate: '1:00',
-    description: '',
-    allowParticipation: true
-  });
-
-  const [newDelegate, setNewDelegate] = useState({
-    name: '',
-    password: ''
-  });
-
-  const [overlayForm, setOverlayForm] = useState({
-    type: 'message',
-    title: ''
-  });
+  const [newAction, setNewAction] = useState({ title: '', duration: 15, timePerDelegate: '1:00', allowParticipation: true });
+  const [newDelegate, setNewDelegate] = useState({ name: '', password: '' });
+  const [overlayForm, setOverlayForm] = useState({ type: 'message', title: '' });
   const [isOverlayDialogOpen, setIsOverlayDialogOpen] = useState(false);
   const [isFluxMenuOpen, setIsFluxMenuOpen] = useState(false);
 
   const [delegates, setDelegates] = useState<any[]>([]);
   const [resolutions, setResolutions] = useState<any[]>([]);
+  const [positions, setPositions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
   const [allParticipations, setAllParticipations] = useState<any[]>([]);
   const [allActions, setAllActions] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [displayGradedDelegates, setDisplayGradedDelegates] = useState<any[]>([]);
 
-  const initialResolutionsCount = useRef<number | null>(null);
-  const initialMessagesCount = useRef<number | null>(null);
-
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push(`/committees/${committeeId}/president/login`);
-    }
+    if (!isUserLoading && !user) router.push(`/committees/${committeeId}/president/login`);
   }, [user, isUserLoading, router, committeeId]);
 
   useEffect(() => {
     if (!db || !user) return;
 
-    const delRef = collection(db, 'committees', committeeId, 'delegates');
-    const unsubDel = onSnapshot(query(delRef, orderBy('country_name', 'asc')), (snap) => {
+    const unsubDel = onSnapshot(query(collection(db, 'committees', committeeId, 'delegates'), orderBy('country_name', 'asc')), (snap) => {
       setDelegates(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
-    const resolutionsRef = collection(db, 'committees', committeeId, 'resolutions');
-    const unsubRes = onSnapshot(query(resolutionsRef, orderBy('created_at', 'desc')), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      if (initialResolutionsCount.current !== null && data.length > initialResolutionsCount.current) {
-        playNotificationSound();
-      }
-      initialResolutionsCount.current = data.length;
-      setResolutions(data);
+    const unsubRes = onSnapshot(query(collection(db, 'committees', committeeId, 'resolutions'), orderBy('created_at', 'desc')), (snapshot) => {
+      setResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    const messagesRef = collection(db, 'committees', committeeId, 'messages');
-    const unsubMessages = onSnapshot(query(messagesRef, orderBy('timestamp', 'desc')), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      if (initialMessagesCount.current !== null && data.length > initialMessagesCount.current) {
-        playNotificationSound();
-      }
-      initialMessagesCount.current = data.length;
-      setMessages(data);
+    const unsubPos = onSnapshot(query(collection(db, 'committees', committeeId, 'positionPapers'), orderBy('created_at', 'desc')), (snapshot) => {
+      setPositions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    const partRef = collection(db, 'committees', committeeId, 'participations');
-    const unsubPartAll = onSnapshot(partRef, (snapshot) => {
+    const unsubMessages = onSnapshot(query(collection(db, 'committees', committeeId, 'messages'), orderBy('timestamp', 'desc')), (snapshot) => {
+      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    const unsubPartAll = onSnapshot(collection(db, 'committees', committeeId, 'participations'), (snapshot) => {
       setAllParticipations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    const actionsHistoryRef = collection(db, 'committees', committeeId, 'actions');
-    const unsubActionsAll = onSnapshot(query(actionsHistoryRef, orderBy('created_at', 'desc')), (snapshot) => {
+    const unsubActionsAll = onSnapshot(query(collection(db, 'committees', committeeId, 'actions'), orderBy('created_at', 'desc')), (snapshot) => {
       setAllActions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    return () => {
-      unsubDel(); unsubRes(); unsubMessages(); unsubPartAll(); unsubActionsAll();
-    };
+    return () => { unsubDel(); unsubRes(); unsubPos(); unsubMessages(); unsubPartAll(); unsubActionsAll(); };
   }, [db, user, committeeId]);
 
   useEffect(() => {
-    if (!db || !currentAction?.id) {
-      setParticipants([]);
-      return;
-    }
-
-    const partRef = collection(db, 'committees', committeeId, 'participations');
-    const unsubPart = onSnapshot(query(partRef, where('action_id', '==', currentAction.id)), (snapshot) => {
+    if (!db || !currentAction?.id) { setParticipants([]); return; }
+    const unsubPart = onSnapshot(query(collection(db, 'committees', committeeId, 'participations'), where('action_id', '==', currentAction.id)), (snapshot) => {
       const parts = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() as any }))
         .filter(p => p.status === 'participating')
         .sort((a, b) => (a.updated_at?.seconds || 0) - (b.updated_at?.seconds || 0));
       setParticipants(parts);
     });
-
     return () => unsubPart();
   }, [db, currentAction?.id, committeeId]);
 
   useEffect(() => {
-    setDisplayGradedDelegates(prev => {
-      const currentDelegatesData = delegates.map(d => {
-        const g = d.grades || { speaking: 0, diplomacy: 0, knowledge: 0 };
-        const avg = (Number(g.speaking) + Number(g.diplomacy) + Number(g.knowledge)) / 3;
-        return { ...d, grades: g, average: avg };
-      });
-
-      const existingIds = new Set(prev.map(p => p.id));
-      const currentIds = new Set(currentDelegatesData.map(d => d.id));
-      const updatedPrev = prev
-        .filter(p => currentIds.has(p.id))
-        .map(p => {
-          const updated = currentDelegatesData.find(d => d.id === p.id);
-          return updated || p;
-        });
-
-      const newDelegates = currentDelegatesData.filter(d => !existingIds.has(d.id));
-      return [...updatedPrev, ...newDelegates];
-    });
+    setDisplayGradedDelegates(delegates.map(d => {
+      const g = d.grades || { speaking: 0, diplomacy: 0, knowledge: 0 };
+      const avg = (Number(g.speaking) + Number(g.diplomacy) + Number(g.knowledge)) / 3;
+      return { ...d, grades: g, average: avg };
+    }));
   }, [delegates]);
-
-  const playNotificationSound = () => {
-    try {
-      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
-      const context = new AudioContextClass();
-      const now = context.currentTime;
-      const osc = context.createOscillator();
-      const gain = context.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, now);
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.1, now + 0.05);
-      gain.gain.linearRampToValueAtTime(0, now + 0.2);
-      osc.connect(gain);
-      gain.connect(context.destination);
-      osc.start(now);
-      osc.stop(now + 0.2);
-    } catch (e) {
-      console.warn("Audio blocked");
-    }
-  };
-
-  const handleCalculateRanks = () => {
-    const sorted = [...displayGradedDelegates].sort((a, b) => b.average - a.average);
-    setDisplayGradedDelegates(sorted);
-    toast({ title: t.calculate + " : OK" });
-  };
-
-  const statsData = useMemo(() => {
-    const counts: Record<string, number> = {};
-    delegates.forEach(d => { counts[d.country_name] = 0; });
-    const existingActionIds = new Set(allActions.map(a => a.id));
-    allParticipations.forEach(p => {
-      if (existingActionIds.has(p.action_id) && (p.status === 'participating' || p.status === 'spoken') && counts[p.country_name] !== undefined) {
-        counts[p.country_name]++;
-      }
-    });
-    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
-  }, [allParticipations, delegates, allActions]);
 
   const toggleSuspension = () => {
     if (!db) return;
-    const sessionRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
-    setDocumentNonBlocking(sessionRef, { isSuspended: !isSuspended, lastUpdated: new Date().toISOString() }, { merge: true });
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { isSuspended: !isSuspended });
   };
 
-  const toggleResolutions = (val: boolean) => {
+  const updateFlux = (field: string, val: boolean) => {
     if (!db) return;
-    const sessionRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
-    setDocumentNonBlocking(sessionRef, { allowResolutions: val, lastUpdated: new Date().toISOString() }, { merge: true });
-    toast({ title: val ? t.resolutionsAllowed : t.resolutionsBlocked });
-  };
-
-  const toggleGossip = (val: boolean) => {
-    if (!db) return;
-    const sessionRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
-    setDocumentNonBlocking(sessionRef, { allowGossip: val, lastUpdated: new Date().toISOString() }, { merge: true });
-    toast({ title: val ? t.gossipAllowed : t.gossipBlocked });
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { [field]: val });
+    toast({ title: val ? "Flux activé" : "Flux suspendu" });
   };
 
   const launchOverlay = () => {
     if (!db || !overlayForm.title) return;
-    const sessionRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
     const overlayData = {
       type: overlayForm.type,
       title: overlayForm.title,
@@ -373,112 +263,65 @@ export default function PresidentDashboard() {
       voteId: overlayForm.type === 'vote' ? Date.now().toString() : null,
       results: overlayForm.type === 'vote' ? { pour: 0, contre: 0, abstention: 0 } : null
     };
-    setDocumentNonBlocking(sessionRef, { activeOverlay: overlayData }, { merge: true });
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: overlayData });
     setIsOverlayDialogOpen(false);
-    toast({ 
-      title: overlayForm.type === 'vote' ? t.voteLaunched : overlayForm.type === 'crisis' ? t.crisisTriggered : t.messageDisplayed,
-      variant: overlayForm.type === 'crisis' ? "destructive" : "default"
-    });
   };
 
   const stopOverlay = () => {
     if (!db) return;
-    const sessionRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
-    setDocumentNonBlocking(sessionRef, { activeOverlay: { type: 'none' } }, { merge: true });
-    toast({ title: "Affichage arrêté" });
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: { type: 'none' } });
   };
 
   const createAction = async () => {
-    if (!db || !newAction.title) {
-      toast({ title: "Erreur", description: "Veuillez donner un titre à l'action.", variant: "destructive" });
-      return;
-    }
-    try {
-      const actionData = {
-        title: newAction.title,
-        duration_minutes: Number(newAction.duration),
-        time_per_delegate: newAction.timePerDelegate,
-        description: newAction.description || "Action en cours",
-        allow_participation: newAction.allowParticipation,
-        status: 'launched',
-        total_elapsed_seconds: 0,
-        speaking_timer_total_elapsed: 0,
-        speaking_timer_status: 'stopped',
-        created_at: serverTimestamp(),
-      };
-      await addDocumentNonBlocking(collection(db, 'committees', committeeId, 'actions'), actionData);
-      toast({ title: lang === 'fr' ? "Action lancée" : "Action launched" });
-      setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', description: '', allowParticipation: true });
-    } catch (e) {
-      toast({ title: "Erreur", description: "Impossible de créer l'action.", variant: "destructive" });
-    }
-  };
-
-  const handleAddDelegate = async () => {
-    if (!db || !newDelegate.name || !newDelegate.password) {
-      toast({ title: "Champs manquants", variant: "destructive" });
-      return;
-    }
-    try {
-      await addDocumentNonBlocking(collection(db, 'committees', committeeId, 'delegates'), {
-        country_name: newDelegate.name,
-        password: newDelegate.password,
-        is_suspended: false,
-        grades: { speaking: 0, diplomacy: 0, knowledge: 0 },
-        created_at: serverTimestamp()
-      });
-      setNewDelegate({ name: '', password: '' });
-      toast({ title: lang === 'fr' ? "Pays ajouté avec succès" : "Country added successfully" });
-    } catch (e) {
-      toast({ title: "Erreur", variant: "destructive" });
-    }
+    if (!db || !newAction.title) return;
+    await addDocumentNonBlocking(collection(db, 'committees', committeeId, 'actions'), {
+      ...newAction,
+      status: 'launched',
+      total_elapsed_seconds: 0,
+      speaking_timer_total_elapsed: 0,
+      speaking_timer_status: 'stopped',
+      created_at: serverTimestamp(),
+    });
+    setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', allowParticipation: true });
   };
 
   const handleUpdateGrade = (delegateId: string, field: string, value: number) => {
     if (!db) return;
-    const delegateRef = doc(db, 'committees', committeeId, 'delegates', delegateId);
-    updateDocumentNonBlocking(delegateRef, { [`grades.${field}`]: value });
-  };
-
-  const toggleDelegateSuspension = (delegateId: string, currentStatus: boolean) => {
-    if (!db) return;
-    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'delegates', delegateId), { is_suspended: !currentStatus });
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'delegates', delegateId), { [`grades.${field}`]: value });
   };
 
   const handleMarkAsSpoken = (participationId: string) => {
     if (!db) return;
     updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'participations', participationId), { status: 'spoken' });
-    toast({ title: lang === 'fr' ? "Orateur validé" : "Speaker validated" });
   };
 
   const extendTime = (mins: number) => {
-    if (!db || !currentAction || isNaN(mins)) return;
-    const actionRef = doc(db, 'committees', committeeId, 'actions', currentAction.id);
-    updateDocumentNonBlocking(actionRef, { duration_minutes: increment(mins) });
+    if (!db || !currentAction) return;
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), { duration_minutes: increment(mins) });
   };
 
   const startTimer = () => {
     if (!db || !currentAction) return;
-    const actionRef = doc(db, 'committees', committeeId, 'actions', currentAction.id);
-    updateDocumentNonBlocking(actionRef, { status: 'started', started_at: new Date().toISOString() });
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), { status: 'started', started_at: new Date().toISOString() });
   };
 
   const pauseTimer = () => {
     if (!db || !currentAction || !currentAction.started_at) return;
-    const actionRef = doc(db, 'committees', committeeId, 'actions', currentAction.id);
     const now = new Date().getTime();
     const start = new Date(currentAction.started_at).getTime();
-    const elapsedSinceStart = Math.floor((now - start) / 1000);
-    const totalElapsed = (currentAction.total_elapsed_seconds || 0) + elapsedSinceStart;
-    updateDocumentNonBlocking(actionRef, { status: 'paused', total_elapsed_seconds: totalElapsed, paused_at: new Date().toISOString(), started_at: null });
+    const elapsed = Math.floor((now - start) / 1000);
+    const total = (currentAction.total_elapsed_seconds || 0) + elapsed;
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), { status: 'paused', total_elapsed_seconds: total, paused_at: new Date().toISOString(), started_at: null });
+  };
+
+  const stopAction = async () => {
+    if (!db || !currentAction) return;
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), { status: 'completed' });
   };
 
   const startSpeakingTimer = () => {
     if (!db || !currentAction) return;
-    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), {
-      speaking_timer_status: 'started',
-      speaking_timer_started_at: new Date().toISOString()
-    });
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), { speaking_timer_status: 'started', speaking_timer_started_at: new Date().toISOString() });
   };
 
   const pauseSpeakingTimer = () => {
@@ -487,76 +330,34 @@ export default function PresidentDashboard() {
     const start = new Date(currentAction.speaking_timer_started_at).getTime();
     const elapsed = Math.floor((now - start) / 1000);
     const total = (currentAction.speaking_timer_total_elapsed || 0) + elapsed;
-    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), {
-      speaking_timer_status: 'paused',
-      speaking_timer_total_elapsed: total,
-      speaking_timer_started_at: null
-    });
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), { speaking_timer_status: 'paused', speaking_timer_total_elapsed: total, speaking_timer_started_at: null });
   };
 
   const resetSpeakingTimer = () => {
     if (!db || !currentAction) return;
-    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), {
-      speaking_timer_status: 'stopped',
-      speaking_timer_started_at: null,
-      speaking_timer_total_elapsed: 0
-    });
-  };
-
-  const stopAction = async () => {
-    if (!db || !currentAction) return;
-    const actionRef = doc(db, 'committees', committeeId, 'actions', currentAction.id);
-    updateDocumentNonBlocking(actionRef, { status: 'completed' });
-  };
-
-  const markMessageAsRead = (messageId: string) => {
-    if (!db) return;
-    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'messages', messageId), { is_read: true });
-  };
-
-  const deleteMessage = (messageId: string) => {
-    if (!db) return;
-    deleteDocumentNonBlocking(doc(db, 'committees', committeeId, 'messages', messageId));
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', currentAction.id), { speaking_timer_status: 'stopped', speaking_timer_started_at: null, speaking_timer_total_elapsed: 0 });
   };
 
   const handleDeleteAction = (actionId: string) => {
     if (!db) return;
     deleteDocumentNonBlocking(doc(db, 'committees', committeeId, 'actions', actionId));
-    allParticipations.forEach(p => {
-      if (p.action_id === actionId) {
-        deleteDocumentNonBlocking(doc(db, 'committees', committeeId, 'participations', p.id));
-      }
-    });
-    toast({ title: t.actionDeleted });
+    allParticipations.forEach(p => { if (p.action_id === actionId) deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'participations', p.id)); });
   };
 
-  const handleLogout = async () => {
-    if (!auth) return;
-    await signOut(auth);
-    router.push('/');
-  };
+  if (isUserLoading) return <div className="min-h-screen flex items-center justify-center font-bold uppercase tracking-widest animate-pulse">Chargement...</div>;
 
-  if (isUserLoading) return <div className="min-h-screen flex items-center justify-center font-bold uppercase tracking-widest animate-pulse">{t.auth}</div>;
-
-  const orateursInscrits = participants;
-  const unreadMessagesCount = messages.filter(m => !m.is_read && m.type !== 'gossip').length;
   const gossipMessages = messages.filter(m => m.type === 'gossip');
-
-  const parseTimePerDelegate = (timeStr: string) => {
-    if (!timeStr) return 60;
-    const [mins, secs] = timeStr.split(':').map(Number);
-    return (mins * 60) + (secs || 0);
-  };
+  const privateMessages = messages.filter(m => m.type !== 'gossip');
+  const unreadCount = privateMessages.filter(m => !m.is_read).length;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col font-body">
       <header className="bg-white/80 backdrop-blur-md border-b border-primary/10 p-4 shadow-sm z-50 sticky top-0 flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 w-full md:w-auto">
-          <h1 className="text-lg md:text-xl font-black font-headline uppercase tracking-tight text-gradient whitespace-nowrap">{committee?.name || "Comité"}</h1>
+          <h1 className="text-lg md:text-2xl font-black uppercase tracking-tight text-gradient">{committee?.name}</h1>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="border-primary/20 text-primary uppercase text-[8px] md:text-[10px] font-bold px-2 md:px-3">{t.presidency}</Badge>
-            {isSuspended && <Badge variant="destructive" className="animate-pulse bg-destructive/10 text-destructive border-destructive/20 text-[8px] md:text-[10px]">{lang === 'fr' ? 'SÉANCE SUSPENDUE' : 'SESSION SUSPENDED'}</Badge>}
-            {activeOverlay?.type === 'crisis' && <Badge variant="destructive" className="bg-red-600 animate-bounce uppercase font-black px-4 shadow-xl border-none text-[8px] md:text-[10px]">{t.crisisMode}</Badge>}
+            <Badge variant="outline" className="border-primary/20 text-primary uppercase text-[8px] md:text-[10px] font-bold px-3">{t.presidency}</Badge>
+            {isSuspended && <Badge variant="destructive" className="animate-pulse bg-destructive/10 text-destructive border-destructive/20 text-[8px] md:text-[10px]">SÉANCE SUSPENDUE</Badge>}
           </div>
         </div>
         
@@ -564,180 +365,113 @@ export default function PresidentDashboard() {
           <Collapsible open={isFluxMenuOpen} onOpenChange={setIsFluxMenuOpen} className="relative">
             <CollapsibleTrigger asChild>
               <Button variant="outline" size="sm" className="rounded-full border-primary/20 text-primary font-bold gap-2 text-[10px] md:text-xs">
-                Controle des Flux {isFluxMenuOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                Contrôle des Flux {isFluxMenuOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="absolute top-full mt-2 right-0 bg-white border border-primary/10 rounded-2xl p-4 shadow-2xl space-y-4 min-w-[200px] z-[60]">
-               <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <Ghost className="size-3.5 text-primary" />
-                  <span className="text-[10px] font-black uppercase tracking-tight text-primary">Gossip</span>
-                </div>
-                <Switch checked={allowGossip} onCheckedChange={toggleGossip} />
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <FileText className="size-3.5 text-primary" />
-                  <span className="text-[10px] font-black uppercase tracking-tight text-primary">Résol.</span>
-                </div>
-                <Switch checked={allowResolutions} onCheckedChange={toggleResolutions} />
-              </div>
-              <Button variant="outline" size="sm" className="w-full text-[10px] font-bold h-8" onClick={toggleSuspension}>
+            <CollapsibleContent className="absolute top-full mt-2 right-0 bg-white border border-primary/10 rounded-2xl p-4 shadow-2xl space-y-4 min-w-[220px] z-[60]">
+               {[
+                 { label: "Gossip", field: "allowGossip", icon: Ghost, checked: allowGossip },
+                 { label: "Résol.", field: "allowResolutions", icon: FileText, checked: allowResolutions },
+                 { label: "Position", field: "allowPositionPapers", icon: FileSignature, checked: allowPositionPapers }
+               ].map(flux => (
+                 <div key={flux.field} className="flex items-center justify-between gap-4">
+                   <div className="flex items-center gap-2"><flux.icon className="size-3.5 text-primary" /><span className="text-[10px] font-black uppercase tracking-tight text-primary">{flux.label}</span></div>
+                   <Switch checked={flux.checked} onCheckedChange={(val) => updateFlux(flux.field, val)} />
+                 </div>
+               ))}
+               <Button variant={isSuspended ? "default" : "outline"} size="sm" className="w-full text-[10px] font-black h-8 rounded-xl" onClick={toggleSuspension}>
                 {isSuspended ? t.resume : t.suspend}
               </Button>
             </CollapsibleContent>
           </Collapsible>
 
           {activeOverlay && activeOverlay.type === 'vote' && (
-            <div className="flex items-center gap-2 md:gap-4 bg-primary/5 px-3 md:px-4 py-1.5 rounded-2xl border border-primary/10">
-              <div className="flex items-center gap-2 md:gap-4">
-                <div className="flex flex-col items-center">
-                  <span className="text-[7px] md:text-[8px] font-black uppercase text-green-600">Pour</span>
-                  <span className="text-xs md:text-sm font-black tabular-nums text-green-600">{activeOverlay.results?.pour || 0}</span>
+            <div className="flex items-center gap-4 bg-primary/5 px-4 py-1.5 rounded-2xl border border-primary/10">
+              {['pour', 'contre', 'abstention'].map(c => (
+                <div key={c} className="flex flex-col items-center">
+                  <span className={`text-[7px] font-black uppercase ${c === 'pour' ? 'text-green-600' : c === 'contre' ? 'text-red-600' : 'text-amber-600'}`}>{c}</span>
+                  <span className={`text-sm font-black tabular-nums ${c === 'pour' ? 'text-green-600' : c === 'contre' ? 'text-red-600' : 'text-amber-600'}`}>{activeOverlay.results?.[c] || 0}</span>
                 </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-[7px] md:text-[8px] font-black uppercase text-red-600">Contre</span>
-                  <span className="text-xs md:text-sm font-black tabular-nums text-red-600">{activeOverlay.results?.contre || 0}</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-[7px] md:text-[8px] font-black uppercase text-amber-600">Abs.</span>
-                  <span className="text-xs md:text-sm font-black tabular-nums text-amber-600">{activeOverlay.results?.abstention || 0}</span>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10 rounded-full" onClick={stopOverlay}><X className="size-3" /></Button>
+              ))}
+              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={stopOverlay}><X className="size-3" /></Button>
             </div>
           )}
 
           <Dialog open={isOverlayDialogOpen} onOpenChange={setIsOverlayDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-full font-bold gap-2 px-4 text-[10px] md:text-xs">
-                <Stars className="size-3.5" /> <span className="hidden sm:inline">{t.specialAction}</span>
-                <span className="sm:hidden">Spécial</span>
-              </Button>
-            </DialogTrigger>
+            <DialogTrigger asChild><Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-full font-bold gap-2 px-4 text-[10px] md:text-xs"><Stars className="size-3.5" /> {t.specialAction}</Button></DialogTrigger>
             <DialogContent className="rounded-3xl border-primary/10 shadow-2xl w-[95vw] max-w-lg">
-              <DialogHeader><DialogTitle className="text-xl md:text-2xl font-black uppercase text-gradient">{t.specialTitle}</DialogTitle></DialogHeader>
-              <div className="space-y-4 md:space-y-6 py-4">
-                <div className="space-y-2">
-                  <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.overlayType}</Label>
+              <DialogHeader><DialogTitle className="text-xl font-black uppercase text-gradient">{t.specialTitle}</DialogTitle></DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2"><Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.overlayType}</Label>
                   <Select value={overlayForm.type} onValueChange={(val) => setOverlayForm({...overlayForm, type: val})}>
                     <SelectTrigger className="rounded-xl border-primary/20"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="message">{lang === 'fr' ? 'Diffusion de Message' : 'Message Broadcast'}</SelectItem>
-                      <SelectItem value="vote">{lang === 'fr' ? 'Procédure de Scrutin' : 'Voting Procedure'}</SelectItem>
-                      <SelectItem value="crisis" className="text-red-600 font-black">🚨 {lang === 'fr' ? 'ALERTE CRISE' : 'CRISIS ALERT'}</SelectItem>
-                    </SelectContent>
+                    <SelectContent><SelectItem value="message">Diffusion de Message</SelectItem><SelectItem value="vote">Procédure de Scrutin</SelectItem><SelectItem value="crisis" className="text-red-600 font-black">🚨 ALERTE CRISE</SelectItem></SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{overlayForm.type === 'crisis' ? t.crisisSubject : t.overlaySubject}</Label>
-                  <Input placeholder="..." value={overlayForm.title} onChange={(e) => setOverlayForm({...overlayForm, title: e.target.value})} className="rounded-xl border-primary/20 h-11 md:h-12" />
-                </div>
+                <div className="space-y-2"><Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{overlayForm.type === 'crisis' ? t.crisisSubject : t.overlaySubject}</Label><Input value={overlayForm.title} onChange={(e) => setOverlayForm({...overlayForm, title: e.target.value})} className="rounded-xl border-primary/20 h-11" /></div>
               </div>
-              <DialogFooter>
-                <Button onClick={launchOverlay} className={overlayForm.type === 'crisis' ? "bg-red-600 hover:bg-red-700 w-full font-black uppercase h-12 md:h-14 rounded-2xl" : "bg-primary w-full h-12 md:h-14 rounded-2xl"}>
-                  {overlayForm.type === 'crisis' ? t.launchCrisis : t.launchEverywhere}
-                </Button>
-              </DialogFooter>
+              <DialogFooter><Button onClick={launchOverlay} className={overlayForm.type === 'crisis' ? "bg-red-600 hover:bg-red-700 w-full font-black uppercase h-12 rounded-2xl" : "bg-primary w-full h-12 rounded-2xl"}>{overlayForm.type === 'crisis' ? t.launchCrisis : t.launchEverywhere}</Button></DialogFooter>
             </DialogContent>
           </Dialog>
-
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-full h-8 w-8 md:h-10 md:w-10" onClick={handleLogout}><LogOut className="size-4 md:size-5" /></Button>
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-full h-10 w-10" onClick={() => { signOut(auth!); router.push('/'); }}><LogOut className="size-5" /></Button>
         </div>
       </header>
 
-      <main className="flex-1 p-4 md:p-6 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 max-w-[1600px] mx-auto w-full">
+      <main className="flex-1 p-4 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 max-w-[1600px] mx-auto w-full">
         <div className="lg:col-span-4 space-y-6 md:space-y-8">
-          <Tabs defaultValue="actions" className="w-full">
+          <Tabs defaultValue="actions">
             <TabsList className="w-full bg-secondary/50 p-1 rounded-2xl border border-primary/5">
-              <TabsTrigger value="actions" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-[10px] tracking-widest">{t.actions}</TabsTrigger>
-              <TabsTrigger value="delegates" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-[10px] tracking-widest">{t.countries}</TabsTrigger>
-              <TabsTrigger value="stats" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-[10px] tracking-widest">{t.stats}</TabsTrigger>
+              <TabsTrigger value="actions" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-xs tracking-widest">{t.actions}</TabsTrigger>
+              <TabsTrigger value="delegates" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-xs tracking-widest">{t.countries}</TabsTrigger>
+              <TabsTrigger value="stats" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-xs tracking-widest">{t.stats}</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="actions" className="space-y-6 md:space-y-8 mt-4 md:mt-6">
-              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
-                <CardHeader className="pb-3 md:pb-4"><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.newAction}</CardTitle></CardHeader>
-                <CardContent className="space-y-3 md:space-y-4">
-                  <div className="space-y-1.5 md:space-y-2">
-                    <Label className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.title}</Label>
-                    <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="..." className="rounded-xl border-primary/10 text-xs md:text-sm h-10 md:h-11" />
+            <TabsContent value="actions" className="space-y-6 mt-4 md:mt-6">
+              <Card className="rounded-2xl border-primary/10 glass-card">
+                <CardHeader className="pb-3"><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">{t.newAction}</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-1.5"><Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">{t.title}</Label><Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} className="rounded-xl border-primary/10 text-xs h-10" /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1"><Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">{t.duration}</Label><Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} className="rounded-xl border-primary/10 text-xs h-10" /></div>
+                    <div className="space-y-1"><Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">{t.speakingTime}</Label><Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} className="rounded-xl border-primary/10 text-xs h-10" /></div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 md:gap-4">
-                    <div className="space-y-1"><Label className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.duration}</Label><Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} className="rounded-xl border-primary/10 text-xs h-10 md:h-11" /></div>
-                    <div className="space-y-1"><Label className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.speakingTime}</Label><Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} placeholder="1:00" className="rounded-xl border-primary/10 text-xs h-10 md:h-11" /></div>
-                  </div>
-                  <Button className="w-full bg-primary hover:bg-primary/90 h-10 md:h-12 rounded-xl font-bold uppercase tracking-widest text-[10px] md:text-xs" onClick={createAction}>{t.launchAction}</Button>
+                  <Button className="w-full bg-primary hover:bg-primary/90 h-10 rounded-xl font-bold uppercase tracking-widest text-[10px]" onClick={createAction}>{t.launchAction}</Button>
                 </CardContent>
               </Card>
 
               {currentAction && currentAction.status !== 'completed' && (
-                <Card className="rounded-2xl md:rounded-3xl border-primary/20 shadow-2xl glass-card overflow-hidden">
-                  <CardHeader className="bg-primary/[0.03] border-b border-primary/5 pb-4 p-4 md:p-6">
-                    <div className="flex justify-between items-start gap-3 md:gap-4">
-                      <div className="flex-1 min-w-0">
-                        <Badge className="bg-primary/10 text-primary border-primary/20 uppercase text-[7px] md:text-[9px] font-black tracking-widest px-2 mb-2">{currentAction.status}</Badge>
-                        <CardTitle className="text-lg md:text-2xl font-black uppercase tracking-tight text-gradient break-words leading-tight">{currentAction.title}</CardTitle>
-                      </div>
-                      <div className="flex items-center gap-1 bg-white p-1 rounded-xl shadow-inner border border-primary/10 shrink-0">
-                        <Input type="number" className="w-8 md:w-12 h-7 md:h-8 border-none p-1 text-center font-bold text-[10px] md:text-xs" value={customMinutes} onChange={(e) => setCustomMinutes(e.target.value)} />
-                        <Button size="icon" variant="ghost" className="h-7 w-7 md:h-8 md:w-8 text-primary hover:bg-primary/5 rounded-lg" onClick={() => extendTime(parseInt(customMinutes))}><Plus className="size-3 md:size-4" /></Button>
-                      </div>
+                <Card className="rounded-2xl border-primary/20 shadow-2xl glass-card overflow-hidden">
+                  <CardHeader className="bg-primary/[0.03] border-b border-primary/5 p-4 md:p-6">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-1"><Badge className="bg-primary/10 text-primary border-primary/20 uppercase text-[7px] font-black tracking-widest px-2 mb-2">{currentAction.status}</Badge><CardTitle className="text-lg md:text-2xl font-black uppercase tracking-tight text-gradient leading-tight">{currentAction.title}</CardTitle></div>
+                      <div className="flex items-center gap-1 bg-white p-1 rounded-xl shadow-inner border border-primary/10"><Input type="number" className="w-10 h-8 border-none p-1 text-center font-bold text-xs" value={customMinutes} onChange={(e) => setCustomMinutes(e.target.value)} /><Button size="icon" variant="ghost" className="h-8 w-8 text-primary rounded-lg" onClick={() => extendTime(parseInt(customMinutes))}><Plus className="size-4" /></Button></div>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4 md:p-8 space-y-6 md:space-y-8">
+                  <CardContent className="p-4 md:p-8 space-y-6">
                     <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
-                    <div className="grid grid-cols-2 gap-3 md:gap-4">
-                      {(currentAction.status === 'launched' || currentAction.status === 'paused') ? (
-                        <Button size="sm" className="bg-primary hover:bg-primary/90 h-10 md:h-14 rounded-xl md:rounded-2xl gap-2 md:gap-3 text-[10px] md:text-sm font-black uppercase tracking-widest shadow-lg shadow-primary/20" onClick={startTimer}><Play className="size-4 md:size-5" fill="currentColor" /> {t.start}</Button>
-                      ) : (
-                        <Button size="sm" variant="outline" className="border-amber-400 text-amber-600 hover:bg-amber-50 h-10 md:h-14 rounded-xl md:rounded-2xl gap-2 md:gap-3 text-[10px] md:text-sm font-black uppercase tracking-widest" onClick={pauseTimer}><Pause className="size-4 md:size-5" fill="currentColor" /> {t.pause}</Button>
-                      )}
-                      <Button size="sm" variant="destructive" className="h-10 md:h-14 rounded-xl md:rounded-2xl gap-2 md:gap-3 text-[10px] md:text-sm font-black uppercase tracking-widest shadow-lg shadow-destructive/20" onClick={stopAction}><Square className="size-4 md:size-5" fill="currentColor" /> {t.stop}</Button>
+                    <div className="grid grid-cols-2 gap-3">
+                      {(currentAction.status === 'launched' || currentAction.status === 'paused') ? <Button size="sm" className="bg-primary h-12 rounded-xl gap-2 font-black uppercase tracking-widest shadow-lg shadow-primary/20" onClick={startTimer}><Play className="size-4" fill="currentColor" /> {t.start}</Button> : <Button size="sm" variant="outline" className="border-amber-400 text-amber-600 h-12 rounded-xl gap-2 font-black uppercase tracking-widest" onClick={pauseTimer}><Pause className="size-4" fill="currentColor" /> {t.pause}</Button>}
+                      <Button size="sm" variant="destructive" className="h-12 rounded-xl gap-2 font-black uppercase tracking-widest shadow-lg shadow-destructive/20" onClick={stopAction}><Square className="size-4" fill="currentColor" /> {t.stop}</Button>
                     </div>
-
-                    <div className="pt-4 md:pt-6 border-t border-primary/5 space-y-4 md:space-y-6">
-                      <div className="flex justify-between items-center">
-                        <h3 className="font-black text-[8px] md:text-[10px] text-primary uppercase tracking-[0.2em] flex items-center gap-2"><Timer className="size-3 md:size-4" /> {t.speakerChrono}</h3>
-                        <Badge variant="outline" className="text-[8px] md:text-[10px] font-bold border-primary/10 bg-primary/5">{currentAction.time_per_delegate}</Badge>
-                      </div>
-                      <div className="flex justify-center">
-                        <SpeakingTimer 
-                          status={currentAction.speaking_timer_status} 
-                          startedAt={currentAction.speaking_timer_started_at} 
-                          totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} 
-                          limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} 
-                          size="md" 
-                        />
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 md:gap-3">
-                        {currentAction.speaking_timer_status === 'started' ? (
-                          <Button variant="outline" size="sm" className="border-amber-400 text-amber-600 h-8 md:h-10 rounded-xl font-bold uppercase text-[8px] md:text-[10px]" onClick={pauseSpeakingTimer}><Pause className="size-3 md:size-4" /> {t.pause}</Button>
-                        ) : (
-                          <Button variant="secondary" size="sm" className="bg-primary/10 text-primary hover:bg-primary/20 h-8 md:h-10 rounded-xl font-bold uppercase text-[8px] md:text-[10px]" onClick={startSpeakingTimer}><Play className="size-3 md:size-4" /> {t.start}</Button>
-                        )}
-                        <Button variant="ghost" size="sm" className="border border-primary/10 h-8 md:h-10 rounded-xl font-bold uppercase text-[8px] md:text-[10px]" onClick={resetSpeakingTimer}>Reset</Button>
-                        <Button variant="outline" size="sm" className="border-green-500/30 text-green-600 hover:bg-green-50 h-8 md:h-10 rounded-xl font-bold uppercase text-[8px] md:text-[10px]" onClick={() => handleMarkAsSpoken(orateursInscrits[0]?.id)} disabled={!orateursInscrits[0]}><Check className="size-3 md:size-4" /></Button>
+                    <div className="pt-4 border-t border-primary/5 space-y-4">
+                      <div className="flex justify-between items-center"><h3 className="font-black text-[8px] md:text-[10px] text-primary uppercase tracking-[0.2em] flex items-center gap-2"><Timer className="size-3 md:size-4" /> {t.speakerChrono}</h3><Badge variant="outline" className="text-[8px] md:text-[10px] font-bold border-primary/10 bg-primary/5">{currentAction.time_per_delegate}</Badge></div>
+                      <div className="flex justify-center"><SpeakingTimer status={currentAction.speaking_timer_status} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} size="md" /></div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {currentAction.speaking_timer_status === 'started' ? <Button variant="outline" size="sm" className="border-amber-400 text-amber-600 h-8 rounded-lg font-bold uppercase text-[8px]" onClick={pauseSpeakingTimer}><Pause className="size-3" /> {t.pause}</Button> : <Button variant="secondary" size="sm" className="bg-primary/10 text-primary h-8 rounded-lg font-bold uppercase text-[8px]" onClick={startSpeakingTimer}><Play className="size-3" /> {t.start}</Button>}
+                        <Button variant="ghost" size="sm" className="border border-primary/10 h-8 rounded-lg font-bold uppercase text-[8px]" onClick={resetSpeakingTimer}>Reset</Button>
+                        <Button variant="outline" size="sm" className="border-green-500/30 text-green-600 h-8 rounded-lg font-bold uppercase text-[8px]" onClick={() => handleMarkAsSpoken(participants[0]?.id)} disabled={!participants[0]}><Check className="size-3" /></Button>
                       </div>
                     </div>
-
-                    <div className="space-y-4 pt-4 md:pt-6 border-t border-primary/5">
-                      <h3 className="font-black text-[9px] md:text-[10px] text-primary uppercase tracking-[0.2em] flex items-center justify-between">
-                        <span className="flex items-center gap-2"><ListOrdered className="size-3 md:size-4" /> {t.speakersList}</span>
-                        <Badge className="bg-primary rounded-lg text-[10px]">{orateursInscrits.length}</Badge>
-                      </h3>
-                      <ScrollArea className="h-[150px] md:h-[200px] rounded-xl md:rounded-2xl border border-primary/5 bg-primary/[0.01] p-2 md:p-3">
+                    <div className="space-y-4 pt-4 border-t border-primary/5">
+                      <h3 className="font-black text-[9px] md:text-[10px] text-primary uppercase tracking-[0.2em] flex items-center justify-between"><span className="flex items-center gap-2"><ListOrdered className="size-3 md:size-4" /> {t.speakersList}</span><Badge className="bg-primary rounded-lg text-[10px]">{participants.length}</Badge></h3>
+                      <ScrollArea className="h-[150px] md:h-[200px] rounded-xl border border-primary/5 bg-primary/[0.01] p-2">
                         <div className="space-y-2">
-                          {orateursInscrits.length > 0 ? orateursInscrits.map((p, i) => (
-                            <div key={i} className="flex justify-between items-center p-2.5 md:p-4 bg-white border border-primary/5 rounded-xl shadow-sm group hover:border-primary/20 transition-all">
+                          {participants.length > 0 ? participants.map((p, i) => (
+                            <div key={p.id} className="flex justify-between items-center p-2.5 bg-white border border-primary/5 rounded-xl shadow-sm group hover:border-primary/20 transition-all">
                               <span className="font-bold text-[10px] md:text-sm text-foreground/80">{i + 1}. {p.country_name}</span>
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 text-green-600 hover:bg-green-50 rounded-lg" onClick={() => handleMarkAsSpoken(p.id)}><Check className="size-3 md:size-4" /></Button>
-                              </div>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleMarkAsSpoken(p.id)}><Check className="size-3" /></Button>
                             </div>
-                          )) : (
-                            <div className="text-center py-10 md:py-12 text-muted-foreground text-[8px] md:text-xs italic opacity-50">{t.noSpeaker}</div>
-                          )}
+                          )) : <div className="text-center py-10 text-muted-foreground text-[8px] md:text-xs italic opacity-50">{t.noSpeaker}</div>}
                         </div>
                       </ScrollArea>
                     </div>
@@ -746,140 +480,55 @@ export default function PresidentDashboard() {
               )}
             </TabsContent>
 
-            <TabsContent value="delegates" className="space-y-6 md:space-y-8 mt-4 md:mt-6">
-              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
-                <CardHeader className="pb-3 flex flex-row items-center gap-3"><UserPlus className="size-4 md:size-5 text-primary" /><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.addCountry}</CardTitle></CardHeader>
+            <TabsContent value="delegates" className="space-y-6 mt-4">
+              <Card className="rounded-2xl border-primary/10 glass-card">
+                <CardHeader className="pb-3 flex flex-row items-center gap-3"><UserPlus className="size-4 md:size-5 text-primary" /><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">{t.addCountry}</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2"><Label className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.countryName}</Label><Input value={newDelegate.name} onChange={e => setNewDelegate({...newDelegate, name: e.target.value})} placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-11 text-xs" /></div>
-                  <div className="space-y-2"><Label className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.password}</Label><Input value={newDelegate.password} onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-11 text-xs" /></div>
-                  <Button className="w-full bg-primary h-10 md:h-11 rounded-xl font-bold uppercase tracking-widest text-[9px] md:text-[10px]" onClick={handleAddDelegate}>{t.addToList}</Button>
+                  <div className="space-y-2"><Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">{t.countryName}</Label><Input value={newDelegate.name} onChange={e => setNewDelegate({...newDelegate, name: e.target.value})} className="rounded-xl border-primary/10 h-10 text-xs" /></div>
+                  <div className="space-y-2"><Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">{t.password}</Label><Input value={newDelegate.password} onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} className="rounded-xl border-primary/10 h-10 text-xs" /></div>
+                  <Button className="w-full bg-primary h-10 rounded-xl font-bold uppercase tracking-widest text-[9px]" onClick={() => { if(db && newDelegate.name) addDocumentNonBlocking(collection(db, 'committees', committeeId, 'delegates'), { country_name: newDelegate.name, password: newDelegate.password, is_suspended: false, grades: { speaking: 0, diplomacy: 0, knowledge: 0 }, created_at: serverTimestamp() }); setNewDelegate({ name: '', password: '' }); }}>{t.addToList}</Button>
                 </CardContent>
               </Card>
-              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
-                <CardHeader><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.registeredDelegates} ({delegates.length})</CardTitle></CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[300px] md:h-[450px]">
-                    <div className="space-y-2.5 md:space-y-3">
-                      {delegates.map(d => (
-                        <div key={d.id} className={`flex justify-between items-center p-3 md:p-4 rounded-xl md:rounded-2xl border transition-all duration-300 ${d.is_suspended ? 'bg-destructive/5 border-destructive/20' : 'bg-white border-primary/5 shadow-sm hover:shadow-md'}`}>
-                          <div className="flex flex-col min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-[10px] md:text-sm text-foreground/80 truncate">{d.country_name}</span>
-                              {d.is_suspended && <Badge variant="destructive" className="h-3 md:h-4 text-[6px] md:text-[8px] px-1 uppercase font-black shrink-0"><ShieldAlert className="size-2 md:size-2.5 mr-0.5" /> Suspendu</Badge>}
-                            </div>
-                            <span className="text-[7px] md:text-[9px] text-muted-foreground font-mono uppercase tracking-widest mt-0.5 md:mt-1 opacity-60">Pass: {d.password}</span>
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0 ml-2">
-                            <Button variant="ghost" size="icon" className={`h-7 w-7 md:h-8 md:w-8 rounded-lg ${d.is_suspended ? 'text-green-600 hover:bg-green-50' : 'text-amber-600 hover:bg-amber-50'}`} onClick={() => toggleDelegateSuspension(d.id, d.is_suspended)}>{d.is_suspended ? <ShieldOff className="size-3 md:size-4" /> : <ShieldAlert className="size-3 md:size-4" />}</Button>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/5 h-7 w-7 md:h-8 md:w-8 rounded-lg" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'delegates', d.id))}><Trash2 className="size-3 md:size-4" /></Button>
-                          </div>
-                        </div>
-                      ))}
+              <Card className="rounded-2xl border-primary/10 glass-card"><CardHeader><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">{t.registeredDelegates} ({delegates.length})</CardTitle></CardHeader>
+                <CardContent><ScrollArea className="h-[300px] md:h-[450px]"><div className="space-y-2.5">
+                  {delegates.map(d => (
+                    <div key={d.id} className={`flex justify-between items-center p-3 rounded-xl border transition-all ${d.is_suspended ? 'bg-destructive/5 border-destructive/20' : 'bg-white border-primary/5'}`}>
+                      <div className="flex flex-col min-w-0 flex-1"><div className="flex items-center gap-2"><span className="font-bold text-[10px] md:text-sm text-foreground/80 truncate">{d.country_name}</span>{d.is_suspended && <Badge variant="destructive" className="h-3 text-[6px] px-1 font-black">Suspendu</Badge>}</div><span className="text-[7px] md:text-[9px] text-muted-foreground font-mono mt-0.5 opacity-60">Pass: {d.password}</span></div>
+                      <div className="flex items-center gap-1"><Button variant="ghost" size="icon" className={`h-7 w-7 rounded-lg ${d.is_suspended ? 'text-green-600' : 'text-amber-600'}`} onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'delegates', d.id), { is_suspended: !d.is_suspended })}>{d.is_suspended ? <ShieldOff className="size-3" /> : <ShieldAlert className="size-3" />}</Button><Button variant="ghost" size="icon" className="text-destructive h-7 w-7 rounded-lg" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'delegates', d.id))}><Trash2 className="size-3" /></Button></div>
                     </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
+                  ))}
+                </div></ScrollArea></CardContent></Card>
             </TabsContent>
 
-            <TabsContent value="stats" className="space-y-6 md:space-y-8 mt-4 md:mt-6">
-              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
-                <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><Award className="size-4 md:size-5 text-primary" /><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.gradingTitle}</CardTitle></CardHeader>
+            <TabsContent value="stats" className="space-y-6 mt-4 md:mt-6">
+              <Card className="rounded-2xl border-primary/10 glass-card">
+                <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><Award className="size-4 md:size-5 text-primary" /><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">{t.gradingTitle}</CardTitle></CardHeader>
                 <CardContent className="px-2 md:px-4 pb-4">
-                  <div className="px-2 md:px-0 mb-4 md:mb-6"><Button size="sm" onClick={handleCalculateRanks} className="w-full bg-primary hover:bg-primary/90 rounded-xl md:rounded-2xl h-11 md:h-14 font-black uppercase tracking-widest text-[9px] md:text-xs gap-2 md:gap-3 shadow-lg shadow-primary/20"><Calculator className="size-4 md:size-5" /> {t.calculate}</Button></div>
-                  <ScrollArea className="h-[400px] md:h-[600px]">
-                    <div className="space-y-4 md:space-y-8 p-1 md:p-4">
-                      {displayGradedDelegates.map((d, index) => (
-                        <div key={d.id} className="p-4 md:p-6 border border-primary/5 rounded-[1.5rem] md:rounded-3xl bg-white shadow-sm relative group hover:shadow-md transition-all">
-                          <div className="flex justify-between items-center mb-4 md:mb-6">
-                            <div className="flex items-center gap-2 md:gap-4">
-                              <span className="h-7 w-7 md:h-10 md:w-10 bg-primary/5 text-primary rounded-lg md:rounded-xl flex items-center justify-center font-black text-[10px] md:text-sm border border-primary/10 shadow-inner">{index + 1}</span>
-                              <span className="font-black uppercase tracking-tight text-[10px] md:text-sm text-foreground/80 truncate max-w-[100px] md:max-w-none">{d.country_name}</span>
-                            </div>
-                            <div className="flex flex-col items-end">
-                              <span className="text-[7px] md:text-[9px] font-black text-primary uppercase tracking-[0.1em] md:tracking-[0.2em] mb-0.5 md:mb-1">{t.average}</span>
-                              <span className={`text-base md:text-2xl font-black tabular-nums leading-none ${d.average >= 7 ? 'text-green-600' : d.average >= 4 ? 'text-amber-600' : 'text-red-600'}`}>{d.average.toFixed(1)}/10</span>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-1 gap-3 md:gap-4">
-                            <div className="space-y-1"><Label className="text-[8px] md:text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.speaking}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 md:h-10 text-[10px] md:text-xs font-black rounded-lg md:rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.speaking} onChange={(e) => handleUpdateGrade(d.id, 'speaking', Number(e.target.value))} /></div>
-                            <div className="space-y-1"><Label className="text-[8px] md:text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.diplomacy}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 md:h-10 text-[10px] md:text-xs font-black rounded-lg md:rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.diplomacy} onChange={(e) => handleUpdateGrade(d.id, 'diplomacy', Number(e.target.value))} /></div>
-                            <div className="space-y-1"><Label className="text-[8px] md:text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.knowledge}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 md:h-10 text-[10px] md:text-xs font-black rounded-lg md:rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.knowledge} onChange={(e) => handleUpdateGrade(d.id, 'knowledge', Number(e.target.value))} /></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card overflow-hidden">
-                <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><BarChart3 className="size-4 md:size-5 text-primary" /><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.participationStats}</CardTitle></CardHeader>
-                <CardContent className="h-[250px] md:h-[350px] pt-2 md:pt-4">
-                  {statsData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={statsData} layout="vertical">
-                        <XAxis type="number" hide />
-                        <YAxis dataKey="name" type="category" width={70} fontSize={7} tick={{ fill: 'currentColor', fontWeight: 700 }} />
-                        <RechartsTooltip 
-                          cursor={{ fill: 'rgba(4, 89, 171, 0.05)' }}
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              return (
-                                <div className="bg-white/95 backdrop-blur-md border border-primary/10 p-2 rounded-xl shadow-2xl text-[8px] md:text-[10px]">
-                                  <p className="font-black text-primary uppercase mb-1">{payload[0].payload.name}</p>
-                                  <p className="font-bold text-muted-foreground">{payload[0].value} intervention(s)</p>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={15}>
-                          {statsData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'rgba(4, 89, 171, 0.5)'} />
+                  <div className="mb-4"><Button size="sm" onClick={() => { const sorted = [...displayGradedDelegates].sort((a, b) => b.average - a.average); setDisplayGradedDelegates(sorted); }} className="w-full bg-primary h-11 rounded-xl font-black uppercase tracking-widest text-[9px] gap-2 shadow-lg shadow-primary/20"><Calculator className="size-4" /> {t.calculate}</Button></div>
+                  <ScrollArea className="h-[400px] md:h-[600px]"><div className="space-y-4 p-1">
+                    {displayGradedDelegates.map((d, index) => (
+                      <div key={d.id} className="p-4 border border-primary/5 rounded-[1.5rem] bg-white shadow-sm hover:shadow-md transition-all">
+                        <div className="flex justify-between items-center mb-4"><div className="flex items-center gap-2"><span className="h-7 w-7 bg-primary/5 text-primary rounded-lg flex items-center justify-center font-black text-[10px] border border-primary/10">{index + 1}</span><span className="font-black uppercase tracking-tight text-[10px] md:text-sm text-foreground/80 truncate max-w-[100px]">{d.country_name}</span></div><div className="flex flex-col items-end"><span className="text-[7px] font-black text-primary uppercase tracking-[0.1em]">{t.average}</span><span className={`text-base md:text-2xl font-black tabular-nums ${d.average >= 7 ? 'text-green-600' : d.average >= 4 ? 'text-amber-600' : 'text-red-600'}`}>{d.average.toFixed(1)}/10</span></div></div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {['speaking', 'diplomacy', 'knowledge'].map(field => (
+                            <div key={field} className="space-y-1"><Label className="text-[7px] font-black uppercase tracking-widest text-muted-foreground">{t[field as keyof typeof t] || field}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 text-[9px] font-black rounded-lg border-primary/10" value={d.grades[field]} onChange={(e) => handleUpdateGrade(d.id, field, Number(e.target.value))} /></div>
                           ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : <div className="h-full flex flex-col items-center justify-center text-muted-foreground italic opacity-50 text-[10px] md:text-xs">{lang === 'fr' ? 'Données d\'activité insuffisantes' : 'Insufficient activity data'}</div>}
+                        </div>
+                      </div>
+                    ))}
+                  </div></ScrollArea>
                 </CardContent>
               </Card>
-
-              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
-                <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6">
-                  <History className="size-4 md:size-5 text-primary" />
-                  <CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.actionsHistory}</CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-6">
-                  <ScrollArea className="h-[250px] md:h-[350px]">
-                    <div className="space-y-3">
-                      {allActions.map(action => (
-                        <div key={action.id} className="flex justify-between items-center p-3 md:p-4 bg-muted/30 rounded-xl md:rounded-2xl border border-primary/5 text-[9px] md:text-xs">
-                          <div className="flex flex-col gap-1 min-w-0">
-                            <span className="font-black uppercase tracking-tight text-primary truncate">{action.title}</span>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-[7px] md:text-[8px] font-bold uppercase">{action.status}</Badge>
-                              <span className="text-muted-foreground opacity-60">
-                                {action.created_at?.toDate ? action.created_at.toDate().toLocaleDateString() : '...'}
-                              </span>
-                            </div>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive hover:bg-destructive/5 h-7 w-7 md:h-10 md:w-10 shrink-0"
-                            onClick={() => handleDeleteAction(action.id)}
-                          >
-                            <Trash2 className="size-3 md:size-4" />
-                          </Button>
-                        </div>
-                      ))}
-                      {allActions.length === 0 && (
-                        <p className="text-center py-10 text-muted-foreground italic text-xs opacity-50">{lang === 'fr' ? 'Aucun historique' : 'No history'}</p>
-                      )}
+              <Card className="rounded-2xl border-primary/10 glass-card">
+                <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><History className="size-4 md:size-5 text-primary" /><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">{t.actionsHistory}</CardTitle></CardHeader>
+                <CardContent className="px-4 pb-6"><ScrollArea className="h-[250px]"><div className="space-y-3">
+                  {allActions.map(action => (
+                    <div key={action.id} className="flex justify-between items-center p-3 bg-muted/30 rounded-xl border border-primary/5 text-[9px] md:text-xs">
+                      <div className="flex flex-col gap-1 min-w-0"><span className="font-black uppercase tracking-tight text-primary truncate">{action.title}</span><Badge variant="outline" className="text-[7px] font-bold uppercase w-fit">{action.status}</Badge></div>
+                      <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => handleDeleteAction(action.id)}><Trash2 className="size-3" /></Button>
                     </div>
-                  </ScrollArea>
-                </CardContent>
+                  ))}
+                </div></ScrollArea></CardContent>
               </Card>
             </TabsContent>
           </Tabs>
@@ -888,134 +537,83 @@ export default function PresidentDashboard() {
         <div className="lg:col-span-8 space-y-6 md:space-y-8">
           <Tabs defaultValue="resolutions" className="w-full">
             <TabsList className="w-full bg-secondary/50 p-1 rounded-2xl border border-primary/5 flex">
-              <TabsTrigger value="resolutions" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-[10px] tracking-widest">{t.resolutionsTab}</TabsTrigger>
-              <TabsTrigger value="messages" className="flex-1 relative rounded-xl font-bold uppercase text-[9px] md:text-[10px] tracking-widest">
-                <span className="hidden sm:inline">{t.messagesTab}</span>
-                <span className="sm:hidden">Msgs</span>
-                {unreadMessagesCount > 0 && <Badge variant="destructive" className="ml-1 md:ml-2 h-4 w-4 md:h-5 md:w-5 p-0 flex items-center justify-center rounded-full text-[8px] md:text-[9px] font-black border-none animate-pulse">{unreadMessagesCount}</Badge>}
-              </TabsTrigger>
-              <TabsTrigger value="gossip" className="flex-1 relative rounded-xl font-bold uppercase text-[9px] md:text-[10px] tracking-widest">
-                Gossip
-                {gossipMessages.length > 0 && <Badge className="ml-1 md:ml-2 h-4 w-4 md:h-5 md:w-5 p-0 flex items-center justify-center rounded-full text-[8px] md:text-[9px] font-black bg-primary text-white border-none">{gossipMessages.length}</Badge>}
-              </TabsTrigger>
+              <TabsTrigger value="resolutions" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-xs tracking-widest">{t.resolutionsTab}</TabsTrigger>
+              <TabsTrigger value="positions" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-xs tracking-widest">{t.positionsTab}</TabsTrigger>
+              <TabsTrigger value="messages" className="flex-1 relative rounded-xl font-bold uppercase text-[9px] md:text-xs tracking-widest">Msgs {unreadCount > 0 && <Badge variant="destructive" className="ml-1 h-4 w-4 p-0 flex items-center justify-center rounded-full text-[8px] font-black border-none animate-pulse">{unreadCount}</Badge>}</TabsTrigger>
+              <TabsTrigger value="gossip" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-xs tracking-widest">Gossip</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="resolutions" className="space-y-6 md:space-y-8 mt-4 md:mt-6 animate-in fade-in duration-300">
+            <TabsContent value="resolutions" className="mt-4 md:mt-6 animate-in fade-in duration-300">
               <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card overflow-hidden">
-                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 flex flex-row items-center justify-between py-4 md:py-6">
-                  <CardTitle className="flex items-center gap-2 md:gap-3 text-base md:text-2xl font-black uppercase tracking-tight text-gradient"><FileText className="text-primary size-5 md:size-6" /> {t.resolutionsSubmitted}</CardTitle>
-                  <Badge variant="outline" className="h-6 w-6 md:h-8 md:w-8 rounded-lg md:rounded-xl flex items-center justify-center p-0 font-black border-primary/20 text-primary">{resolutions.length}</Badge>
-                </CardHeader>
-                <CardContent className="p-3 md:p-8 space-y-6 md:space-y-8">
+                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 flex flex-row items-center justify-between py-4 md:py-6"><CardTitle className="flex items-center gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><FileText className="text-primary" /> {t.resolutionsSubmitted}</CardTitle><Badge variant="outline" className="h-8 w-8 rounded-xl flex items-center justify-center p-0 font-black border-primary/20 text-primary">{resolutions.length}</Badge></CardHeader>
+                <CardContent className="p-4 md:p-8 space-y-6">
                   {resolutions.map(res => (
-                    <Card key={res.id} className={`overflow-hidden rounded-xl md:rounded-3xl border-2 transition-all duration-500 ${res.is_displayed ? 'border-primary shadow-2xl scale-[1.01]' : 'border-primary/5 shadow-sm'}`}>
-                      <div className="bg-muted/30 p-3 md:p-5 flex justify-between items-center border-b border-primary/5">
-                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 min-w-0">
-                          <span className="font-black text-primary uppercase tracking-tight text-sm md:text-lg truncate">{res.title || "Projet Anonyme"}</span>
-                          {res.is_displayed && <Badge className="bg-primary animate-pulse rounded-lg text-[7px] md:text-[9px] font-black tracking-widest px-2 w-fit"><Monitor className="size-2.5 md:size-3 mr-1" /> {lang === 'fr' ? 'PROJECTÉ' : 'PROJECTED'}</Badge>}
-                        </div>
-                        <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase font-black text-[7px] md:text-[9px] tracking-widest px-2 md:px-3 shrink-0 ml-2">{res.status?.toUpperCase()}</Badge>
+                    <Card key={res.id} className={`overflow-hidden rounded-2xl border-2 transition-all duration-500 ${res.is_displayed ? 'border-primary shadow-2xl scale-[1.01]' : 'border-primary/5'}`}>
+                      <div className="bg-muted/30 p-4 flex justify-between items-center border-b border-primary/5">
+                        <div className="flex items-center gap-3"><span className="font-black text-primary uppercase text-sm md:text-lg truncate max-w-[200px]">{res.title || "Projet"}</span>{res.is_displayed && <Badge className="bg-primary animate-pulse text-[7px] md:text-[9px] font-black"><Monitor className="size-2.5 mr-1" /> PROJECTÉ</Badge>}</div>
+                        <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase font-black text-[7px] md:text-[9px]">{res.status?.toUpperCase()}</Badge>
                       </div>
-                      <CardContent className="p-4 md:p-8 space-y-4 md:space-y-6">
-                        <div className="flex flex-wrap gap-1.5 md:gap-2 items-center mb-3 md:mb-6">
-                          <Badge className="bg-primary/5 text-primary border-primary/10 rounded-lg py-1 md:py-1.5 px-2 md:px-3 text-[7px] md:text-[10px] font-black uppercase tracking-widest">DE: {res.proposing_country}</Badge>
-                          {res.spokesperson && <Badge className="bg-secondary text-foreground/70 border-primary/5 rounded-lg py-1 md:py-1.5 px-2 md:px-3 text-[7px] md:text-[10px] font-black uppercase tracking-widest gap-1 md:gap-1.5"><User className="size-2 md:size-2.5" /> {t.spokesperson}: {res.spokesperson}</Badge>}
-                        </div>
-                        <div className="text-xs md:text-base leading-relaxed whitespace-pre-wrap break-words prose prose-slate max-w-none text-left font-medium text-foreground/80 p-3 md:p-6 bg-primary/[0.01] rounded-xl md:rounded-2xl border border-primary/5" dangerouslySetInnerHTML={{ __html: res.content }} />
-                        <div className="flex flex-wrap gap-2 justify-center md:justify-end pt-4 md:pt-6 border-t border-primary/5">
-                          <Button size="sm" variant={res.is_displayed ? "default" : "outline"} className={`rounded-xl font-bold uppercase text-[8px] md:text-[10px] px-3 md:px-6 h-8 md:h-10 ${res.is_displayed ? 'bg-primary' : 'border-primary/20 text-primary hover:bg-primary/5'}`} onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}>{res.is_displayed ? <><EyeOff className="size-3 md:size-4 mr-1 md:mr-2" /> {t.hide}</> : <><Eye className="size-3 md:size-4 mr-1 md:mr-2" /> {t.show}</>}</Button>
-                          <Button size="sm" variant="outline" className="border-green-500/30 text-green-600 hover:bg-green-50 rounded-xl font-bold uppercase text-[8px] md:text-[10px] px-3 md:px-6 h-8 md:h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}><CheckCircle className="size-3 md:size-4 mr-1 md:mr-2" /> {t.approve}</Button>
-                          <Button size="sm" variant="outline" className="border-red-500/30 text-red-600 hover:bg-red-50 rounded-xl font-bold uppercase text-[8px] md:text-[10px] px-3 md:px-6 h-8 md:h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}><XCircle className="size-3 md:size-4 mr-1 md:mr-2" /> {t.reject}</Button>
-                          <Button size="icon" variant="ghost" className="text-destructive hover:bg-destructive/5 rounded-xl h-8 w-8 md:h-10 md:w-10 p-0" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id))}><Trash2 className="size-3 md:size-4" /></Button>
+                      <CardContent className="p-4 md:p-8 space-y-4">
+                        <div className="flex flex-wrap gap-2 mb-4"><Badge className="bg-primary/5 text-primary border-primary/10 py-1 text-[7px] md:text-[10px] font-black uppercase">DE: {res.proposing_country}</Badge></div>
+                        <div className="text-xs md:text-base leading-relaxed whitespace-pre-wrap font-medium text-foreground/80 p-4 bg-primary/[0.01] rounded-xl border border-primary/5" dangerouslySetInnerHTML={{ __html: res.content }} />
+                        <div className="flex gap-2 justify-end pt-4 border-t border-primary/5">
+                          <Button size="sm" variant={res.is_displayed ? "default" : "outline"} className={`rounded-xl font-bold uppercase text-[8px] md:text-[10px] ${res.is_displayed ? 'bg-primary' : 'border-primary/20 text-primary'}`} onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}>{res.is_displayed ? <><EyeOff className="size-3 md:size-4 mr-1" /> {t.hide}</> : <><Eye className="size-3 md:size-4 mr-1" /> {t.show}</>}</Button>
+                          <Button size="sm" variant="outline" className="border-green-500/30 text-green-600 h-8 md:h-10 rounded-xl" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}><CheckCircle className="size-3 md:size-4" /></Button>
+                          <Button size="sm" variant="outline" className="border-red-500/30 text-red-600 h-8 md:h-10 rounded-xl" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}><XCircle className="size-3 md:size-4" /></Button>
+                          <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id))}><Trash2 className="size-3 md:size-4" /></Button>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
-                  {resolutions.length === 0 && (
-                    <div className="text-center py-16 md:py-24 text-muted-foreground italic text-xs md:text-sm">Aucune résolution soumise</div>
-                  )}
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="messages" className="space-y-6 md:space-y-8 mt-4 md:mt-6 animate-in fade-in duration-300">
+            <TabsContent value="positions" className="mt-4 md:mt-6 animate-in fade-in duration-300">
               <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card overflow-hidden">
-                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 py-4 md:py-6"><CardTitle className="flex items-center gap-2 md:gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><Bell className="size-5 md:size-6 text-primary" /> {t.privateInbox}</CardTitle></CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-[400px] md:h-[700px]">
-                    <div className="p-4 md:p-8 space-y-4 md:space-y-6">
-                      {messages.filter(m => m.type !== 'gossip').map(msg => (
-                        <div key={msg.id} className={`p-4 md:p-6 border-l-4 md:border-l-8 rounded-xl md:rounded-3xl shadow-sm flex flex-col gap-3 md:gap-4 transition-all duration-300 hover:shadow-md ${msg.is_read ? 'bg-muted/20 border-muted-foreground/30 opacity-70' : 'bg-primary/[0.02] border-primary shadow-primary/5'}`}>
-                          <div className="flex justify-between items-start">
-                            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 min-w-0">
-                              <Badge className={`uppercase text-[7px] md:text-[9px] font-black tracking-widest px-2 md:px-3 py-1 rounded-full border-none shadow-sm w-fit ${msg.type === 'privilege' ? 'bg-destructive text-white' : 'bg-secondary text-primary'}`}>{msg.type}</Badge>
-                              <span className="font-black uppercase tracking-tight text-[10px] md:text-sm text-foreground/80 truncate">{msg.sender_country}</span>
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0 ml-2">
-                              {!msg.is_read && <Button size="icon" variant="ghost" className="h-7 w-7 md:h-10 md:w-10 text-green-600 hover:bg-green-50 rounded-xl shadow-sm border border-green-100" onClick={() => markMessageAsRead(msg.id)}><Check className="size-3 md:size-4" /></Button>}
-                              <Button size="icon" variant="ghost" className="h-7 w-7 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 className="size-3 md:size-4" /></Button>
-                            </div>
-                          </div>
-                          <p className="text-xs md:text-base font-semibold text-foreground/80 leading-relaxed whitespace-pre-wrap pl-1 md:pl-2 italic">"{msg.content}"</p>
-                          <div className="flex justify-end opacity-40 text-[7px] md:text-[9px] font-black uppercase tracking-[0.2em]">{msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "Maintenant"}</div>
+                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 flex flex-row items-center justify-between py-4 md:py-6"><CardTitle className="flex items-center gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><FileSignature className="text-primary" /> {t.positionsSubmitted}</CardTitle><Badge variant="outline" className="h-8 w-8 rounded-xl flex items-center justify-center p-0 font-black border-primary/20 text-primary">{positions.length}</Badge></CardHeader>
+                <CardContent className="p-4 md:p-8 space-y-6">
+                  {positions.map(pos => (
+                    <Card key={pos.id} className="overflow-hidden rounded-2xl border border-primary/5 shadow-sm">
+                      <div className="bg-muted/30 p-4 flex justify-between items-center border-b border-primary/5"><span className="font-black text-primary uppercase text-sm md:text-lg">{pos.title || "Texte"}</span><Badge className="bg-secondary text-primary uppercase text-[7px] md:text-[9px] font-black">{pos.proposing_country}</Badge></div>
+                      <CardContent className="p-4 md:p-8 space-y-4">
+                        <div className="text-xs md:text-base leading-relaxed whitespace-pre-wrap font-medium text-foreground/80 p-4 bg-primary/[0.01] rounded-xl border border-primary/5" dangerouslySetInnerHTML={{ __html: pos.content }} />
+                        <div className="flex justify-end pt-4 border-t border-primary/5">
+                          <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'positionPapers', pos.id))}><Trash2 className="size-3 md:size-4" /></Button>
                         </div>
-                      ))}
-                      {messages.filter(m => m.type !== 'gossip').length === 0 && (
-                        <div className="text-center py-20 md:py-40 opacity-30 flex flex-col items-center gap-4 md:gap-6">
-                          <MessageSquareOff className="size-10 md:size-16" />
-                          <p className="text-xs md:text-lg font-black uppercase tracking-widest">{t.noMessage}</p>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="gossip" className="space-y-6 md:space-y-8 mt-4 md:mt-6 animate-in fade-in duration-300">
-              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card overflow-hidden">
-                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 py-4 md:py-6"><CardTitle className="flex items-center gap-2 md:gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><Ghost className="size-5 md:size-6 text-primary" /> {t.gossipBoxTitle}</CardTitle></CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-[400px] md:h-[700px]">
-                    <div className="p-4 md:p-8 space-y-4 md:space-y-6">
-                      {gossipMessages.map(msg => (
-                        <div key={msg.id} className="p-4 md:p-6 border-l-4 md:border-l-8 border-primary rounded-xl md:rounded-3xl shadow-sm flex flex-col gap-3 md:gap-4 transition-all duration-300 hover:shadow-md bg-primary/[0.02]">
-                          <div className="flex justify-between items-start">
-                            <Badge className="bg-primary text-white uppercase text-[7px] md:text-[9px] font-black tracking-widest px-2 md:px-3 py-1 rounded-full border-none shadow-sm w-fit">GOSSIP ANONYME</Badge>
-                            <div className="flex flex-wrap items-center gap-1 md:gap-2 shrink-0 ml-2">
-                              <Button 
-                                variant={activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? "default" : "outline"} 
-                                size="sm" 
-                                className={`rounded-xl font-bold uppercase text-[7px] md:text-[10px] px-2 md:px-6 h-8 md:h-10 ${activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? 'bg-primary' : 'border-primary/20 text-primary hover:bg-primary/5'}`}
-                                onClick={() => {
-                                  if (activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content) {
-                                    stopOverlay();
-                                  } else {
-                                    const sessionRef = doc(db!, 'committees', committeeId, 'sessionState', 'current');
-                                    setDocumentNonBlocking(sessionRef, { activeOverlay: { type: 'gossip', title: msg.content, status: 'active' } }, { merge: true });
-                                    toast({ title: t.messageDisplayed });
-                                  }
-                                }}
-                              >
-                                {activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? <><EyeOff className="size-3 md:size-4 mr-1 md:mr-2" /> {t.hide}</> : <><Eye className="size-3 md:size-4 mr-1 md:mr-2" /> {t.show}</>}
-                              </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 className="size-4" /></Button>
-                            </div>
-                          </div>
-                          <p className="text-xs md:text-base font-semibold text-foreground/80 leading-relaxed whitespace-pre-wrap pl-1 md:pl-2 italic">"{msg.content}"</p>
-                          <div className="flex justify-end opacity-40 text-[7px] md:text-[9px] font-black uppercase tracking-[0.2em]">{msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "Maintenant"}</div>
-                        </div>
-                      ))}
-                      {gossipMessages.length === 0 && (
-                        <div className="text-center py-20 md:py-40 opacity-30 flex flex-col items-center gap-4 md:gap-6">
-                          <Ghost className="size-10 md:size-16" />
-                          <p className="text-xs md:text-lg font-black uppercase tracking-widest">{t.noGossip}</p>
-                        </div>
-                      )}
+            <TabsContent value="messages" className="mt-4 md:mt-6 animate-in fade-in duration-300">
+              <Card className="rounded-2xl border-primary/10 glass-card overflow-hidden"><CardHeader className="bg-primary/[0.02] border-b border-primary/5 py-4 md:py-6"><CardTitle className="flex items-center gap-3 text-lg font-black uppercase tracking-tight text-gradient"><Bell className="size-5 text-primary" /> {t.privateInbox}</CardTitle></CardHeader>
+                <CardContent className="p-0"><ScrollArea className="h-[400px] md:h-[700px]"><div className="p-4 md:p-8 space-y-4">
+                  {privateMessages.map(msg => (
+                    <div key={msg.id} className={`p-4 md:p-6 border-l-4 md:border-l-8 rounded-xl md:rounded-3xl shadow-sm flex flex-col gap-3 transition-all duration-300 hover:shadow-md ${msg.is_read ? 'bg-muted/20 border-muted-foreground/30 opacity-70' : 'bg-primary/[0.02] border-primary shadow-primary/5'}`}>
+                      <div className="flex justify-between items-start"><div className="flex items-center gap-3"><Badge className={`uppercase text-[7px] md:text-[9px] font-black px-2 py-1 rounded-full shadow-sm ${msg.type === 'privilege' ? 'bg-destructive text-white' : 'bg-secondary text-primary'}`}>{msg.type}</Badge><span className="font-black uppercase tracking-tight text-[10px] md:text-sm text-foreground/80">{msg.sender_country}</span></div><div className="flex items-center gap-1 shrink-0 ml-2">
+                        {!msg.is_read && <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 rounded-xl shadow-sm border border-green-100" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'messages', msg.id), { is_read: true })}><Check className="size-4" /></Button>}
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive rounded-xl border border-destructive/5" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'messages', msg.id))}><Trash2 className="size-4" /></Button></div></div>
+                      <p className="text-xs md:text-base font-semibold text-foreground/80 leading-relaxed italic">"{msg.content}"</p>
                     </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
+                  ))}
+                </div></ScrollArea></CardContent></Card>
+            </TabsContent>
+
+            <TabsContent value="gossip" className="mt-4 md:mt-6 animate-in fade-in duration-300">
+              <Card className="rounded-2xl border-primary/10 glass-card overflow-hidden"><CardHeader className="bg-primary/[0.02] border-b border-primary/5 py-4 md:py-6"><CardTitle className="flex items-center gap-3 text-lg font-black uppercase tracking-tight text-gradient"><Ghost className="size-5 text-primary" /> {t.gossipBoxTitle}</CardTitle></CardHeader>
+                <CardContent className="p-0"><ScrollArea className="h-[400px] md:h-[700px]"><div className="p-4 md:p-8 space-y-4">
+                  {gossipMessages.map(msg => (
+                    <div key={msg.id} className="p-4 md:p-6 border-l-4 md:border-l-8 border-primary rounded-xl md:rounded-3xl shadow-sm flex flex-col gap-3 transition-all duration-300 hover:shadow-md bg-primary/[0.02]">
+                      <div className="flex justify-between items-start"><Badge className="bg-primary text-white uppercase text-[7px] md:text-[9px] font-black px-2 py-1 rounded-full shadow-sm">GOSSIP ANONYME</Badge><div className="flex items-center gap-2">
+                        <Button variant={activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? "default" : "outline"} size="sm" className="rounded-xl font-bold uppercase text-[7px] md:text-[10px] px-3 h-8 md:h-10" onClick={() => { if (activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content) stopOverlay(); else updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: { type: 'gossip', title: msg.content, status: 'active' } }); }}>{activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? t.hide : t.show}</Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'messages', msg.id))}><Trash2 className="size-4" /></Button></div></div>
+                      <p className="text-xs md:text-base font-semibold text-foreground/80 leading-relaxed italic">"{msg.content}"</p>
+                    </div>
+                  ))}
+                </div></ScrollArea></CardContent></Card>
             </TabsContent>
           </Tabs>
         </div>

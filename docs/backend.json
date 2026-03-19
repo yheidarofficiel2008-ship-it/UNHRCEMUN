@@ -52,6 +52,18 @@
         "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
         "is_displayed": { "type": "boolean" }
       }
+    },
+    "PositionPaper": {
+      "title": "Position Paper",
+      "type": "object",
+      "description": "Un texte de positionnement officiel soumis par un pays.",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "proposing_country": { "type": "string" },
+        "content": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -62,6 +74,7 @@
     "/committees/{committeeId}/delegates/{id}": { "schema": "Delegate", "description": "Délégués du comité." },
     "/committees/{committeeId}/actions/{id}": { "schema": "Action", "description": "Actions du comité." },
     "/committees/{committeeId}/resolutions/{id}": { "schema": "Resolution", "description": "Résolutions du comité." },
+    "/committees/{committeeId}/positionPapers/{id}": { "schema": "PositionPaper", "description": "Textes de positionnement du comité." },
     "/committees/{committeeId}/messages/{id}": { "schema": "object", "description": "Messages du comité." },
     "/committees/{committeeId}/sessionState/{id}": { "schema": "object", "description": "État de la session." }
   }

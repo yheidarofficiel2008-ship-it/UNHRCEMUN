@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, MessageSquare, Check, Bold, Italic, Underline, Eye, ThumbsUp, ThumbsDown, CircleSlash, ShieldAlert, AlertTriangle, User, Users, Lock, ListOrdered, Ghost } from 'lucide-react';
+import { Send, CheckCircle2, XCircle, LogOut, FileText, Monitor, Clock, Timer, MessageSquarePlus, Check, Bold, Italic, Underline, Eye, ShieldAlert, AlertTriangle, User, Users, Lock, ListOrdered, Ghost, FileSignature } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirebase, useDoc } from '@/firebase';
 import { useMemoFirebase } from '@/firebase';
-import { collection, query, where, onSnapshot, addDoc, serverTimestamp, setDoc, doc, increment, updateDoc, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp, setDoc, doc, increment, updateDoc } from 'firebase/firestore';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
 import { SpeakingTimer } from '@/components/SpeakingTimer';
@@ -27,7 +27,7 @@ export default function DelegateDashboard() {
   const committeeId = params.committeeId as string;
   const { toast } = useToast();
   const { firestore: db } = useFirebase();
-  const { isSuspended: isGlobalSuspended, allowResolutions, allowGossip, currentAction, activeOverlay } = useRealtime(committeeId);
+  const { isSuspended: isGlobalSuspended, allowResolutions, allowGossip, allowPositionPapers, currentAction, activeOverlay } = useRealtime(committeeId);
   
   const committeeRef = useMemoFirebase(() => db ? doc(db, 'committees', committeeId) : null, [db, committeeId]);
   const { data: committee } = useDoc(committeeRef);
@@ -36,7 +36,9 @@ export default function DelegateDashboard() {
   const [participationStatus, setParticipationStatus] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [isCountrySuspended, setIsCountrySuspended] = useState(false);
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  
+  const resTextAreaRef = useRef<HTMLTextAreaElement>(null);
+  const posTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const lastOverlayType = useRef<string | null>(null);
 
   const lang = committee?.language || 'fr';
@@ -54,6 +56,7 @@ export default function DelegateDashboard() {
       sending: "Transmission...",
       myEnvois: "Historique de mes Envois",
       resolution: "Résolution",
+      positionPaper: "Texte de Position",
       message: "Message",
       currentSession: "PROCÉDURE EN COURS",
       waitingAction: "En attente de consignes...",
@@ -63,11 +66,12 @@ export default function DelegateDashboard() {
       pass: "Passer son tour",
       projected: "EN DIFFUSION SUR ÉCRAN GÉANT",
       submitResolution: "Rédaction de Résolution",
-      title: "Intitulé du Projet",
+      submitPosition: "Texte de Positionnement",
+      title: "Intitulé",
       spokesperson: "Délégation Porte-parole",
       countryName: "Nom de la délégation",
       sponsors: "Délégations Sponsors",
-      content: "Contenu de la Résolution",
+      content: "Contenu",
       transmit: "Soumettre au Bureau Officiel",
       suspended: "DÉLÉGATION SUSPENDUE",
       suspendedDesc: "Votre droit de parole et d'interaction a été temporairement suspendu.",
@@ -77,7 +81,7 @@ export default function DelegateDashboard() {
       abstention: "ABSTENTION",
       voteRecorded: "Vote enregistré avec succès",
       submissionsSuspended: "ENVOIS BLOQUÉS",
-      preview: "Aperçu du rendu final (sans balises)",
+      preview: "Aperçu du rendu final",
       speakersList: "Liste des Orateurs inscrits",
       noSpeaker: "Aucune inscription active",
       officialVote: "SCRUTIN OFFICIEL",
@@ -97,6 +101,7 @@ export default function DelegateDashboard() {
       sending: "Transmitting...",
       myEnvois: "My Sent Communications",
       resolution: "Resolution",
+      positionPaper: "Position Paper",
       message: "Message",
       currentSession: "CURRENT PROCEDURE",
       waitingAction: "Waiting for instructions...",
@@ -106,11 +111,12 @@ export default function DelegateDashboard() {
       pass: "Pass",
       projected: "PROJECTED ON MAIN SCREEN",
       submitResolution: "Resolution Drafting",
-      title: "Project Title",
+      submitPosition: "Position Paper",
+      title: "Title",
       spokesperson: "Spokesperson Delegation",
       countryName: "Delegation name",
       sponsors: "Sponsor Delegations",
-      content: "Resolution Content",
+      content: "Content",
       transmit: "Submit to Official Office",
       suspended: "DELEGATION SUSPENDED",
       suspendedDesc: "Your right to speak and interact has been temporarily suspended.",
@@ -120,7 +126,7 @@ export default function DelegateDashboard() {
       abstention: "ABSTAIN",
       voteRecorded: "Vote recorded successfully",
       submissionsSuspended: "SUBMISSIONS BLOCKED",
-      preview: "Live Preview (Clean rendering)",
+      preview: "Live Preview",
       speakersList: "Registered Speakers List",
       noSpeaker: "No active registrations",
       officialVote: "OFFICIAL VOTE",
@@ -130,9 +136,11 @@ export default function DelegateDashboard() {
   }[lang];
   
   const [resolutionForm, setResolutionForm] = useState({ title: '', spokesperson: '', sponsors: '', content: '' });
+  const [positionForm, setPositionForm] = useState({ title: '', content: '' });
   const [messageForm, setMessageForm] = useState({ type: 'privilege', content: '' });
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [myResolutions, setMyResolutions] = useState<any[]>([]);
+  const [myPositions, setMyPositions] = useState<any[]>([]);
   const [myMessages, setMyMessages] = useState<any[]>([]);
   const [displayedResolutions, setDisplayedResolutions] = useState<any[]>([]);
   const [activeSpeakers, setActiveSpeakers] = useState<any[]>([]);
@@ -156,7 +164,14 @@ export default function DelegateDashboard() {
     const qRes = query(resRef, where('proposing_country', '==', del.country_name));
     const unsubRes = onSnapshot(qRes, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), _type: 'resolution' }));
-      setMyResolutions(data.sort((a: any, b: any) => (b.created_at?.seconds || 0) - (a.created_at?.seconds || 0)));
+      setMyResolutions(data);
+    });
+
+    const posRef = collection(db, 'committees', committeeId, 'positionPapers');
+    const qPos = query(posRef, where('proposing_country', '==', del.country_name));
+    const unsubPos = onSnapshot(qPos, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), _type: 'positionPaper' }));
+      setMyPositions(data);
     });
 
     const msgRef = collection(db, 'committees', committeeId, 'messages');
@@ -165,7 +180,7 @@ export default function DelegateDashboard() {
       const data = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data(), _type: 'message' }))
         .filter((m: any) => m.type !== 'gossip');
-      setMyMessages(data.sort((a: any, b: any) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)));
+      setMyMessages(data);
     });
 
     const qDisplayed = query(collection(db, 'committees', committeeId, 'resolutions'), where('is_displayed', '==', true));
@@ -173,7 +188,7 @@ export default function DelegateDashboard() {
       setDisplayedResolutions(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    return () => { unsubDelegate(); unsubRes(); unsubMsg(); unsubDisplayed(); };
+    return () => { unsubDelegate(); unsubRes(); unsubPos(); unsubMsg(); unsubDisplayed(); };
   }, [router, db, committeeId]);
 
   useEffect(() => {
@@ -209,17 +224,12 @@ export default function DelegateDashboard() {
     lastOverlayType.current = activeOverlay?.type || null;
   }, [activeOverlay]);
 
-  useEffect(() => {
-    setHasVoted(false);
-  }, [activeOverlay?.voteId]);
-
   const playCrisisAlarm = () => {
     try {
       const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
       const context = new AudioContextClass();
       const now = context.currentTime;
-      
       const playPulse = (startTime: number) => {
         const osc = context.createOscillator();
         const gain = context.createGain();
@@ -234,13 +244,8 @@ export default function DelegateDashboard() {
         osc.start(startTime);
         osc.stop(startTime + 0.5);
       };
-
-      for(let i = 0; i < 8; i++) {
-        playPulse(now + i * 0.5);
-      }
-    } catch (e) {
-      console.warn("Audio blocked");
-    }
+      for(let i = 0; i < 8; i++) playPulse(now + i * 0.5);
+    } catch (e) { console.warn("Audio blocked"); }
   };
 
   const handleParticipation = async (status: 'participating' | 'passing') => {
@@ -255,9 +260,7 @@ export default function DelegateDashboard() {
         updated_at: serverTimestamp()
       });
       toast({ title: lang === 'fr' ? "Inscription effectuée" : "Registration complete" });
-    } catch (e) {
-      toast({ title: "Error", variant: "destructive" });
-    }
+    } catch (e) { toast({ title: "Error", variant: "destructive" }); }
   };
 
   const handleVote = async (choice: 'pour' | 'contre' | 'abstention') => {
@@ -267,17 +270,15 @@ export default function DelegateDashboard() {
       await updateDoc(sessionRef, { [`activeOverlay.results.${choice}`]: increment(1) });
       setHasVoted(true);
       toast({ title: t.voteRecorded });
-    } catch (e) {
-      toast({ title: "Error", variant: "destructive" });
-    }
+    } catch (e) { toast({ title: "Error", variant: "destructive" }); }
   };
 
-  const wrapText = (tag: string) => {
-    if (!textAreaRef.current) return;
-    const textarea = textAreaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
+  const wrapText = (tag: string, target: 'resolution' | 'position') => {
+    const textArea = target === 'resolution' ? resTextAreaRef.current : posTextAreaRef.current;
+    if (!textArea) return;
+    const start = textArea.selectionStart;
+    const end = textArea.selectionEnd;
+    const text = textArea.value;
     const selectedText = text.substring(start, end);
     const openTag = `<${tag}>`;
     const closeTag = `</${tag}>`;
@@ -290,20 +291,18 @@ export default function DelegateDashboard() {
       newText = text.substring(0, start) + unwrapped + text.substring(end);
       newSelectionStart = start;
       newSelectionEnd = start + unwrapped.length;
-    } else if (text.substring(start - openTag.length, start) === openTag && text.substring(end, end + closeTag.length) === closeTag) {
-      newText = text.substring(0, start - openTag.length) + selectedText + text.substring(end + closeTag.length);
-      newSelectionStart = start - openTag.length;
-      newSelectionEnd = end - openTag.length;
     } else {
       newText = text.substring(0, start) + openTag + selectedText + closeTag + text.substring(end);
       newSelectionStart = start + openTag.length;
       newSelectionEnd = end + openTag.length;
     }
 
-    setResolutionForm({ ...resolutionForm, content: newText });
+    if (target === 'resolution') setResolutionForm({ ...resolutionForm, content: newText });
+    else setPositionForm({ ...positionForm, content: newText });
+
     setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(newSelectionStart, newSelectionEnd);
+      textArea.focus();
+      textArea.setSelectionRange(newSelectionStart, newSelectionEnd);
     }, 0);
   };
 
@@ -323,9 +322,22 @@ export default function DelegateDashboard() {
       });
       setResolutionForm({ title: '', spokesperson: '', sponsors: '', content: '' });
       toast({ title: lang === 'fr' ? "Résolution transmise" : "Resolution transmitted" });
-    } catch (e) {
-      toast({ title: "Error", variant: "destructive" });
-    }
+    } catch (e) { toast({ title: "Error", variant: "destructive" }); }
+  };
+
+  const submitPosition = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!delegate || !allowPositionPapers || isCountrySuspended || !db) return;
+    try {
+      await addDoc(collection(db, 'committees', committeeId, 'positionPapers'), {
+        title: positionForm.title,
+        proposing_country: delegate.country_name,
+        content: positionForm.content,
+        created_at: serverTimestamp()
+      });
+      setPositionForm({ title: '', content: '' });
+      toast({ title: lang === 'fr' ? "Texte de position transmis" : "Position paper transmitted" });
+    } catch (e) { toast({ title: "Error", variant: "destructive" }); }
   };
 
   const submitMessage = async (e: React.FormEvent) => {
@@ -345,23 +357,14 @@ export default function DelegateDashboard() {
         is_read: false
       });
       setMessageForm({ ...messageForm, content: '' });
-      toast({ title: lang === 'fr' ? "Message transmise" : "Message transmitted" });
-    } catch (e) {
-      toast({ title: "Error", variant: "destructive" });
-    } finally {
-      setIsSendingMessage(false);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('delegate_session');
-    router.push('/');
+      toast({ title: lang === 'fr' ? "Message transmis" : "Message transmitted" });
+    } catch (e) { toast({ title: "Error", variant: "destructive" }); } finally { setIsSendingMessage(false); }
   };
 
   if (!delegate) return null;
 
   const isActive = currentAction && currentAction.status !== 'completed';
-  const myEnvois = [...myResolutions, ...myMessages].sort((a: any, b: any) => {
+  const myEnvois = [...myResolutions, ...myPositions, ...myMessages].sort((a: any, b: any) => {
     const timeA = a.created_at?.seconds || a.timestamp?.seconds || 0;
     const timeB = b.created_at?.seconds || b.timestamp?.seconds || 0;
     return timeB - timeA;
@@ -374,7 +377,7 @@ export default function DelegateDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative font-body">
+    <div className="min-h-screen bg-background flex flex-col relative font-body overflow-x-hidden">
       {isGlobalSuspended && <SuspensionOverlay />}
       {isCountrySuspended && (
         <div className="fixed inset-0 z-[10000] bg-destructive flex flex-col items-center justify-center p-6 text-white animate-in fade-in duration-500">
@@ -384,7 +387,7 @@ export default function DelegateDashboard() {
         </div>
       )}
       
-      {activeOverlay && (activeOverlay.type === 'crisis' || activeOverlay.type === 'vote' || activeOverlay.type === 'message' || activeOverlay.type === 'gossip') && (
+      {activeOverlay && activeOverlay.type !== 'none' && (
         <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4 md:p-6 transition-colors duration-700 ${activeOverlay.type === 'crisis' ? 'bg-red-700 text-white' : 'bg-white/95 backdrop-blur-3xl text-primary'}`}>
           <div className="max-w-5xl w-full text-center space-y-8 md:space-y-12">
             {activeOverlay.type === 'crisis' ? (
@@ -396,56 +399,28 @@ export default function DelegateDashboard() {
             ) : (
               <div className="space-y-8 md:space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700 w-full flex flex-col items-center">
                 <div className="space-y-4">
-                  <Badge variant="outline" className={`font-black uppercase tracking-[0.4em] px-4 py-1.5 text-[9px] md:text-[10px] border-primary/20 text-primary bg-primary/5`}>
+                  <Badge variant="outline" className={`font-black uppercase tracking-[0.4em] px-4 py-1.5 text-[9px] md:text-xs border-primary/20 text-primary bg-primary/5`}>
                     {activeOverlay.type === 'vote' ? t.officialVote : activeOverlay.type === 'gossip' ? t.gossipTitle : t.officialAnnouncement}
                   </Badge>
                   <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-tight text-gradient py-2">
                     {activeOverlay.title}
                   </h1>
                 </div>
-
                 {activeOverlay.type === 'vote' && (
-                  <div className="space-y-8 md:space-y-12 w-full">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-10 max-w-3xl mx-auto w-full">
-                      <div className="space-y-2 md:space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-10 max-w-3xl mx-auto w-full">
+                    {['pour', 'contre', 'abstention'].map((choice) => (
+                      <div key={choice} className="space-y-2 md:space-y-4">
                         <Button 
                           size="lg" 
-                          className="w-full h-12 md:h-14 bg-green-600 hover:bg-green-700 text-white text-xs font-black rounded-xl shadow-lg shadow-green-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
-                          onClick={() => handleVote('pour')} 
+                          className={`w-full h-12 md:h-14 ${choice === 'pour' ? 'bg-green-600 hover:bg-green-700' : choice === 'contre' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-500 hover:bg-amber-600'} text-white text-xs font-black rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-30`} 
+                          onClick={() => handleVote(choice as any)} 
                           disabled={hasVoted || isCountrySuspended}
                         >
-                          {t.for}
+                          {t[choice as keyof typeof t] || choice.toUpperCase()}
                         </Button>
-                        <div className="text-3xl md:text-5xl font-black tabular-nums text-green-600">{activeOverlay.results?.pour || 0}</div>
+                        <div className={`text-3xl md:text-5xl font-black tabular-nums ${choice === 'pour' ? 'text-green-600' : choice === 'contre' ? 'text-red-600' : 'text-amber-500'}`}>{activeOverlay.results?.[choice] || 0}</div>
                       </div>
-                      <div className="space-y-2 md:space-y-4">
-                        <Button 
-                          size="lg" 
-                          className="w-full h-12 md:h-14 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl shadow-lg shadow-red-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
-                          onClick={() => handleVote('contre')} 
-                          disabled={hasVoted || isCountrySuspended}
-                        >
-                          {t.against}
-                        </Button>
-                        <div className="text-3xl md:text-5xl font-black tabular-nums text-red-600">{activeOverlay.results?.contre || 0}</div>
-                      </div>
-                      <div className="space-y-2 md:space-y-4">
-                        <Button 
-                          size="lg" 
-                          className="w-full h-12 md:h-14 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black rounded-xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30" 
-                          onClick={() => handleVote('abstention')} 
-                          disabled={hasVoted || isCountrySuspended}
-                        >
-                          {t.abstention}
-                        </Button>
-                        <div className="text-3xl md:text-5xl font-black tabular-nums text-amber-500">{activeOverlay.results?.abstention || 0}</div>
-                      </div>
-                    </div>
-                    {hasVoted && (
-                      <div className="text-[10px] md:text-sm font-black uppercase tracking-widest text-primary/40 animate-pulse border-y border-primary/10 py-3 md:py-4 max-w-xs md:max-w-sm mx-auto">
-                        {t.voteRecorded}
-                      </div>
-                    )}
+                    ))}
                   </div>
                 )}
               </div>
@@ -457,227 +432,190 @@ export default function DelegateDashboard() {
       <header className="bg-white/80 backdrop-blur-md border-b border-primary/10 p-3 md:p-4 shadow-sm flex justify-between items-center z-20 sticky top-0">
         <div className="flex items-center gap-3 md:gap-6 min-w-0">
           <h1 className="text-sm md:text-xl font-black font-headline uppercase tracking-tight text-[#0459ab] truncate">{delegate.country_name}</h1>
-          <div className="flex items-center gap-1.5 md:gap-2">
-            <Badge variant="outline" className="border-primary/20 text-[#0459ab] uppercase text-[7px] md:text-[10px] font-bold px-1.5 md:px-3 whitespace-nowrap">{t.sessionActive}</Badge>
-            {activeOverlay?.type === 'crisis' && <Badge variant="destructive" className="animate-pulse bg-red-600 text-white font-black px-2 text-[8px] md:text-base">{t.crisis}</Badge>}
-          </div>
+          <Badge variant="outline" className="border-primary/20 text-[#0459ab] uppercase text-[7px] md:text-[10px] font-bold px-1.5 md:px-3 whitespace-nowrap">{t.sessionActive}</Badge>
         </div>
-        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-full" onClick={handleLogout}><LogOut className="size-4 md:size-5" /></Button>
+        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-full" onClick={() => { localStorage.removeItem('delegate_session'); router.push('/'); }}><LogOut className="size-4 md:size-5" /></Button>
       </header>
 
-      <main className="flex-1 p-4 md:p-6 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 max-w-[1500px] mx-auto w-full">
-        <div className="lg:col-span-4 space-y-6 md:space-y-8">
-          <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
-            <CardHeader className="py-3 px-4 md:py-4 md:px-6 flex flex-row items-center gap-2 md:gap-3">
-              <MessageSquarePlus className="size-4 md:size-5 text-[#0459ab]" />
-              <CardTitle className="text-xs md:text-sm font-black uppercase tracking-widest text-[#0459ab]/80">{t.msgToPresidency}</CardTitle>
-            </CardHeader>
-            <form onSubmit={submitMessage}>
-              <CardContent className="px-4 md:px-6 pb-3 md:pb-4 space-y-3 md:space-y-4">
-                <Select value={messageForm.type} onValueChange={(val) => setMessageForm({...messageForm, type: val})} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}>
-                  <SelectTrigger className="h-9 md:h-10 text-[10px] md:text-xs rounded-xl border-primary/10 bg-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="privilege">{t.personalPrivilege}</SelectItem>
-                    <SelectItem value="general">{t.generalMsg}</SelectItem>
-                    <SelectItem value="gossip" className="text-primary font-bold">✨ {t.gossipMsg}</SelectItem>
-                  </SelectContent>
-                </Select>
-                {messageForm.type === 'gossip' && (
-                  <p className="text-[9px] md:text-[10px] font-bold text-primary/60 px-2 italic">{t.anonymousHint}</p>
-                )}
-                <Textarea placeholder={t.yourMsg} className="min-h-[70px] md:min-h-[80px] text-[10px] md:text-xs resize-none rounded-xl border-primary/10 bg-white p-3 md:p-4" value={messageForm.content} onChange={(e) => setMessageForm({...messageForm, content: e.target.value})} required disabled={isCountrySuspended || activeOverlay?.type === 'crisis' || (messageForm.type === 'gossip' && !allowGossip)} />
-              </CardContent>
-              <CardFooter className="px-4 md:px-6 pb-4 md:pb-6 pt-0">
-                <Button size="sm" type="submit" className="w-full bg-[#0459ab] hover:bg-[#0459ab]/90 h-9 md:h-11 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-[10px]" disabled={isSendingMessage || isCountrySuspended || activeOverlay?.type === 'crisis' || (messageForm.type === 'gossip' && !allowGossip)}>
-                  {isSendingMessage ? t.sending : t.send}
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
-
-          <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
-            <CardHeader className="py-3 px-4 md:py-4 md:px-6 flex flex-row items-center justify-between">
-              <div className="flex items-center gap-2 md:gap-3">
-                <ListOrdered className="size-4 md:size-5 text-[#0459ab]" />
-                <CardTitle className="text-xs md:text-sm font-black uppercase tracking-widest text-[#0459ab]/80">{t.speakersList}</CardTitle>
-              </div>
-              <Badge className="bg-[#0459ab] rounded-lg font-black text-[10px] md:text-xs">{activeSpeakers.length}</Badge>
-            </CardHeader>
-            <CardContent className="px-4 md:px-6 pb-4 md:pb-6">
-              <ScrollArea className="h-[200px] md:h-[280px]">
-                <div className="space-y-2 md:space-y-3">
-                  {activeSpeakers.map((s, i) => (
-                    <div key={s.id} className={`flex justify-between items-center p-3 md:p-4 rounded-xl md:rounded-2xl border transition-all duration-300 ${i === 0 ? 'bg-primary/5 border-primary/20 shadow-sm' : 'bg-white border-primary/5 shadow-inner'}`}>
-                      <div className="flex items-center gap-2 md:gap-4">
-                        <span className={`text-[10px] md:text-xs font-black h-6 w-6 md:h-7 md:w-7 flex items-center justify-center rounded-lg md:rounded-xl ${i === 0 ? 'bg-[#0459ab] text-white' : 'bg-muted text-muted-foreground'}`}>{i + 1}</span>
-                        <span className={`text-[10px] md:text-xs font-bold uppercase tracking-tight ${i === 0 ? 'text-[#0459ab]' : 'text-foreground/70'}`}>{s.country_name}</span>
-                      </div>
-                      {i === 0 && <Badge className="bg-[#0459ab]/10 text-[#0459ab] border-[#0459ab]/20 text-[7px] md:text-[9px] font-black animate-pulse px-1.5 md:px-2 whitespace-nowrap">ACTUEL</Badge>}
-                    </div>
-                  ))}
-                  {activeSpeakers.length === 0 && (
-                    <div className="text-center py-12 md:py-16 text-muted-foreground/50 text-[10px] md:text-xs italic font-medium">{t.noSpeaker}</div>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
-            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6"><CardTitle className="flex items-center gap-2 md:gap-3 text-base md:text-lg font-black uppercase tracking-tight text-[#0459ab]"><Send className="size-4 md:size-5" /> {t.myEnvois}</CardTitle></CardHeader>
-            <CardContent className="px-4 md:px-6 pb-4 md:pb-6">
-              <ScrollArea className="h-[250px] md:h-[350px]">
-                <div className="space-y-3 md:space-y-4">
-                  {myEnvois.map(item => (
-                    <div key={item.id} className="p-3 md:p-4 border border-primary/5 rounded-xl md:rounded-2xl bg-white shadow-sm transition-all hover:shadow-md">
-                      <div className="flex justify-between items-center mb-2 md:mb-3">
-                        <Badge variant="outline" className="text-[8px] md:text-[9px] font-black uppercase tracking-widest border-primary/10 text-[#0459ab]/70">{item._type === 'resolution' ? t.resolution : t.message}</Badge>
-                        {item._type === 'resolution' ? <Badge variant={item.status === 'approved' ? 'default' : item.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase text-[8px] md:text-[9px] font-black">{item.status.toUpperCase()}</Badge> : <Badge variant="ghost" className="opacity-60">{item.is_read ? <Check className="size-3 md:size-4 text-green-500" /> : <Clock className="size-3 md:size-4" />}</Badge>}
-                      </div>
-                      {item._type === 'resolution' && <div className="mb-2 font-black uppercase text-[#0459ab] tracking-tight text-xs md:text-sm break-words">{item.title}</div>}
-                      <div className="text-[10px] md:text-xs font-medium text-foreground/70 whitespace-pre-wrap break-words prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: item.content }} />
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-8 space-y-6 md:space-y-8">
+      <main className="flex-1 p-4 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 max-w-[1600px] mx-auto w-full">
+        {/* SECTION 1: PROCÉDURE EN COURS (MOBILE ORDER 1) */}
+        <div className="order-1 lg:col-span-8 space-y-6 md:order-1">
           <Card className="rounded-[1.5rem] md:rounded-[2.5rem] border-primary/10 glass-card overflow-hidden shadow-2xl">
-            <CardHeader className="bg-primary/[0.03] border-b border-primary/5 p-6 md:p-8">
-              <div className="flex justify-between items-center mb-2 md:mb-4">
-                <Badge className="bg-[#0459ab] rounded-lg md:rounded-xl px-3 md:px-4 py-0.5 md:py-1 font-black text-[8px] md:text-[10px] tracking-widest">{t.currentSession}</Badge>
-              </div>
+            <CardHeader className="bg-primary/[0.03] border-b border-primary/5 p-6 md:p-10">
+              <Badge className="bg-[#0459ab] rounded-lg md:rounded-xl px-3 md:px-4 py-0.5 md:py-1 font-black text-[8px] md:text-[10px] tracking-widest mb-4">{t.currentSession}</Badge>
               <CardTitle className="text-xl md:text-4xl font-black font-headline uppercase tracking-tighter text-[#0459ab] leading-none">{isActive ? currentAction.title : t.waitingAction}</CardTitle>
             </CardHeader>
             <CardContent className="p-6 md:p-10 space-y-8 md:space-y-12">
               {isActive ? (
-                <>
-                  <div className="flex flex-col items-center gap-8 md:gap-12 max-w-2xl mx-auto w-full">
-                    <div className="w-full">
-                      <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
+                <div className="flex flex-col items-center gap-8 md:gap-12 max-w-2xl mx-auto w-full">
+                  <div className="w-full">
+                    <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
+                  </div>
+                  <div className="flex flex-col items-center gap-3 md:gap-4">
+                    <div className="flex items-center gap-2 px-3 md:px-4 py-1 md:py-1.5 bg-primary/5 border border-primary/10 rounded-full">
+                      <Timer className="size-3 md:size-4 text-primary/60" />
+                      <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary/60">{t.speakerChrono}</span>
                     </div>
-                    
-                    <div className="flex flex-col items-center gap-3 md:gap-4">
-                      <div className="flex items-center gap-2 px-3 md:px-4 py-1 md:py-1.5 bg-primary/5 border border-primary/10 rounded-full">
-                        <Timer className="size-3 md:size-4 text-primary/60" />
-                        <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary/60">{t.speakerChrono}</span>
-                      </div>
-                      <SpeakingTimer status={currentAction.speaking_timer_status} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} size="md" />
-                    </div>
+                    <SpeakingTimer status={currentAction.speaking_timer_status} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} size="md" />
                   </div>
                   {currentAction.allow_participation && currentAction.status === 'launched' && (
-                    <div className="pt-6 md:pt-10 border-t border-primary/5 text-center">
+                    <div className="pt-6 md:pt-10 border-t border-primary/5 text-center w-full">
                       <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-md mx-auto">
-                        <Button size="sm" className={`h-10 md:h-11 rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] gap-1.5 md:gap-2 shadow-lg transition-all hover:scale-[1.03] ${participationStatus === 'participating' ? 'bg-green-600 shadow-green-600/20' : 'bg-[#0459ab] shadow-[#0459ab]/20'}`} onClick={() => handleParticipation('participating')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><CheckCircle2 className="size-4 md:size-5" /> {t.participate}</Button>
-                        <Button size="sm" variant="outline" className={`h-10 md:h-11 rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] gap-1.5 md:gap-2 border-2 transition-all hover:scale-[1.03] ${participationStatus === 'passing' ? 'border-destructive text-destructive bg-destructive/5' : 'border-primary/20 text-[#0459ab]/60 hover:bg-primary/5'}`} onClick={() => handleParticipation('passing')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><XCircle className="size-4 md:size-5" /> {t.pass}</Button>
+                        <Button size="sm" className={`h-10 md:h-12 rounded-xl font-black uppercase tracking-widest text-[8px] md:text-xs gap-1.5 md:gap-2 shadow-lg transition-all hover:scale-[1.03] ${participationStatus === 'participating' ? 'bg-green-600 shadow-green-600/20' : 'bg-[#0459ab] shadow-[#0459ab]/20'}`} onClick={() => handleParticipation('participating')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><CheckCircle2 className="size-4 md:size-5" /> {t.participate}</Button>
+                        <Button size="sm" variant="outline" className={`h-10 md:h-12 rounded-xl font-black uppercase tracking-widest text-[8px] md:text-xs gap-1.5 md:gap-2 border-2 transition-all hover:scale-[1.03] ${participationStatus === 'passing' ? 'border-destructive text-destructive bg-destructive/5' : 'border-primary/20 text-[#0459ab]/60 hover:bg-primary/5'}`} onClick={() => handleParticipation('passing')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><XCircle className="size-4 md:size-5" /> {t.pass}</Button>
                       </div>
                     </div>
                   )}
-                </>
-              ) : <div className="py-16 md:py-24 text-center opacity-20"><Monitor className="size-16 md:size-20 mx-auto mb-4 md:mb-6" /></div>}
+                </div>
+              ) : <div className="py-16 md:py-24 text-center opacity-20"><Monitor className="size-16 md:size-24 mx-auto mb-4 md:mb-6" /></div>}
             </CardContent>
           </Card>
 
-          {activeOverlay?.type === 'gossip' && (
-            <Card className="rounded-[1.5rem] md:rounded-[2.5rem] border-primary border-2 md:border-4 bg-primary/[0.02] shadow-2xl animate-in fade-in zoom-in duration-500 overflow-hidden relative">
-              <CardHeader className="border-b border-primary/10 p-6 md:p-10 bg-white/60 backdrop-blur-sm">
-                <div className="space-y-2 md:space-y-3">
-                  <Badge className="bg-[#0459ab] rounded-lg md:rounded-xl px-3 md:px-4 py-0.5 md:py-1 font-black text-[8px] md:text-[10px] tracking-widest"><Monitor className="size-3 md:size-4 mr-1 md:mr-2" /> {t.projected}</Badge>
-                  <CardTitle className="text-xl md:text-4xl font-black text-[#0459ab] uppercase tracking-tight break-words">{t.gossipTitle}</CardTitle>
-                </div>
+          {/* RÉDACTION (MOBILE ORDER 4) - SUR DESKTOP À DROITE */}
+          <div className="hidden lg:flex flex-col gap-6 md:gap-8">
+            <Card className={`rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl overflow-hidden glass-card transition-all duration-500 ${(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+              <CardHeader className="bg-secondary/5 border-b border-primary/5 p-6 md:p-8 flex flex-row items-center justify-between">
+                <CardTitle className="text-lg md:text-3xl font-black uppercase tracking-tight text-[#0459ab]">{t.submitResolution}</CardTitle>
+                {!allowResolutions && <Badge variant="destructive" className="font-black h-7 md:h-8 px-2 md:px-4 text-[8px] md:text-xs"><Lock className="size-3 md:size-4 mr-1.5 md:mr-2" /> {t.submissionsSuspended}</Badge>}
               </CardHeader>
-              <CardContent className="p-6 md:p-10 text-left">
-                <div className="mb-4 md:mb-8 flex flex-wrap gap-2 md:gap-3 items-center">
-                  <Badge variant="outline" className="border-primary/20 text-primary/60 rounded-lg md:rounded-xl px-3 md:px-4 py-1 md:py-1.5 font-black text-[8px] md:text-[10px] tracking-widest uppercase">ANONYMOUS SOURCE</Badge>
-                </div>
-                <div className="text-base md:text-2xl leading-relaxed font-serif italic text-primary/80 whitespace-pre-wrap break-words prose prose-lg md:prose-xl max-w-none border-l-2 md:border-l-4 border-primary/20 pl-4 md:pl-8">
-                  "{activeOverlay.title}"
-                </div>
-              </CardContent>
+              <form onSubmit={submitResolution}>
+                <CardContent className="p-6 md:p-10 space-y-6 md:space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    <div className="space-y-2"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.title}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-12 font-bold text-xs" value={resolutionForm.title} onChange={e => setResolutionForm({...resolutionForm, title: e.target.value})} required /></div>
+                    <div className="space-y-2"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.spokesperson}</Label><Input placeholder={t.countryName} className="rounded-xl border-primary/10 h-10 md:h-12 font-bold text-xs" value={resolutionForm.spokesperson} onChange={e => setResolutionForm({...resolutionForm, spokesperson: e.target.value})} required /></div>
+                  </div>
+                  <div className="space-y-2"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.sponsors}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-12 font-bold text-xs" value={resolutionForm.sponsors} onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} /></div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.content}</Label><div className="flex gap-1.5 bg-secondary p-1 rounded-lg border border-primary/5">
+                      {['b', 'i', 'u'].map(tag => <Button key={tag} type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-lg hover:bg-white" onClick={() => wrapText(tag, 'resolution')}><span className={tag === 'b' ? 'font-bold' : tag === 'i' ? 'italic' : 'underline'}>{tag.toUpperCase()}</span></Button>)}
+                    </div></div>
+                    <Textarea ref={resTextAreaRef} className="min-h-[200px] md:min-h-[300px] text-xs md:text-sm leading-relaxed font-serif rounded-2xl border-primary/10 bg-white/50 p-4 md:p-8" value={resolutionForm.content} onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} required />
+                    {resolutionForm.content && <div className="mt-4 p-4 md:p-8 rounded-2xl bg-primary/[0.01] border border-primary/5"><div className="flex items-center gap-2 text-[8px] md:text-[10px] font-black text-[#0459ab]/40 uppercase tracking-widest mb-4"><Eye className="size-4" /> {t.preview}</div><div className="text-xs md:text-sm font-serif leading-relaxed text-left text-foreground/60 whitespace-pre-wrap break-words prose max-w-none" dangerouslySetInnerHTML={{ __html: resolutionForm.content }} /></div>}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-6 md:p-10 pt-0"><Button type="submit" className="w-full bg-[#0459ab] hover:bg-[#0459ab]/90 h-10 md:h-12 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-xs shadow-lg shadow-[#0459ab]/20"><Send className="size-4 mr-2" /> {t.transmit}</Button></CardFooter>
+              </form>
             </Card>
-          )}
 
-          {displayedResolutions.map((res) => (
-            <Card key={res.id} className="rounded-[1.5rem] md:rounded-[2.5rem] border-[#0459ab] border-2 md:border-4 bg-primary/[0.02] shadow-2xl animate-in fade-in zoom-in duration-500 overflow-hidden relative">
-              <div className="absolute top-4 right-4 md:top-10 md:right-10 z-30">
-                <Badge 
-                  variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} 
-                  className="uppercase font-black px-3 md:px-6 h-7 md:h-10 text-[8px] md:text-[11px] tracking-widest md:tracking-[0.2em] shadow-xl border-none antialiased"
-                >
-                  {res.status.toUpperCase()}
-                </Badge>
-              </div>
-              <CardHeader className="border-b border-primary/10 p-6 md:p-10 bg-white/60 backdrop-blur-sm">
-                <div className="space-y-2 md:space-y-3">
-                  <Badge className="bg-[#0459ab] rounded-lg md:rounded-xl px-3 md:px-4 py-0.5 md:py-1 font-black text-[8px] md:text-[10px] tracking-widest"><Monitor className="size-3 md:size-4 mr-1 md:mr-2" /> {t.projected}</Badge>
-                  <CardTitle className="text-xl md:text-4xl font-black text-[#0459ab] uppercase tracking-tight break-words pr-16 md:pr-32">{res.title}</CardTitle>
-                </div>
+            <Card className={`rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl overflow-hidden glass-card transition-all duration-500 ${(!allowPositionPapers || isCountrySuspended || activeOverlay?.type === 'crisis') ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+              <CardHeader className="bg-secondary/5 border-b border-primary/5 p-6 md:p-8 flex flex-row items-center justify-between">
+                <CardTitle className="text-lg md:text-3xl font-black uppercase tracking-tight text-[#0459ab]">{t.submitPosition}</CardTitle>
+                {!allowPositionPapers && <Badge variant="destructive" className="font-black h-7 md:h-8 px-2 md:px-4 text-[8px] md:text-xs"><Lock className="size-3 md:size-4 mr-1.5 md:mr-2" /> {t.submissionsSuspended}</Badge>}
               </CardHeader>
-              <CardContent className="p-6 md:p-10 text-left">
-                <div className="mb-4 md:mb-8 flex flex-wrap gap-2 md:gap-3 items-center">
-                  <Badge variant="outline" className="bg-primary/5 border-primary/10 text-[#0459ab] py-1 md:py-2 px-3 md:px-4 text-[8px] md:text-[10px] font-black uppercase tracking-widest">DÉLÉGATION: {res.proposing_country}</Badge>
-                  {res.spokesperson && <Badge variant="outline" className="bg-secondary text-foreground/60 border-primary/10 py-1 md:py-2 px-3 md:px-4 text-[8px] md:text-[10px] font-black uppercase tracking-widest gap-1.5 md:gap-2"><User size={10} /> {t.spokesperson}: {res.spokesperson}</Badge>}
-                  {res.sponsors && <Badge variant="outline" className="bg-muted text-muted-foreground border-primary/10 py-1 md:py-2 px-3 md:px-4 text-[8px] md:text-[10px] font-black uppercase tracking-widest gap-1.5 md:gap-2"><Users size={10} /> {t.sponsors}: {res.sponsors}</Badge>}
-                </div>
-                <div className="text-base md:text-xl leading-relaxed font-serif text-foreground/80 whitespace-pre-wrap break-words prose prose-lg md:prose-xl max-w-none border-l-2 md:border-l-4 border-[#0459ab]/20 pl-4 md:pl-8" dangerouslySetInnerHTML={{ __html: res.content }} />
-              </CardContent>
+              <form onSubmit={submitPosition}>
+                <CardContent className="p-6 md:p-10 space-y-6 md:space-y-8">
+                  <div className="space-y-2"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.title}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-12 font-bold text-xs" value={positionForm.title} onChange={e => setPositionForm({...positionForm, title: e.target.value})} required /></div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.content}</Label><div className="flex gap-1.5 bg-secondary p-1 rounded-lg border border-primary/5">
+                      {['b', 'i', 'u'].map(tag => <Button key={tag} type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-lg hover:bg-white" onClick={() => wrapText(tag, 'position')}><span className={tag === 'b' ? 'font-bold' : tag === 'i' ? 'italic' : 'underline'}>{tag.toUpperCase()}</span></Button>)}
+                    </div></div>
+                    <Textarea ref={posTextAreaRef} className="min-h-[200px] md:min-h-[300px] text-xs md:text-sm leading-relaxed font-serif rounded-2xl border-primary/10 bg-white/50 p-4 md:p-8" value={positionForm.content} onChange={e => setPositionForm({...positionForm, content: e.target.value})} required />
+                    {positionForm.content && <div className="mt-4 p-4 md:p-8 rounded-2xl bg-primary/[0.01] border border-primary/5"><div className="flex items-center gap-2 text-[8px] md:text-[10px] font-black text-[#0459ab]/40 uppercase tracking-widest mb-4"><Eye className="size-4" /> {t.preview}</div><div className="text-xs md:text-sm font-serif leading-relaxed text-left text-foreground/60 whitespace-pre-wrap break-words prose max-w-none" dangerouslySetInnerHTML={{ __html: positionForm.content }} /></div>}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-6 md:p-10 pt-0"><Button type="submit" className="w-full bg-[#0459ab] hover:bg-[#0459ab]/90 h-10 md:h-12 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-xs shadow-lg shadow-[#0459ab]/20"><Send className="size-4 mr-2" /> {t.transmit}</Button></CardFooter>
+              </form>
             </Card>
-          ))}
+          </div>
+        </div>
 
-          <Card className={`rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl overflow-hidden glass-card transition-all duration-500 ${(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
-            <CardHeader className="bg-secondary/5 border-b border-primary/5 p-6 md:p-8 flex flex-row items-center justify-between">
-              <CardTitle className="text-xl md:text-4xl font-black uppercase tracking-tight text-[#0459ab]">{t.submitResolution}</CardTitle>
-              {(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') && <Badge variant="destructive" className="font-black h-7 md:h-8 px-2 md:px-4 text-[8px] md:text-xs"><Lock className="size-3 md:size-4 mr-1.5 md:mr-2" /> {t.submissionsSuspended}</Badge>}
+        {/* SECTION 2 & 3: LISTE ORATEURS & MESSAGES (MOBILE ORDER 2 & 3) */}
+        <div className="order-2 lg:col-span-4 space-y-6 md:order-2">
+          {/* LISTE ORATEURS (ORDER 2 MOBILE) */}
+          <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
+            <CardHeader className="py-3 px-4 md:py-6 md:px-8 flex flex-row items-center justify-between">
+              <div className="flex items-center gap-2 md:gap-3"><ListOrdered className="size-4 md:size-6 text-[#0459ab]" /><CardTitle className="text-xs md:text-lg font-black uppercase tracking-widest text-[#0459ab]/80">{t.speakersList}</CardTitle></div>
+              <Badge className="bg-[#0459ab] rounded-lg font-black text-[10px] md:text-sm">{activeSpeakers.length}</Badge>
             </CardHeader>
-            <form onSubmit={submitResolution}>
-              <CardContent className="p-6 md:p-8 space-y-6 md:space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                  <div className="space-y-2">
-                    <Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.title}</Label>
-                    <Input placeholder="..." className="rounded-xl md:rounded-2xl border-primary/10 h-11 md:h-14 font-bold" value={resolutionForm.title} onChange={e => setResolutionForm({...resolutionForm, title: e.target.value})} required disabled={!allowResolutions} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.spokesperson}</Label>
-                    <Input placeholder={t.countryName} className="rounded-xl md:rounded-2xl border-primary/10 h-11 md:h-14 font-bold" value={resolutionForm.spokesperson} onChange={e => setResolutionForm({...resolutionForm, spokesperson: e.target.value})} required disabled={!allowResolutions} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.sponsors}</Label>
-                  <Input placeholder="..." className="rounded-xl md:rounded-2xl border-primary/10 h-11 md:h-14 font-bold" value={resolutionForm.sponsors} onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} disabled={!allowResolutions} />
-                </div>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.content}</Label>
-                    <div className="flex gap-1.5 bg-secondary p-1 rounded-lg md:rounded-xl border border-primary/5">
-                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-lg hover:bg-white" onClick={() => wrapText('b')}><Bold className="size-4" /></Button>
-                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-lg hover:bg-white" onClick={() => wrapText('i')}><Italic className="size-4" /></Button>
-                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-lg hover:bg-white" onClick={() => wrapText('u')}><Underline className="size-4" /></Button>
+            <CardContent className="px-4 md:px-8 pb-4 md:pb-8">
+              <ScrollArea className="h-[200px] md:h-[300px]">
+                <div className="space-y-2 md:space-y-4">
+                  {activeSpeakers.map((s, i) => (
+                    <div key={s.id} className={`flex justify-between items-center p-3 md:p-5 rounded-xl md:rounded-2xl border transition-all duration-300 ${i === 0 ? 'bg-primary/5 border-primary/20 shadow-sm' : 'bg-white border-primary/5'}`}>
+                      <div className="flex items-center gap-3 md:gap-5"><span className={`text-[10px] md:text-sm font-black h-6 w-6 md:h-8 md:w-8 flex items-center justify-center rounded-lg ${i === 0 ? 'bg-[#0459ab] text-white' : 'bg-muted text-muted-foreground'}`}>{i + 1}</span><span className={`text-[10px] md:text-sm font-bold uppercase tracking-tight ${i === 0 ? 'text-[#0459ab]' : 'text-foreground/70'}`}>{s.country_name}</span></div>
+                      {i === 0 && <Badge className="bg-[#0459ab]/10 text-[#0459ab] text-[7px] md:text-[10px] font-black animate-pulse px-2">ACTUEL</Badge>}
                     </div>
-                  </div>
-                  <Textarea ref={textAreaRef} className="min-h-[250px] md:min-h-[350px] text-lg md:text-xl leading-relaxed font-serif rounded-2xl md:rounded-[2rem] border-primary/10 bg-white/50 p-6 md:p-8 shadow-inner" value={resolutionForm.content} onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} required disabled={!allowResolutions} />
-                  
-                  {resolutionForm.content && (
-                    <div className="mt-4 md:mt-6 p-6 md:p-8 rounded-2xl md:rounded-[2rem] bg-primary/[0.01] border border-primary/5 shadow-inner">
-                      <div className="flex items-center gap-2 text-[8px] md:text-[10px] font-black text-[#0459ab]/40 uppercase tracking-widest md:tracking-[0.3em] mb-4 md:mb-6">
-                        <Eye className="size-4" /> {t.preview}
+                  ))}
+                  {activeSpeakers.length === 0 && <div className="text-center py-12 md:py-20 text-muted-foreground/50 text-[10px] md:text-sm italic font-medium">{t.noSpeaker}</div>}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* HISTORIQUE / MESSAGES (ORDER 3 MOBILE) */}
+          <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
+            <CardHeader className="py-3 px-4 md:py-6 md:px-8 flex flex-row items-center gap-2 md:gap-3">
+              <Send className="size-4 md:size-6 text-[#0459ab]" />
+              <CardTitle className="text-xs md:text-lg font-black uppercase tracking-tight text-[#0459ab]">{t.myEnvois}</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 md:px-8 pb-4 md:pb-8">
+              <ScrollArea className="h-[250px] md:h-[400px]">
+                <div className="space-y-3 md:space-y-5">
+                  {myEnvois.map(item => (
+                    <div key={item.id} className="p-3 md:p-5 border border-primary/5 rounded-xl md:rounded-2xl bg-white shadow-sm transition-all hover:shadow-md">
+                      <div className="flex justify-between items-center mb-2 md:mb-4">
+                        <Badge variant="outline" className="text-[8px] md:text-[10px] font-black uppercase tracking-widest border-primary/10 text-[#0459ab]/70">
+                          {item._type === 'resolution' ? t.resolution : item._type === 'positionPaper' ? t.positionPaper : t.message}
+                        </Badge>
+                        {item._type === 'resolution' ? <Badge variant={item.status === 'approved' ? 'default' : item.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase text-[8px] md:text-[10px] font-black">{item.status?.toUpperCase()}</Badge> : <Badge variant="ghost" className="opacity-60">{item.is_read ? <Check className="size-3 md:size-5 text-green-500" /> : <Clock className="size-3 md:size-5" />}</Badge>}
                       </div>
-                      <div 
-                        className="text-base md:text-xl font-serif leading-relaxed text-left text-foreground/60 whitespace-pre-wrap break-words prose prose-lg max-w-none"
-                        dangerouslySetInnerHTML={{ __html: resolutionForm.content }}
-                      />
+                      {(item._type === 'resolution' || item._type === 'positionPaper') && <div className="mb-2 font-black uppercase text-[#0459ab] tracking-tight text-xs md:text-sm break-words">{item.title}</div>}
+                      <div className="text-[10px] md:text-sm font-medium text-foreground/70 whitespace-pre-wrap break-words prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: item.content }} />
                     </div>
-                  )}
+                  ))}
                 </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* MESSAGE TO PRESIDENCY (RESTE EN BAS SUR MOBILE) */}
+          <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
+            <CardHeader className="py-3 px-4 md:py-6 md:px-8 flex flex-row items-center gap-2 md:gap-3">
+              <MessageSquarePlus className="size-4 md:size-6 text-[#0459ab]" />
+              <CardTitle className="text-xs md:text-sm font-black uppercase tracking-widest text-[#0459ab]/80">{t.msgToPresidency}</CardTitle>
+            </CardHeader>
+            <form onSubmit={submitMessage}>
+              <CardContent className="px-4 md:px-8 pb-3 md:pb-6 space-y-3 md:space-y-5">
+                <Select value={messageForm.type} onValueChange={(val) => setMessageForm({...messageForm, type: val})} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}>
+                  <SelectTrigger className="h-9 md:h-12 text-[10px] md:text-sm rounded-xl border-primary/10 bg-white"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="privilege">{t.personalPrivilege}</SelectItem><SelectItem value="general">{t.generalMsg}</SelectItem><SelectItem value="gossip" className="text-primary font-bold">✨ {t.gossipMsg}</SelectItem></SelectContent>
+                </Select>
+                {messageForm.type === 'gossip' && <p className="text-[9px] md:text-xs font-bold text-primary/60 px-2 italic">{t.anonymousHint}</p>}
+                <Textarea placeholder={t.yourMsg} className="min-h-[70px] md:min-h-[100px] text-[10px] md:text-sm resize-none rounded-xl border-primary/10 bg-white p-3 md:p-5" value={messageForm.content} onChange={(e) => setMessageForm({...messageForm, content: e.target.value})} required disabled={isCountrySuspended || activeOverlay?.type === 'crisis' || (messageForm.type === 'gossip' && !allowGossip)} />
               </CardContent>
-              <CardFooter className="p-6 md:p-8 pt-0">
-                <Button type="submit" disabled={!allowResolutions} className="w-full bg-[#0459ab] hover:bg-[#0459ab]/90 h-10 md:h-11 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-[10px] shadow-lg shadow-[#0459ab]/20 transition-all">
-                  <Send className="size-4 mr-2" /> {t.transmit}
-                </Button>
-              </CardFooter>
+              <CardFooter className="px-4 md:px-8 pb-4 md:pb-8 pt-0"><Button size="sm" type="submit" className="w-full bg-[#0459ab] hover:bg-[#0459ab]/90 h-9 md:h-12 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-xs" disabled={isSendingMessage || isCountrySuspended || activeOverlay?.type === 'crisis' || (messageForm.type === 'gossip' && !allowGossip)}>{isSendingMessage ? t.sending : t.send}</Button></CardFooter>
             </form>
+          </Card>
+        </div>
+
+        {/* SECTION RÉDACTION MOBILE ORDER 4 (VISIBLE UNIQUEMENT SUR MOBILE ICI) */}
+        <div className="order-4 lg:hidden space-y-6">
+          <Card className={`rounded-[1.5rem] shadow-xl overflow-hidden glass-card ${(!allowResolutions || isCountrySuspended) ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+            <CardHeader className="bg-secondary/5 border-b p-6 flex flex-row items-center justify-between"><CardTitle className="text-lg font-black uppercase tracking-tight text-[#0459ab]">{t.submitResolution}</CardTitle></CardHeader>
+            <form onSubmit={submitResolution}><CardContent className="p-6 space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-1"><Label className="text-[8px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.title}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 font-bold text-xs" value={resolutionForm.title} onChange={e => setResolutionForm({...resolutionForm, title: e.target.value})} required /></div>
+                <div className="space-y-1"><Label className="text-[8px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.spokesperson}</Label><Input placeholder={t.countryName} className="rounded-xl border-primary/10 h-10 font-bold text-xs" value={resolutionForm.spokesperson} onChange={e => setResolutionForm({...resolutionForm, spokesperson: e.target.value})} required /></div>
+                <div className="space-y-1"><Label className="text-[8px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.sponsors}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 font-bold text-xs" value={resolutionForm.sponsors} onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} /></div>
+                <div className="space-y-4">
+                  <Label className="text-[8px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.content}</Label>
+                  <Textarea className="min-h-[150px] text-xs leading-relaxed font-serif rounded-xl border-primary/10 bg-white/50 p-4" value={resolutionForm.content} onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} required />
+                </div>
+              </div>
+            </CardContent><CardFooter className="p-6 pt-0"><Button type="submit" className="w-full bg-[#0459ab] h-10 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-lg"><Send className="size-4 mr-2" /> {t.transmit}</Button></CardFooter></form>
+          </Card>
+
+          <Card className={`rounded-[1.5rem] shadow-xl overflow-hidden glass-card ${(!allowPositionPapers || isCountrySuspended) ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+            <CardHeader className="bg-secondary/5 border-b p-6 flex flex-row items-center justify-between"><CardTitle className="text-lg font-black uppercase tracking-tight text-[#0459ab]">{t.submitPosition}</CardTitle></CardHeader>
+            <form onSubmit={submitPosition}><CardContent className="p-6 space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-1"><Label className="text-[8px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.title}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 font-bold text-xs" value={positionForm.title} onChange={e => setPositionForm({...positionForm, title: e.target.value})} required /></div>
+                <div className="space-y-4">
+                  <Label className="text-[8px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.content}</Label>
+                  <Textarea className="min-h-[150px] text-xs leading-relaxed font-serif rounded-xl border-primary/10 bg-white/50 p-4" value={positionForm.content} onChange={e => setPositionForm({...positionForm, content: e.target.value})} required />
+                </div>
+              </div>
+            </CardContent><CardFooter className="p-6 pt-0"><Button type="submit" className="w-full bg-[#0459ab] h-10 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-lg"><Send className="size-4 mr-2" /> {t.transmit}</Button></CardFooter></form>
           </Card>
         </div>
       </main>

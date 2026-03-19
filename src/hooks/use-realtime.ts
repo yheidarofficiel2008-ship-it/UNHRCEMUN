@@ -10,13 +10,13 @@ export function useRealtime(committeeId?: string) {
   const [isSuspended, setIsSuspended] = useState(false);
   const [allowResolutions, setAllowResolutions] = useState(true);
   const [allowGossip, setAllowGossip] = useState(true);
+  const [allowPositionPapers, setAllowPositionPapers] = useState(true);
   const [currentAction, setCurrentAction] = useState<any>(null);
   const [activeOverlay, setActiveOverlay] = useState<any>(null);
 
   useEffect(() => {
     if (!db || !committeeId) return;
 
-    // Écouter l'état global de la session du comité spécifique
     const sessionStateRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
     const unsubSettings = onSnapshot(sessionStateRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -24,36 +24,27 @@ export function useRealtime(committeeId?: string) {
         setIsSuspended(data.isSuspended === true);
         setAllowResolutions(data.allowResolutions !== false);
         setAllowGossip(data.allowGossip !== false);
+        setAllowPositionPapers(data.allowPositionPapers !== false);
         setActiveOverlay(data.activeOverlay || { type: 'none' });
       } else {
-        // Initialiser si n'existe pas
         setIsSuspended(false);
         setAllowResolutions(true);
         setAllowGossip(true);
+        setAllowPositionPapers(true);
         setActiveOverlay({ type: 'none' });
       }
-    }, (error) => {
-      console.warn("Session state error:", error.message);
     });
 
-    // Écouter l'action la plus récente du comité
     const actionsRef = collection(db, 'committees', committeeId, 'actions');
-    const q = query(
-      actionsRef, 
-      orderBy('created_at', 'desc'), 
-      limit(1)
-    );
+    const q = query(actionsRef, orderBy('created_at', 'desc'), limit(1));
 
     const unsubActions = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
         const actionDoc = snapshot.docs[0];
-        const actionData = actionDoc.data();
-        setCurrentAction({ id: actionDoc.id, ...actionData });
+        setCurrentAction({ id: actionDoc.id, ...actionDoc.data() });
       } else {
         setCurrentAction(null);
       }
-    }, (error) => {
-      console.error("Actions listener error:", error);
     });
 
     return () => {
@@ -62,5 +53,5 @@ export function useRealtime(committeeId?: string) {
     };
   }, [db, committeeId]);
 
-  return { isSuspended, allowResolutions, allowGossip, currentAction, activeOverlay };
+  return { isSuspended, allowResolutions, allowGossip, allowPositionPapers, currentAction, activeOverlay };
 }
