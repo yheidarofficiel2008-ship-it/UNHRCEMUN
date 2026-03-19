@@ -164,7 +164,7 @@ export default function PresidentDashboard() {
   }[lang];
 
   const [customMinutes, setCustomMinutes] = useState('1');
-  const [newAction, setNewAction] = useState({ title: '', duration: 15, timePerDelegate: '1:00', allowParticipation: true });
+  const [newAction, setNewAction] = useState({ title: '', duration_minutes: 15, time_per_delegate: '1:00', allowParticipation: true });
   const [newDelegate, setNewDelegate] = useState({ name: '', password: '' });
   const [overlayForm, setOverlayForm] = useState({ type: 'message', title: '' });
   const [isOverlayDialogOpen, setIsOverlayDialogOpen] = useState(false);
@@ -214,17 +214,14 @@ export default function PresidentDashboard() {
     return () => { unsubDel(); unsubRes(); unsubMessages(); unsubPartAll(); unsubActionsAll(); };
   }, [db, user, committeeId]);
 
-  // Initialisation et mise à jour de displayGradedDelegates (sans tri automatique par moyenne)
   useEffect(() => {
     setDisplayGradedDelegates(prev => {
       if (prev.length === 0) return delegates;
-      
-      // On met à jour les données (notes, moyenne) tout en gardant l'ordre actuel
       return prev.map(p => {
         const fresh = delegates.find(d => d.id === p.id);
         return fresh ? fresh : p;
-      }).filter(p => delegates.some(d => d.id === p.id)) // Enlever ceux supprimés
-      .concat(delegates.filter(d => !prev.some(p => p.id === d.id))); // Ajouter les nouveaux
+      }).filter(p => delegates.some(d => d.id === p.id))
+      .concat(delegates.filter(d => !prev.some(p => p.id === d.id)));
     });
   }, [delegates]);
 
@@ -272,14 +269,17 @@ export default function PresidentDashboard() {
   const createAction = async () => {
     if (!db || !newAction.title) return;
     await addDocumentNonBlocking(collection(db, 'committees', committeeId, 'actions'), {
-      ...newAction,
+      title: newAction.title,
+      duration_minutes: Number(newAction.duration_minutes),
+      time_per_delegate: newAction.time_per_delegate,
+      allow_participation: newAction.allowParticipation,
       status: 'launched',
       total_elapsed_seconds: 0,
       speaking_timer_total_elapsed: 0,
       speaking_timer_status: 'stopped',
       created_at: serverTimestamp(),
     });
-    setNewAction({ title: '', duration: 15, timePerDelegate: '1:00', allowParticipation: true });
+    setNewAction({ title: '', duration_minutes: 15, time_per_delegate: '1:00', allowParticipation: true });
   };
 
   const handleUpdateGrade = (delegateId: string, field: string, value: number) => {
@@ -446,8 +446,8 @@ export default function PresidentDashboard() {
                 <CardContent className="space-y-4">
                   <div className="space-y-1.5"><Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">{t.title}</Label><Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} className="rounded-xl border-primary/10 text-xs h-10" /></div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1"><Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">{t.duration}</Label><Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} className="rounded-xl border-primary/10 text-xs h-10" /></div>
-                    <div className="space-y-1"><Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">{t.speakingTime}</Label><Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} className="rounded-xl border-primary/10 text-xs h-10" /></div>
+                    <div className="space-y-1"><Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">{t.duration}</Label><Input type="number" value={newAction.duration_minutes} onChange={e => setNewAction({...newAction, duration_minutes: parseInt(e.target.value)})} className="rounded-xl border-primary/10 text-xs h-10" /></div>
+                    <div className="space-y-1"><Label className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">{t.speakingTime}</Label><Input value={newAction.time_per_delegate} onChange={e => setNewAction({...newAction, time_per_delegate: e.target.value})} className="rounded-xl border-primary/10 text-xs h-10" /></div>
                   </div>
                   <Button className="w-full bg-primary hover:bg-primary/90 h-10 rounded-xl font-bold uppercase tracking-widest text-[10px]" onClick={createAction}>{t.launchAction}</Button>
                 </CardContent>
