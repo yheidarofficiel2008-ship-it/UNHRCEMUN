@@ -82,7 +82,7 @@ export default function MUNOSHome() {
           )}
         </div>
 
-        <div className="flex justify-center pt-8">
+        <div className="flex justify-center pt-4">
           <Button asChild variant="ghost" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 gap-2 font-bold uppercase tracking-widest text-[10px] px-8 py-3 rounded-full border border-transparent hover:border-destructive/10 h-auto transition-colors">
             <Link href="/admin">
               <Settings size={16} /> Console d'Administration
@@ -91,7 +91,7 @@ export default function MUNOSHome() {
         </div>
       </div>
       
-      <footer className="mt-auto py-12">
+      <footer className="mt-auto py-6">
         <a 
           href="https://www.instagram.com/youssef_heidar/" 
           target="_blank" 
