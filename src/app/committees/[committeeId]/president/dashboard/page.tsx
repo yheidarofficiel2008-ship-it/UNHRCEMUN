@@ -531,6 +531,32 @@ export default function PresidentDashboard() {
 
             <TabsContent value="stats" className="space-y-6 mt-4 md:mt-6">
               <Card className="rounded-2xl border-primary/10 glass-card">
+                <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><Award className="size-4 md:size-5 text-primary" /><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">{t.gradingTitle}</CardTitle></CardHeader>
+                <CardContent className="px-2 md:px-4 pb-4">
+                  <div className="mb-4 flex flex-col gap-2">
+                    <Button size="sm" onClick={handleGenerateRanking} className="w-full bg-primary h-11 rounded-xl font-black uppercase tracking-widest text-[9px] gap-2 shadow-lg shadow-primary/20">
+                      <Calculator className="size-4" /> {t.calculate}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={handleSortAlpha} className="w-full text-[8px] uppercase font-bold opacity-60">
+                      Trier par Ordre Alphabétique
+                    </Button>
+                  </div>
+                  <ScrollArea className="h-[400px] md:h-[600px]"><div className="space-y-4 p-1">
+                    {displayGradedDelegates.map((d, index) => (
+                      <div key={d.id} className="p-4 border border-primary/5 rounded-[1.5rem] bg-white shadow-sm hover:shadow-md transition-all">
+                        <div className="flex justify-between items-center mb-4"><div className="flex items-center gap-2"><span className="h-7 w-7 bg-primary/5 text-primary rounded-lg flex items-center justify-center font-black text-[10px] border border-primary/10">{index + 1}</span><span className="font-black uppercase tracking-tight text-[10px] md:text-sm text-foreground/80 truncate max-w-[100px]">{d.country_name}</span></div><div className="flex flex-col items-end"><span className="text-[7px] font-black text-primary uppercase tracking-[0.1em]">{t.average}</span><span className={`text-base md:text-2xl font-black tabular-nums ${d.average >= 7 ? 'text-green-600' : d.average >= 4 ? 'text-amber-600' : 'text-red-600'}`}>{d.average.toFixed(1)}/10</span></div></div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {['speaking', 'diplomacy', 'knowledge'].map(field => (
+                            <div key={field} className="space-y-1"><Label className="text-[7px] font-black uppercase tracking-widest text-muted-foreground">{t[field as keyof typeof t] || field}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 text-[9px] font-black rounded-lg border-primary/10" value={d.grades[field]} onChange={(e) => handleUpdateGrade(d.id, field, Number(e.target.value))} /></div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div></ScrollArea>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl border-primary/10 glass-card">
                 <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><BarChart3 className="size-4 md:size-5 text-primary" /><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">Participations aux Débats</CardTitle></CardHeader>
                 <CardContent className="h-[300px] pt-4">
                   {statsData.length > 0 ? (
@@ -574,31 +600,6 @@ export default function PresidentDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl border-primary/10 glass-card">
-                <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><Award className="size-4 md:size-5 text-primary" /><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">{t.gradingTitle}</CardTitle></CardHeader>
-                <CardContent className="px-2 md:px-4 pb-4">
-                  <div className="mb-4 flex flex-col gap-2">
-                    <Button size="sm" onClick={handleGenerateRanking} className="w-full bg-primary h-11 rounded-xl font-black uppercase tracking-widest text-[9px] gap-2 shadow-lg shadow-primary/20">
-                      <Calculator className="size-4" /> {t.calculate}
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={handleSortAlpha} className="w-full text-[8px] uppercase font-bold opacity-60">
-                      Trier par Ordre Alphabétique
-                    </Button>
-                  </div>
-                  <ScrollArea className="h-[400px] md:h-[600px]"><div className="space-y-4 p-1">
-                    {displayGradedDelegates.map((d, index) => (
-                      <div key={d.id} className="p-4 border border-primary/5 rounded-[1.5rem] bg-white shadow-sm hover:shadow-md transition-all">
-                        <div className="flex justify-between items-center mb-4"><div className="flex items-center gap-2"><span className="h-7 w-7 bg-primary/5 text-primary rounded-lg flex items-center justify-center font-black text-[10px] border border-primary/10">{index + 1}</span><span className="font-black uppercase tracking-tight text-[10px] md:text-sm text-foreground/80 truncate max-w-[100px]">{d.country_name}</span></div><div className="flex flex-col items-end"><span className="text-[7px] font-black text-primary uppercase tracking-[0.1em]">{t.average}</span><span className={`text-base md:text-2xl font-black tabular-nums ${d.average >= 7 ? 'text-green-600' : d.average >= 4 ? 'text-amber-600' : 'text-red-600'}`}>{d.average.toFixed(1)}/10</span></div></div>
-                        <div className="grid grid-cols-3 gap-2">
-                          {['speaking', 'diplomacy', 'knowledge'].map(field => (
-                            <div key={field} className="space-y-1"><Label className="text-[7px] font-black uppercase tracking-widest text-muted-foreground">{t[field as keyof typeof t] || field}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 text-[9px] font-black rounded-lg border-primary/10" value={d.grades[field]} onChange={(e) => handleUpdateGrade(d.id, field, Number(e.target.value))} /></div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div></ScrollArea>
-                </CardContent>
-              </Card>
               <Card className="rounded-2xl border-primary/10 glass-card">
                 <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><History className="size-4 md:size-5 text-primary" /><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">{t.actionsHistory}</CardTitle></CardHeader>
                 <CardContent className="px-4 pb-6"><ScrollArea className="h-[250px]"><div className="space-y-3">
