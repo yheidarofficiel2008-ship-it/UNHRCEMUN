@@ -82,7 +82,8 @@ export default function DelegateDashboard() {
       noSpeaker: "Aucune inscription active",
       officialVote: "SCRUTIN OFFICIEL",
       officialAnnouncement: "ANNONCE OFFICIELLE",
-      gossipTitle: "✨ GOSSIP ANONYME ✨"
+      gossipTitle: "✨ GOSSIP ANONYME ✨",
+      projectedRes: "Résolution projetée au Comité"
     },
     en: {
       sessionActive: "Session Active",
@@ -124,7 +125,8 @@ export default function DelegateDashboard() {
       noSpeaker: "No active registrations",
       officialVote: "OFFICIAL VOTE",
       officialAnnouncement: "OFFICIAL ANNOUNCEMENT",
-      gossipTitle: "✨ ANONYMOUS GOSSIP ✨"
+      gossipTitle: "✨ ANONYMOUS GOSSIP ✨",
+      projectedRes: "Resolution projected to Committee"
     }
   }[lang];
   
@@ -134,6 +136,7 @@ export default function DelegateDashboard() {
   const [myResolutions, setMyResolutions] = useState<any[]>([]);
   const [myMessages, setMyMessages] = useState<any[]>([]);
   const [activeSpeakers, setActiveSpeakers] = useState<any[]>([]);
+  const [projectedResolutions, setProjectedResolutions] = useState<any[]>([]);
 
   useEffect(() => {
     const session = localStorage.getItem('delegate_session');
@@ -157,6 +160,12 @@ export default function DelegateDashboard() {
       setMyResolutions(data);
     });
 
+    // Écouteur pour les résolutions projetées par la présidence
+    const qProjected = query(resRef, where('is_displayed', '==', true));
+    const unsubProjected = onSnapshot(qProjected, (snapshot) => {
+      setProjectedResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     const msgRef = collection(db, 'committees', committeeId, 'messages');
     const qMsg = query(msgRef, where('sender_country', '==', del.country_name));
     const unsubMsg = onSnapshot(qMsg, (snapshot) => {
@@ -166,7 +175,12 @@ export default function DelegateDashboard() {
       setMyMessages(data);
     });
 
-    return () => { unsubDelegate(); unsubRes(); unsubMsg(); };
+    return () => { 
+      unsubDelegate(); 
+      unsubRes(); 
+      unsubMsg(); 
+      unsubProjected();
+    };
   }, [router, db, committeeId]);
 
   useEffect(() => {
@@ -400,7 +414,6 @@ export default function DelegateDashboard() {
       </header>
 
       <main className="flex-1 p-4 md:p-10 flex flex-col lg:grid lg:grid-cols-12 gap-6 md:gap-8 max-w-[1600px] mx-auto w-full">
-        {/* 1. PROCÉDURE EN COURS (MOBILE 1) */}
         <div className="order-1 lg:col-span-8 lg:row-span-1">
           <Card className="rounded-[1.5rem] md:rounded-[2.5rem] border-primary/10 glass-card overflow-hidden shadow-2xl h-full">
             <CardHeader className="bg-primary/[0.03] border-b border-primary/5 p-6 md:p-10">
@@ -434,9 +447,7 @@ export default function DelegateDashboard() {
           </Card>
         </div>
 
-        {/* SIDEBAR WRAPPER (MOBILE 2, 3, 4) */}
         <div className="order-2 lg:col-span-4 lg:row-span-2 space-y-6 md:space-y-8">
-          {/* 2. LISTE ORATEURS */}
           <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
             <CardHeader className="py-3 px-4 md:py-6 md:px-8 flex flex-row items-center justify-between">
               <div className="flex items-center gap-2 md:gap-3"><ListOrdered className="size-4 md:size-6 text-[#0459ab]" /><CardTitle className="text-xs md:text-lg font-black uppercase tracking-widest text-[#0459ab]/80">{t.speakersList}</CardTitle></div>
@@ -457,7 +468,6 @@ export default function DelegateDashboard() {
             </CardContent>
           </Card>
 
-          {/* 3. MESSAGE TO PRESIDENCY */}
           <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
             <CardHeader className="py-3 px-4 md:py-6 md:px-8 flex flex-row items-center gap-2 md:gap-3">
               <MessageSquarePlus className="size-4 md:size-6 text-[#0459ab]" />
@@ -476,7 +486,6 @@ export default function DelegateDashboard() {
             </form>
           </Card>
 
-          {/* 4. HISTORIQUE / MESSAGES */}
           <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
             <CardHeader className="py-3 px-4 md:py-6 md:px-8 flex flex-row items-center gap-2 md:gap-3">
               <Send className="size-4 md:size-6 text-[#0459ab]" />
@@ -503,8 +512,23 @@ export default function DelegateDashboard() {
           </Card>
         </div>
 
-        {/* 5. RÉDACTION RÉSOLUTION (MOBILE 5) */}
-        <div className="order-3 lg:col-span-8 lg:row-span-1">
+        <div className="order-3 lg:col-span-8 lg:row-span-1 space-y-6 md:space-y-8">
+          {projectedResolutions.map(res => (
+            <Card key={res.id} className="rounded-[1.5rem] md:rounded-[2.5rem] border-primary border-4 bg-primary/5 shadow-2xl animate-in fade-in zoom-in duration-500 overflow-hidden">
+              <CardHeader className="bg-white/80 border-b border-primary/20 p-6 md:p-8">
+                <Badge className="bg-[#0459ab] text-white animate-pulse mb-3">{t.projectedRes}</Badge>
+                <CardTitle className="text-xl md:text-3xl font-black uppercase text-[#0459ab]">{res.title}</CardTitle>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <Badge variant="outline" className="text-[10px] border-primary/20 text-[#0459ab]">DE: {res.proposing_country}</Badge>
+                  {res.spokesperson && <Badge variant="outline" className="text-[10px] border-primary/20 text-[#0459ab]">Porte-parole: {res.spokesperson}</Badge>}
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 md:p-10">
+                <div className="text-sm md:text-lg leading-relaxed font-serif text-foreground/80 whitespace-pre-wrap prose max-w-none" dangerouslySetInnerHTML={{ __html: res.content }} />
+              </CardContent>
+            </Card>
+          ))}
+
           <Card className={`rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl overflow-hidden glass-card transition-all duration-500 ${(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
             <CardHeader className="bg-secondary/5 border-b border-primary/5 p-6 md:p-8 flex flex-row items-center justify-between">
               <CardTitle className="text-lg md:text-3xl font-black uppercase tracking-tight text-[#0459ab]">{t.submitResolution}</CardTitle>

@@ -177,6 +177,7 @@ export default function PresidentDashboard() {
   const [allActions, setAllActions] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [displayGradedDelegates, setDisplayGradedDelegates] = useState<any[]>([]);
+  const [sortOrder, setSortOrder] = useState<'alpha' | 'rank'>('alpha');
 
   useEffect(() => {
     if (!isUserLoading && !user) router.push(`/committees/${committeeId}/president/login`);
@@ -186,7 +187,13 @@ export default function PresidentDashboard() {
     if (!db || !user) return;
 
     const unsubDel = onSnapshot(query(collection(db, 'committees', committeeId, 'delegates'), orderBy('country_name', 'asc')), (snap) => {
-      setDelegates(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const data = snap.docs.map(d => {
+        const docData = d.data();
+        const g = docData.grades || { speaking: 0, diplomacy: 0, knowledge: 0 };
+        const avg = (Number(g.speaking) + Number(g.diplomacy) + Number(g.knowledge)) / 3;
+        return { id: d.id, ...docData, grades: g, average: avg };
+      });
+      setDelegates(data);
     });
 
     const unsubRes = onSnapshot(query(collection(db, 'committees', committeeId, 'resolutions'), orderBy('created_at', 'desc')), (snapshot) => {
@@ -221,12 +228,14 @@ export default function PresidentDashboard() {
   }, [db, currentAction?.id, committeeId]);
 
   useEffect(() => {
-    setDisplayGradedDelegates(delegates.map(d => {
-      const g = d.grades || { speaking: 0, diplomacy: 0, knowledge: 0 };
-      const avg = (Number(g.speaking) + Number(g.diplomacy) + Number(g.knowledge)) / 3;
-      return { ...d, grades: g, average: avg };
-    }));
-  }, [delegates]);
+    let sorted = [...delegates];
+    if (sortOrder === 'rank') {
+      sorted.sort((a, b) => b.average - a.average);
+    } else {
+      sorted.sort((a, b) => a.country_name.localeCompare(b.country_name));
+    }
+    setDisplayGradedDelegates(sorted);
+  }, [delegates, sortOrder]);
 
   const toggleSuspension = () => {
     if (!db) return;
@@ -375,14 +384,15 @@ export default function PresidentDashboard() {
             </CollapsibleContent>
           </Collapsible>
 
-          {activeOverlay && activeOverlay.type === 'vote' && (
+          {activeOverlay && activeOverlay.type !== 'none' && (
             <div className="flex items-center gap-4 bg-primary/5 px-4 py-1.5 rounded-2xl border border-primary/10">
-              {['pour', 'contre', 'abstention'].map(c => (
+              {activeOverlay.type === 'vote' && ['pour', 'contre', 'abstention'].map(c => (
                 <div key={c} className="flex flex-col items-center">
                   <span className={`text-[7px] font-black uppercase ${c === 'pour' ? 'text-green-600' : c === 'contre' ? 'text-red-600' : 'text-amber-600'}`}>{c}</span>
                   <span className={`text-sm font-black tabular-nums ${c === 'pour' ? 'text-green-600' : c === 'contre' ? 'text-red-600' : 'text-amber-600'}`}>{activeOverlay.results?.[c] || 0}</span>
                 </div>
               ))}
+              {activeOverlay.type !== 'vote' && <span className="text-[9px] font-black uppercase text-primary/60 truncate max-w-[100px]">{activeOverlay.title}</span>}
               <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={stopOverlay}><X className="size-3" /></Button>
             </div>
           )}
@@ -494,7 +504,16 @@ export default function PresidentDashboard() {
               <Card className="rounded-2xl border-primary/10 glass-card">
                 <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><Award className="size-4 md:size-5 text-primary" /><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">{t.gradingTitle}</CardTitle></CardHeader>
                 <CardContent className="px-2 md:px-4 pb-4">
-                  <div className="mb-4"><Button size="sm" onClick={() => { const sorted = [...displayGradedDelegates].sort((a, b) => b.average - a.average); setDisplayGradedDelegates(sorted); }} className="w-full bg-primary h-11 rounded-xl font-black uppercase tracking-widest text-[9px] gap-2 shadow-lg shadow-primary/20"><Calculator className="size-4" /> {t.calculate}</Button></div>
+                  <div className="mb-4">
+                    <Button size="sm" onClick={() => setSortOrder('rank')} className="w-full bg-primary h-11 rounded-xl font-black uppercase tracking-widest text-[9px] gap-2 shadow-lg shadow-primary/20">
+                      <Calculator className="size-4" /> {t.calculate}
+                    </Button>
+                    {sortOrder === 'rank' && (
+                      <Button variant="ghost" size="sm" onClick={() => setSortOrder('alpha')} className="w-full mt-2 text-[8px] uppercase font-bold opacity-60">
+                        Retour à l'ordre alphabétique
+                      </Button>
+                    )}
+                  </div>
                   <ScrollArea className="h-[400px] md:h-[600px]"><div className="space-y-4 p-1">
                     {displayGradedDelegates.map((d, index) => (
                       <div key={d.id} className="p-4 border border-primary/5 rounded-[1.5rem] bg-white shadow-sm hover:shadow-md transition-all">
