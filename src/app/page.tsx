@@ -22,9 +22,9 @@ export default function MUNOSHome() {
   const { data: committees, isLoading } = useCollection(committeesQuery);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start p-6 pt-4 md:pt-8">
-      <div className="max-w-6xl w-full space-y-6">
-        <div className="space-y-3 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-start p-6 pt-12 md:pt-20">
+      <div className="max-w-6xl w-full space-y-12">
+        <div className="space-y-4 text-center">
           <Badge variant="outline" className="px-6 py-1 border-primary/20 text-primary font-bold uppercase tracking-[0.4em] bg-white/50 backdrop-blur-sm shadow-sm">
             MUN Operating System
           </Badge>
@@ -36,7 +36,7 @@ export default function MUNOSHome() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {isLoading ? (
             Array(3).fill(0).map((_, i) => (
               <Card key={i} className="animate-pulse bg-white/50 border-none h-[220px] rounded-3xl" />
@@ -82,7 +82,7 @@ export default function MUNOSHome() {
           )}
         </div>
 
-        <div className="flex justify-center pt-2">
+        <div className="flex justify-center pt-8">
           <Button asChild variant="ghost" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 gap-2 font-bold uppercase tracking-widest text-[10px] px-8 py-3 rounded-full border border-transparent hover:border-destructive/10 h-auto transition-colors">
             <Link href="/admin">
               <Settings size={16} /> Console d'Administration
@@ -91,7 +91,7 @@ export default function MUNOSHome() {
         </div>
       </div>
       
-      <footer className="mt-auto py-4">
+      <footer className="mt-auto py-12">
         <a 
           href="https://www.instagram.com/youssef_heidar/" 
           target="_blank" 
