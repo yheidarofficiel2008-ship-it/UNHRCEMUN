@@ -319,7 +319,7 @@ export default function DelegateDashboard() {
         is_read: false
       });
       setMessageForm({ ...messageForm, content: '' });
-      toast({ title: lang === 'fr' ? "Message transmis" : "Message transmitted" });
+      toast({ title: lang === 'fr' ? "Message transmise" : "Message transmitted" });
     } catch (e) { toast({ title: "Error", variant: "destructive" }); } finally { setIsSendingMessage(false); }
   };
 
@@ -399,10 +399,10 @@ export default function DelegateDashboard() {
         <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-full" onClick={() => { localStorage.removeItem('delegate_session'); router.push('/'); }}><LogOut className="size-4 md:size-5" /></Button>
       </header>
 
-      <main className="flex-1 p-4 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 max-w-[1600px] mx-auto w-full">
-        {/* SECTION 1: PROCÉDURE EN COURS (MOBILE ORDER 1) */}
-        <div className="order-1 lg:col-span-8 space-y-6">
-          <Card className="rounded-[1.5rem] md:rounded-[2.5rem] border-primary/10 glass-card overflow-hidden shadow-2xl">
+      <main className="flex-1 p-4 md:p-10 flex flex-col lg:grid lg:grid-cols-12 gap-6 md:gap-8 max-w-[1600px] mx-auto w-full">
+        {/* 1. PROCÉDURE EN COURS (MOBILE 1) */}
+        <div className="order-1 lg:col-span-8 lg:row-span-1">
+          <Card className="rounded-[1.5rem] md:rounded-[2.5rem] border-primary/10 glass-card overflow-hidden shadow-2xl h-full">
             <CardHeader className="bg-primary/[0.03] border-b border-primary/5 p-6 md:p-10">
               <Badge className="bg-[#0459ab] rounded-lg md:rounded-xl px-3 md:px-4 py-0.5 md:py-1 font-black text-[8px] md:text-[10px] tracking-widest mb-4">{t.currentSession}</Badge>
               <CardTitle className="text-xl md:text-4xl font-black font-headline uppercase tracking-tighter text-[#0459ab] leading-none">{isActive ? currentAction.title : t.waitingAction}</CardTitle>
@@ -432,39 +432,12 @@ export default function DelegateDashboard() {
               ) : <div className="py-16 md:py-24 text-center opacity-20"><Monitor className="size-16 md:size-24 mx-auto mb-4 md:mb-6" /></div>}
             </CardContent>
           </Card>
-
-          {/* RÉDACTION DESKTOP (SUR MOBILE C'EST EN ORDER 5) */}
-          <div className="hidden lg:flex flex-col gap-6 md:gap-8">
-            <Card className={`rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl overflow-hidden glass-card transition-all duration-500 ${(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
-              <CardHeader className="bg-secondary/5 border-b border-primary/5 p-6 md:p-8 flex flex-row items-center justify-between">
-                <CardTitle className="text-lg md:text-3xl font-black uppercase tracking-tight text-[#0459ab]">{t.submitResolution}</CardTitle>
-                {!allowResolutions && <Badge variant="destructive" className="font-black h-7 md:h-8 px-2 md:px-4 text-[8px] md:text-xs"><Lock className="size-3 md:size-4 mr-1.5 md:mr-2" /> {t.submissionsSuspended}</Badge>}
-              </CardHeader>
-              <form onSubmit={submitResolution}>
-                <CardContent className="p-6 md:p-10 space-y-6 md:space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                    <div className="space-y-2"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.title}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-12 font-bold text-xs" value={resolutionForm.title} onChange={e => setResolutionForm({...resolutionForm, title: e.target.value})} required /></div>
-                    <div className="space-y-2"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.spokesperson}</Label><Input placeholder={t.countryName} className="rounded-xl border-primary/10 h-10 md:h-12 font-bold text-xs" value={resolutionForm.spokesperson} onChange={e => setResolutionForm({...resolutionForm, spokesperson: e.target.value})} required /></div>
-                  </div>
-                  <div className="space-y-2"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.sponsors}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-12 font-bold text-xs" value={resolutionForm.sponsors} onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} /></div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.content}</Label><div className="flex gap-1.5 bg-secondary p-1 rounded-lg border border-primary/5">
-                      {['b', 'i', 'u'].map(tag => <Button key={tag} type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-lg hover:bg-white" onClick={() => wrapText(tag)}><span className={tag === 'b' ? 'font-bold' : tag === 'i' ? 'italic' : 'underline'}>{tag.toUpperCase()}</span></Button>)}
-                    </div></div>
-                    <Textarea ref={resTextAreaRef} className="min-h-[200px] md:min-h-[300px] text-xs md:text-sm leading-relaxed font-serif rounded-2xl border-primary/10 bg-white/50 p-4 md:p-8" value={resolutionForm.content} onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} required />
-                    {resolutionForm.content && <div className="mt-4 p-4 md:p-8 rounded-2xl bg-primary/[0.01] border border-primary/5"><div className="flex items-center gap-2 text-[8px] md:text-[10px] font-black text-[#0459ab]/40 uppercase tracking-widest mb-4"><Eye className="size-4" /> {t.preview}</div><div className="text-xs md:text-sm font-serif leading-relaxed text-left text-foreground/60 whitespace-pre-wrap break-words prose max-w-none" dangerouslySetInnerHTML={{ __html: resolutionForm.content }} /></div>}
-                  </div>
-                </CardContent>
-                <CardFooter className="p-6 md:p-10 pt-0"><Button type="submit" className="w-full bg-[#0459ab] hover:bg-[#0459ab]/90 h-10 md:h-12 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-xs shadow-lg shadow-[#0459ab]/20"><Send className="size-4 mr-2" /> {t.transmit}</Button></CardFooter>
-              </form>
-            </Card>
-          </div>
         </div>
 
-        {/* SECTION 2, 3, 4: LISTE ORATEURS, MESSAGE FORM, HISTORIQUE (DESKTOP SIDEBAR) */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* LISTE ORATEURS (ORDER 2 MOBILE) */}
-          <Card className="order-2 lg:order-none rounded-2xl md:rounded-3xl border-primary/10 glass-card">
+        {/* SIDEBAR WRAPPER (MOBILE 2, 3, 4) */}
+        <div className="order-2 lg:col-span-4 lg:row-span-2 space-y-6 md:space-y-8">
+          {/* 2. LISTE ORATEURS */}
+          <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
             <CardHeader className="py-3 px-4 md:py-6 md:px-8 flex flex-row items-center justify-between">
               <div className="flex items-center gap-2 md:gap-3"><ListOrdered className="size-4 md:size-6 text-[#0459ab]" /><CardTitle className="text-xs md:text-lg font-black uppercase tracking-widest text-[#0459ab]/80">{t.speakersList}</CardTitle></div>
               <Badge className="bg-[#0459ab] rounded-lg font-black text-[10px] md:text-sm">{activeSpeakers.length}</Badge>
@@ -484,8 +457,8 @@ export default function DelegateDashboard() {
             </CardContent>
           </Card>
 
-          {/* MESSAGE TO PRESIDENCY (ORDER 3 MOBILE) */}
-          <Card className="order-3 lg:order-none rounded-2xl md:rounded-3xl border-primary/10 glass-card">
+          {/* 3. MESSAGE TO PRESIDENCY */}
+          <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
             <CardHeader className="py-3 px-4 md:py-6 md:px-8 flex flex-row items-center gap-2 md:gap-3">
               <MessageSquarePlus className="size-4 md:size-6 text-[#0459ab]" />
               <CardTitle className="text-xs md:text-sm font-black uppercase tracking-widest text-[#0459ab]/80">{t.msgToPresidency}</CardTitle>
@@ -503,8 +476,8 @@ export default function DelegateDashboard() {
             </form>
           </Card>
 
-          {/* HISTORIQUE / MESSAGES (ORDER 4 MOBILE) */}
-          <Card className="order-4 lg:order-none rounded-2xl md:rounded-3xl border-primary/10 glass-card">
+          {/* 4. HISTORIQUE / MESSAGES */}
+          <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
             <CardHeader className="py-3 px-4 md:py-6 md:px-8 flex flex-row items-center gap-2 md:gap-3">
               <Send className="size-4 md:size-6 text-[#0459ab]" />
               <CardTitle className="text-xs md:text-lg font-black uppercase tracking-tight text-[#0459ab]">{t.myEnvois}</CardTitle>
@@ -528,24 +501,33 @@ export default function DelegateDashboard() {
               </ScrollArea>
             </CardContent>
           </Card>
+        </div>
 
-          {/* RÉDACTION RÉSOLUTION MOBILE (ORDER 5 MOBILE) */}
-          <div className="lg:hidden order-5">
-            <Card className={`rounded-[1.5rem] shadow-xl overflow-hidden glass-card ${(!allowResolutions || isCountrySuspended) ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
-              <CardHeader className="bg-secondary/5 border-b p-6 flex flex-row items-center justify-between"><CardTitle className="text-lg font-black uppercase tracking-tight text-[#0459ab]">{t.submitResolution}</CardTitle></CardHeader>
-              <form onSubmit={submitResolution}><CardContent className="p-6 space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-1"><Label className="text-[8px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.title}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 font-bold text-xs" value={resolutionForm.title} onChange={e => setResolutionForm({...resolutionForm, title: e.target.value})} required /></div>
-                  <div className="space-y-1"><Label className="text-[8px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.spokesperson}</Label><Input placeholder={t.countryName} className="rounded-xl border-primary/10 h-10 font-bold text-xs" value={resolutionForm.spokesperson} onChange={e => setResolutionForm({...resolutionForm, spokesperson: e.target.value})} required /></div>
-                  <div className="space-y-1"><Label className="text-[8px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.sponsors}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 font-bold text-xs" value={resolutionForm.sponsors} onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} /></div>
-                  <div className="space-y-4">
-                    <Label className="text-[8px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.content}</Label>
-                    <Textarea className="min-h-[150px] text-xs leading-relaxed font-serif rounded-xl border-primary/10 bg-white/50 p-4" value={resolutionForm.content} onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} required />
-                  </div>
+        {/* 5. RÉDACTION RÉSOLUTION (MOBILE 5) */}
+        <div className="order-3 lg:col-span-8 lg:row-span-1">
+          <Card className={`rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl overflow-hidden glass-card transition-all duration-500 ${(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+            <CardHeader className="bg-secondary/5 border-b border-primary/5 p-6 md:p-8 flex flex-row items-center justify-between">
+              <CardTitle className="text-lg md:text-3xl font-black uppercase tracking-tight text-[#0459ab]">{t.submitResolution}</CardTitle>
+              {!allowResolutions && <Badge variant="destructive" className="font-black h-7 md:h-8 px-2 md:px-4 text-[8px] md:text-xs"><Lock className="size-3 md:size-4 mr-1.5 md:mr-2" /> {t.submissionsSuspended}</Badge>}
+            </CardHeader>
+            <form onSubmit={submitResolution}>
+              <CardContent className="p-6 md:p-10 space-y-6 md:space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                  <div className="space-y-2"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.title}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-12 font-bold text-xs" value={resolutionForm.title} onChange={e => setResolutionForm({...resolutionForm, title: e.target.value})} required /></div>
+                  <div className="space-y-2"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.spokesperson}</Label><Input placeholder={t.countryName} className="rounded-xl border-primary/10 h-10 md:h-12 font-bold text-xs" value={resolutionForm.spokesperson} onChange={e => setResolutionForm({...resolutionForm, spokesperson: e.target.value})} required /></div>
                 </div>
-              </CardContent><CardFooter className="p-6 pt-0"><Button type="submit" className="w-full bg-[#0459ab] h-10 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-lg"><Send className="size-4 mr-2" /> {t.transmit}</Button></CardFooter></form>
-            </Card>
-          </div>
+                <div className="space-y-2"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.sponsors}</Label><Input placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-12 font-bold text-xs" value={resolutionForm.sponsors} onChange={e => setResolutionForm({...resolutionForm, sponsors: e.target.value})} /></div>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center"><Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.content}</Label><div className="flex gap-1.5 bg-secondary p-1 rounded-lg border border-primary/5">
+                    {['b', 'i', 'u'].map(tag => <Button key={tag} type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 rounded-lg hover:bg-white" onClick={() => wrapText(tag)}><span className={tag === 'b' ? 'font-bold' : tag === 'i' ? 'italic' : 'underline'}>{tag.toUpperCase()}</span></Button>)}
+                  </div></div>
+                  <Textarea ref={resTextAreaRef} className="min-h-[200px] md:min-h-[300px] text-xs md:text-sm leading-relaxed font-serif rounded-2xl border-primary/10 bg-white/50 p-4 md:p-8" value={resolutionForm.content} onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} required />
+                  {resolutionForm.content && <div className="mt-4 p-4 md:p-8 rounded-2xl bg-primary/[0.01] border border-primary/5"><div className="flex items-center gap-2 text-[8px] md:text-[10px] font-black text-[#0459ab]/40 uppercase tracking-widest mb-4"><Eye className="size-4" /> {t.preview}</div><div className="text-xs md:text-sm font-serif leading-relaxed text-left text-foreground/60 whitespace-pre-wrap break-words prose max-w-none" dangerouslySetInnerHTML={{ __html: resolutionForm.content }} /></div>}
+                </div>
+              </CardContent>
+              <CardFooter className="p-6 md:p-10 pt-0"><Button type="submit" className="w-full bg-[#0459ab] hover:bg-[#0459ab]/90 h-10 md:h-12 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-xs shadow-lg shadow-[#0459ab]/20"><Send className="size-4 mr-2" /> {t.transmit}</Button></CardFooter>
+            </form>
+          </Card>
         </div>
       </main>
     </div>
