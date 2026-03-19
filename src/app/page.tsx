@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from 'react';
@@ -22,21 +23,18 @@ export default function MUNOSHome() {
   const { data: committees, isLoading } = useCollection(committeesQuery);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start p-6 pt-12 md:pt-20">
+    <div className="min-h-screen flex flex-col items-center justify-start p-4 md:p-12 lg:p-20 pt-12 md:pt-20">
       <div className="max-w-6xl w-full space-y-12">
         <div className="space-y-4 text-center">
           <Badge variant="outline" className="px-6 py-1 border-primary/20 text-primary font-bold uppercase tracking-[0.4em] bg-white/50 backdrop-blur-sm shadow-sm">
             MUN Operating System
           </Badge>
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-gradient uppercase font-headline">
+          <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-gradient uppercase font-headline leading-none">
             MUN-OS
           </h1>
-          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed">
-            Plateforme centralisée de gestion pour vos simulations onusiennes.
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {isLoading ? (
             Array(3).fill(0).map((_, i) => (
               <Card key={i} className="animate-pulse bg-white/50 border-none h-[220px] rounded-3xl" />
@@ -83,7 +81,7 @@ export default function MUNOSHome() {
         </div>
 
         <div className="flex justify-center pt-4">
-          <Button asChild variant="ghost" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 gap-2 font-bold uppercase tracking-widest text-[10px] px-8 py-3 rounded-full border border-transparent hover:border-destructive/10 h-auto transition-colors">
+          <Button asChild variant="ghost" className="text-muted-foreground hover:text-red-600 hover:bg-red-50 gap-2 font-bold uppercase tracking-widest text-[10px] px-8 py-3 rounded-full border border-transparent hover:border-red-100 h-auto transition-colors">
             <Link href="/admin">
               <Settings size={16} /> Console d'Administration
             </Link>
@@ -91,7 +89,7 @@ export default function MUNOSHome() {
         </div>
       </div>
       
-      <footer className="mt-auto py-6">
+      <footer className="mt-8 py-4">
         <a 
           href="https://www.instagram.com/youssef_heidar/" 
           target="_blank" 
