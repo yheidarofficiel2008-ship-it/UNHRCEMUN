@@ -563,7 +563,7 @@ export default function PresidentDashboard() {
         <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 w-full md:w-auto">
           <Collapsible open={isFluxMenuOpen} onOpenChange={setIsFluxMenuOpen} className="relative">
             <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-full border-primary/20 text-primary font-bold gap-2">
+              <Button variant="outline" size="sm" className="rounded-full border-primary/20 text-primary font-bold gap-2 text-[10px] md:text-xs">
                 Controle des Flux {isFluxMenuOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </Button>
             </CollapsibleTrigger>
@@ -610,8 +610,9 @@ export default function PresidentDashboard() {
 
           <Dialog open={isOverlayDialogOpen} onOpenChange={setIsOverlayDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-full font-bold gap-2 px-4">
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-full font-bold gap-2 px-4 text-[10px] md:text-xs">
                 <Stars size={14} /> <span className="hidden sm:inline">{t.specialAction}</span>
+                <span className="sm:hidden">Spécial</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="rounded-3xl border-primary/10 shadow-2xl w-[95vw] max-w-lg">
@@ -655,50 +656,50 @@ export default function PresidentDashboard() {
             </TabsList>
             
             <TabsContent value="actions" className="space-y-6 md:space-y-8 mt-4 md:mt-6">
-              <Card className="rounded-3xl border-primary/10 glass-card">
-                <CardHeader className="pb-4"><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.newAction}</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.title}</Label>
-                    <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="..." className="rounded-xl border-primary/10" />
+              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
+                <CardHeader className="pb-3 md:pb-4"><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.newAction}</CardTitle></CardHeader>
+                <CardContent className="space-y-3 md:space-y-4">
+                  <div className="space-y-1.5 md:space-y-2">
+                    <Label className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.title}</Label>
+                    <Input value={newAction.title} onChange={e => setNewAction({...newAction, title: e.target.value})} placeholder="..." className="rounded-xl border-primary/10 text-xs md:text-sm h-10 md:h-11" />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1"><Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.duration}</Label><Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} className="rounded-xl border-primary/10" /></div>
-                    <div className="space-y-1"><Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.speakingTime}</Label><Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} placeholder="1:00" className="rounded-xl border-primary/10" /></div>
+                  <div className="grid grid-cols-2 gap-3 md:gap-4">
+                    <div className="space-y-1"><Label className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.duration}</Label><Input type="number" value={newAction.duration} onChange={e => setNewAction({...newAction, duration: parseInt(e.target.value)})} className="rounded-xl border-primary/10 text-xs h-10 md:h-11" /></div>
+                    <div className="space-y-1"><Label className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.speakingTime}</Label><Input value={newAction.timePerDelegate} onChange={e => setNewAction({...newAction, timePerDelegate: e.target.value})} placeholder="1:00" className="rounded-xl border-primary/10 text-xs h-10 md:h-11" /></div>
                   </div>
-                  <Button className="w-full bg-primary hover:bg-primary/90 h-11 md:h-12 rounded-xl font-bold uppercase tracking-widest text-xs" onClick={createAction}>{t.launchAction}</Button>
+                  <Button className="w-full bg-primary hover:bg-primary/90 h-10 md:h-12 rounded-xl font-bold uppercase tracking-widest text-[10px] md:text-xs" onClick={createAction}>{t.launchAction}</Button>
                 </CardContent>
               </Card>
 
               {currentAction && currentAction.status !== 'completed' && (
-                <Card className="rounded-3xl border-primary/20 shadow-2xl glass-card overflow-hidden">
-                  <CardHeader className="bg-primary/[0.03] border-b border-primary/5 pb-4">
-                    <div className="flex justify-between items-start gap-4">
+                <Card className="rounded-2xl md:rounded-3xl border-primary/20 shadow-2xl glass-card overflow-hidden">
+                  <CardHeader className="bg-primary/[0.03] border-b border-primary/5 pb-4 p-4 md:p-6">
+                    <div className="flex justify-between items-start gap-3 md:gap-4">
                       <div className="flex-1 min-w-0">
-                        <Badge className="bg-primary/10 text-primary border-primary/20 uppercase text-[8px] md:text-[9px] font-black tracking-widest px-2 mb-2">{currentAction.status}</Badge>
-                        <CardTitle className="text-xl md:text-2xl font-black uppercase tracking-tight text-gradient break-words leading-none">{currentAction.title}</CardTitle>
+                        <Badge className="bg-primary/10 text-primary border-primary/20 uppercase text-[7px] md:text-[9px] font-black tracking-widest px-2 mb-2">{currentAction.status}</Badge>
+                        <CardTitle className="text-lg md:text-2xl font-black uppercase tracking-tight text-gradient break-words leading-tight">{currentAction.title}</CardTitle>
                       </div>
                       <div className="flex items-center gap-1 bg-white p-1 rounded-xl shadow-inner border border-primary/10 shrink-0">
-                        <Input type="number" className="w-10 md:w-12 h-8 border-none p-1 text-center font-bold text-xs" value={customMinutes} onChange={(e) => setCustomMinutes(e.target.value)} />
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-primary hover:bg-primary/5 rounded-lg" onClick={() => extendTime(parseInt(customMinutes))}><Plus size={14} /></Button>
+                        <Input type="number" className="w-8 md:w-12 h-7 md:h-8 border-none p-1 text-center font-bold text-[10px] md:text-xs" value={customMinutes} onChange={(e) => setCustomMinutes(e.target.value)} />
+                        <Button size="icon" variant="ghost" className="h-7 w-7 md:h-8 md:w-8 text-primary hover:bg-primary/5 rounded-lg" onClick={() => extendTime(parseInt(customMinutes))}><Plus className="size-3 md:size-4" /></Button>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-6 md:p-8 space-y-6 md:space-y-8">
+                  <CardContent className="p-4 md:p-8 space-y-6 md:space-y-8">
                     <GlobalTimer status={currentAction.status} startedAt={currentAction.started_at} pausedAt={currentAction.paused_at} totalElapsedSeconds={currentAction.total_elapsed_seconds} durationMinutes={currentAction.duration_minutes} />
                     <div className="grid grid-cols-2 gap-3 md:gap-4">
                       {(currentAction.status === 'launched' || currentAction.status === 'paused') ? (
-                        <Button size="sm" className="bg-primary hover:bg-primary/90 h-12 md:h-14 rounded-2xl gap-2 md:gap-3 text-xs md:text-sm font-black uppercase tracking-widest shadow-lg shadow-primary/20" onClick={startTimer}><Play size={16} fill="currentColor" /> {t.start}</Button>
+                        <Button size="sm" className="bg-primary hover:bg-primary/90 h-10 md:h-14 rounded-xl md:rounded-2xl gap-2 md:gap-3 text-[10px] md:text-sm font-black uppercase tracking-widest shadow-lg shadow-primary/20" onClick={startTimer}><Play className="size-4 md:size-5" fill="currentColor" /> {t.start}</Button>
                       ) : (
-                        <Button size="sm" variant="outline" className="border-amber-400 text-amber-600 hover:bg-amber-50 h-12 md:h-14 rounded-2xl gap-2 md:gap-3 text-xs md:text-sm font-black uppercase tracking-widest" onClick={pauseTimer}><Pause size={16} fill="currentColor" /> {t.pause}</Button>
+                        <Button size="sm" variant="outline" className="border-amber-400 text-amber-600 hover:bg-amber-50 h-10 md:h-14 rounded-xl md:rounded-2xl gap-2 md:gap-3 text-[10px] md:text-sm font-black uppercase tracking-widest" onClick={pauseTimer}><Pause className="size-4 md:size-5" fill="currentColor" /> {t.pause}</Button>
                       )}
-                      <Button size="sm" variant="destructive" className="h-12 md:h-14 rounded-2xl gap-2 md:gap-3 text-xs md:text-sm font-black uppercase tracking-widest shadow-lg shadow-destructive/20" onClick={stopAction}><Square size={16} fill="currentColor" /> {t.stop}</Button>
+                      <Button size="sm" variant="destructive" className="h-10 md:h-14 rounded-xl md:rounded-2xl gap-2 md:gap-3 text-[10px] md:text-sm font-black uppercase tracking-widest shadow-lg shadow-destructive/20" onClick={stopAction}><Square className="size-4 md:size-5" fill="currentColor" /> {t.stop}</Button>
                     </div>
 
-                    <div className="pt-6 border-t border-primary/5 space-y-6">
+                    <div className="pt-4 md:pt-6 border-t border-primary/5 space-y-4 md:space-y-6">
                       <div className="flex justify-between items-center">
-                        <h3 className="font-black text-[9px] md:text-[10px] text-primary uppercase tracking-[0.2em] flex items-center gap-2"><Timer size={14} /> {t.speakerChrono}</h3>
-                        <Badge variant="outline" className="text-[9px] md:text-[10px] font-bold border-primary/10 bg-primary/5">{currentAction.time_per_delegate}</Badge>
+                        <h3 className="font-black text-[8px] md:text-[10px] text-primary uppercase tracking-[0.2em] flex items-center gap-2"><Timer size={12} className="md:size-14" /> {t.speakerChrono}</h3>
+                        <Badge variant="outline" className="text-[8px] md:text-[10px] font-bold border-primary/10 bg-primary/5">{currentAction.time_per_delegate}</Badge>
                       </div>
                       <div className="flex justify-center">
                         <SpeakingTimer 
@@ -711,31 +712,31 @@ export default function PresidentDashboard() {
                       </div>
                       <div className="grid grid-cols-3 gap-2 md:gap-3">
                         {currentAction.speaking_timer_status === 'started' ? (
-                          <Button variant="outline" size="sm" className="border-amber-400 text-amber-600 h-9 md:h-10 rounded-xl font-bold uppercase text-[9px] md:text-[10px]" onClick={pauseSpeakingTimer}><Pause size={12} /> {t.pause}</Button>
+                          <Button variant="outline" size="sm" className="border-amber-400 text-amber-600 h-8 md:h-10 rounded-xl font-bold uppercase text-[8px] md:text-[10px]" onClick={pauseSpeakingTimer}><Pause className="size-3 md:size-4" /> {t.pause}</Button>
                         ) : (
-                          <Button variant="secondary" size="sm" className="bg-primary/10 text-primary hover:bg-primary/20 h-9 md:h-10 rounded-xl font-bold uppercase text-[9px] md:text-[10px]" onClick={startSpeakingTimer}><Play size={12} /> {t.start}</Button>
+                          <Button variant="secondary" size="sm" className="bg-primary/10 text-primary hover:bg-primary/20 h-8 md:h-10 rounded-xl font-bold uppercase text-[8px] md:text-[10px]" onClick={startSpeakingTimer}><Play className="size-3 md:size-4" /> {t.start}</Button>
                         )}
-                        <Button variant="ghost" size="sm" className="border border-primary/10 h-9 md:h-10 rounded-xl font-bold uppercase text-[9px] md:text-[10px]" onClick={resetSpeakingTimer}>Reset</Button>
-                        <Button variant="outline" size="sm" className="border-green-500/30 text-green-600 hover:bg-green-50 h-9 md:h-10 rounded-xl font-bold uppercase text-[9px] md:text-[10px]" onClick={() => handleMarkAsSpoken(orateursInscrits[0]?.id)} disabled={!orateursInscrits[0]}><Check size={12} /></Button>
+                        <Button variant="ghost" size="sm" className="border border-primary/10 h-8 md:h-10 rounded-xl font-bold uppercase text-[8px] md:text-[10px]" onClick={resetSpeakingTimer}>Reset</Button>
+                        <Button variant="outline" size="sm" className="border-green-500/30 text-green-600 hover:bg-green-50 h-8 md:h-10 rounded-xl font-bold uppercase text-[8px] md:text-[10px]" onClick={() => handleMarkAsSpoken(orateursInscrits[0]?.id)} disabled={!orateursInscrits[0]}><Check className="size-3 md:size-4" /></Button>
                       </div>
                     </div>
 
-                    <div className="space-y-4 pt-6 border-t border-primary/5">
+                    <div className="space-y-4 pt-4 md:pt-6 border-t border-primary/5">
                       <h3 className="font-black text-[9px] md:text-[10px] text-primary uppercase tracking-[0.2em] flex items-center justify-between">
-                        <span className="flex items-center gap-2"><ListOrdered size={14} /> {t.speakersList}</span>
+                        <span className="flex items-center gap-2"><ListOrdered className="size-3 md:size-4" /> {t.speakersList}</span>
                         <Badge className="bg-primary rounded-lg text-[10px]">{orateursInscrits.length}</Badge>
                       </h3>
-                      <ScrollArea className="h-[200px] rounded-2xl border border-primary/5 bg-primary/[0.01] p-2 md:p-3">
+                      <ScrollArea className="h-[150px] md:h-[200px] rounded-xl md:rounded-2xl border border-primary/5 bg-primary/[0.01] p-2 md:p-3">
                         <div className="space-y-2">
                           {orateursInscrits.length > 0 ? orateursInscrits.map((p, i) => (
-                            <div key={i} className="flex justify-between items-center p-3 md:p-4 bg-white border border-primary/5 rounded-xl shadow-sm group hover:border-primary/20 transition-all">
-                              <span className="font-bold text-xs md:text-sm text-foreground/80">{i + 1}. {p.country_name}</span>
+                            <div key={i} className="flex justify-between items-center p-2.5 md:p-4 bg-white border border-primary/5 rounded-xl shadow-sm group hover:border-primary/20 transition-all">
+                              <span className="font-bold text-[10px] md:text-sm text-foreground/80">{i + 1}. {p.country_name}</span>
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:bg-green-50 rounded-lg" onClick={() => handleMarkAsSpoken(p.id)}><Check size={14} /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 text-green-600 hover:bg-green-50 rounded-lg" onClick={() => handleMarkAsSpoken(p.id)}><Check className="size-3 md:size-4" /></Button>
                               </div>
                             </div>
                           )) : (
-                            <div className="text-center py-12 text-muted-foreground text-[10px] md:text-xs italic opacity-50">{t.noSpeaker}</div>
+                            <div className="text-center py-10 md:py-12 text-muted-foreground text-[8px] md:text-xs italic opacity-50">{t.noSpeaker}</div>
                           )}
                         </div>
                       </ScrollArea>
@@ -746,31 +747,31 @@ export default function PresidentDashboard() {
             </TabsContent>
 
             <TabsContent value="delegates" className="space-y-6 md:space-y-8 mt-4 md:mt-6">
-              <Card className="rounded-3xl border-primary/10 glass-card">
-                <CardHeader className="pb-3 flex flex-row items-center gap-3"><UserPlus size={20} className="text-primary" /><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.addCountry}</CardTitle></CardHeader>
+              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
+                <CardHeader className="pb-3 flex flex-row items-center gap-3"><UserPlus className="size-4 md:size-5 text-primary" /><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.addCountry}</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2"><Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.countryName}</Label><Input value={newDelegate.name} onChange={e => setNewDelegate({...newDelegate, name: e.target.value})} placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-11" /></div>
-                  <div className="space-y-2"><Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.password}</Label><Input value={newDelegate.password} onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-11" /></div>
+                  <div className="space-y-2"><Label className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.countryName}</Label><Input value={newDelegate.name} onChange={e => setNewDelegate({...newDelegate, name: e.target.value})} placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-11 text-xs" /></div>
+                  <div className="space-y-2"><Label className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{t.password}</Label><Input value={newDelegate.password} onChange={e => setNewDelegate({...newDelegate, password: e.target.value})} placeholder="..." className="rounded-xl border-primary/10 h-10 md:h-11 text-xs" /></div>
                   <Button className="w-full bg-primary h-10 md:h-11 rounded-xl font-bold uppercase tracking-widest text-[9px] md:text-[10px]" onClick={handleAddDelegate}>{t.addToList}</Button>
                 </CardContent>
               </Card>
-              <Card className="rounded-3xl border-primary/10 glass-card">
+              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
                 <CardHeader><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.registeredDelegates} ({delegates.length})</CardTitle></CardHeader>
                 <CardContent>
-                  <ScrollArea className="h-[350px] md:h-[450px]">
-                    <div className="space-y-3">
+                  <ScrollArea className="h-[300px] md:h-[450px]">
+                    <div className="space-y-2.5 md:space-y-3">
                       {delegates.map(d => (
-                        <div key={d.id} className={`flex justify-between items-center p-3 md:p-4 rounded-2xl border transition-all duration-300 ${d.is_suspended ? 'bg-destructive/5 border-destructive/20' : 'bg-white border-primary/5 shadow-sm hover:shadow-md'}`}>
+                        <div key={d.id} className={`flex justify-between items-center p-3 md:p-4 rounded-xl md:rounded-2xl border transition-all duration-300 ${d.is_suspended ? 'bg-destructive/5 border-destructive/20' : 'bg-white border-primary/5 shadow-sm hover:shadow-md'}`}>
                           <div className="flex flex-col min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-xs md:text-sm text-foreground/80 truncate">{d.country_name}</span>
-                              {d.is_suspended && <Badge variant="destructive" className="h-4 text-[7px] md:text-[8px] px-1 uppercase font-black shrink-0"><ShieldAlert size={10} className="mr-0.5" /> Suspendu</Badge>}
+                              <span className="font-bold text-[10px] md:text-sm text-foreground/80 truncate">{d.country_name}</span>
+                              {d.is_suspended && <Badge variant="destructive" className="h-3 md:h-4 text-[6px] md:text-[8px] px-1 uppercase font-black shrink-0"><ShieldAlert size={8} className="md:size-10 mr-0.5" /> Suspendu</Badge>}
                             </div>
-                            <span className="text-[8px] md:text-[9px] text-muted-foreground font-mono uppercase tracking-widest mt-1 opacity-60">Pass: {d.password}</span>
+                            <span className="text-[7px] md:text-[9px] text-muted-foreground font-mono uppercase tracking-widest mt-0.5 md:mt-1 opacity-60">Pass: {d.password}</span>
                           </div>
                           <div className="flex items-center gap-1 shrink-0 ml-2">
-                            <Button variant="ghost" size="icon" className={`h-8 w-8 rounded-lg ${d.is_suspended ? 'text-green-600 hover:bg-green-50' : 'text-amber-600 hover:bg-amber-50'}`} onClick={() => toggleDelegateSuspension(d.id, d.is_suspended)}>{d.is_suspended ? <ShieldOff size={14} /> : <ShieldAlert size={14} />}</Button>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/5 h-8 w-8 rounded-lg" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'delegates', d.id))}><Trash2 size={14} /></Button>
+                            <Button variant="ghost" size="icon" className={`h-7 w-7 md:h-8 md:w-8 rounded-lg ${d.is_suspended ? 'text-green-600 hover:bg-green-50' : 'text-amber-600 hover:bg-amber-50'}`} onClick={() => toggleDelegateSuspension(d.id, d.is_suspended)}>{d.is_suspended ? <ShieldOff className="size-3 md:size-4" /> : <ShieldAlert className="size-3 md:size-4" />}</Button>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/5 h-7 w-7 md:h-8 md:w-8 rounded-lg" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'delegates', d.id))}><Trash2 className="size-3 md:size-4" /></Button>
                           </div>
                         </div>
                       ))}
@@ -781,28 +782,28 @@ export default function PresidentDashboard() {
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-6 md:space-y-8 mt-4 md:mt-6">
-              <Card className="rounded-3xl border-primary/10 glass-card">
-                <CardHeader className="flex flex-row items-center gap-3"><Award size={20} className="text-primary" /><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.gradingTitle}</CardTitle></CardHeader>
-                <CardContent className="px-2">
-                  <div className="px-2 md:px-4 mb-6"><Button size="sm" onClick={handleCalculateRanks} className="w-full bg-primary hover:bg-primary/90 rounded-2xl h-12 md:h-14 font-black uppercase tracking-widest text-[10px] md:text-xs gap-2 md:gap-3 shadow-lg shadow-primary/20"><Calculator size={16} /> {t.calculate}</Button></div>
-                  <ScrollArea className="h-[500px] md:h-[600px]">
-                    <div className="space-y-6 md:space-y-8 p-2 md:p-4">
+              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
+                <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><Award className="size-4 md:size-5 text-primary" /><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.gradingTitle}</CardTitle></CardHeader>
+                <CardContent className="px-2 md:px-4 pb-4">
+                  <div className="px-2 md:px-0 mb-4 md:mb-6"><Button size="sm" onClick={handleCalculateRanks} className="w-full bg-primary hover:bg-primary/90 rounded-xl md:rounded-2xl h-11 md:h-14 font-black uppercase tracking-widest text-[9px] md:text-xs gap-2 md:gap-3 shadow-lg shadow-primary/20"><Calculator className="size-4 md:size-5" /> {t.calculate}</Button></div>
+                  <ScrollArea className="h-[400px] md:h-[600px]">
+                    <div className="space-y-4 md:space-y-8 p-1 md:p-4">
                       {displayGradedDelegates.map((d, index) => (
-                        <div key={d.id} className="p-4 md:p-6 border border-primary/5 rounded-3xl bg-white shadow-sm relative group hover:shadow-md transition-all">
+                        <div key={d.id} className="p-4 md:p-6 border border-primary/5 rounded-[1.5rem] md:rounded-3xl bg-white shadow-sm relative group hover:shadow-md transition-all">
                           <div className="flex justify-between items-center mb-4 md:mb-6">
-                            <div className="flex items-center gap-3 md:gap-4">
-                              <span className="h-8 w-8 md:h-10 md:w-10 bg-primary/5 text-primary rounded-xl md:rounded-2xl flex items-center justify-center font-black text-xs md:text-sm border border-primary/10 shadow-inner">{index + 1}</span>
-                              <span className="font-black uppercase tracking-tight text-xs md:text-sm text-foreground/80 truncate max-w-[120px] md:max-w-none">{d.country_name}</span>
+                            <div className="flex items-center gap-2 md:gap-4">
+                              <span className="h-7 w-7 md:h-10 md:w-10 bg-primary/5 text-primary rounded-lg md:rounded-xl flex items-center justify-center font-black text-[10px] md:text-sm border border-primary/10 shadow-inner">{index + 1}</span>
+                              <span className="font-black uppercase tracking-tight text-[10px] md:text-sm text-foreground/80 truncate max-w-[100px] md:max-w-none">{d.country_name}</span>
                             </div>
                             <div className="flex flex-col items-end">
-                              <span className="text-[8px] md:text-[9px] font-black text-primary uppercase tracking-[0.2em] mb-1">{t.average}</span>
-                              <span className={`text-xl md:text-2xl font-black tabular-nums leading-none ${d.average >= 7 ? 'text-green-600' : d.average >= 4 ? 'text-amber-600' : 'text-red-600'}`}>{d.average.toFixed(1)}/10</span>
+                              <span className="text-[7px] md:text-[9px] font-black text-primary uppercase tracking-[0.1em] md:tracking-[0.2em] mb-0.5 md:mb-1">{t.average}</span>
+                              <span className={`text-base md:text-2xl font-black tabular-nums leading-none ${d.average >= 7 ? 'text-green-600' : d.average >= 4 ? 'text-amber-600' : 'text-red-600'}`}>{d.average.toFixed(1)}/10</span>
                             </div>
                           </div>
                           <div className="grid grid-cols-1 gap-3 md:gap-4">
-                            <div className="space-y-1"><Label className="text-[8px] md:text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.speaking}</Label><Input type="number" min="0" max="10" step="0.5" className="h-9 md:h-10 text-[10px] md:text-xs font-black rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.speaking} onChange={(e) => handleUpdateGrade(d.id, 'speaking', Number(e.target.value))} /></div>
-                            <div className="space-y-1"><Label className="text-[8px] md:text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.diplomacy}</Label><Input type="number" min="0" max="10" step="0.5" className="h-9 md:h-10 text-[10px] md:text-xs font-black rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.diplomacy} onChange={(e) => handleUpdateGrade(d.id, 'diplomacy', Number(e.target.value))} /></div>
-                            <div className="space-y-1"><Label className="text-[8px] md:text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.knowledge}</Label><Input type="number" min="0" max="10" step="0.5" className="h-9 md:h-10 text-[10px] md:text-xs font-black rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.knowledge} onChange={(e) => handleUpdateGrade(d.id, 'knowledge', Number(e.target.value))} /></div>
+                            <div className="space-y-1"><Label className="text-[8px] md:text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.speaking}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 md:h-10 text-[10px] md:text-xs font-black rounded-lg md:rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.speaking} onChange={(e) => handleUpdateGrade(d.id, 'speaking', Number(e.target.value))} /></div>
+                            <div className="space-y-1"><Label className="text-[8px] md:text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.diplomacy}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 md:h-10 text-[10px] md:text-xs font-black rounded-lg md:rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.diplomacy} onChange={(e) => handleUpdateGrade(d.id, 'diplomacy', Number(e.target.value))} /></div>
+                            <div className="space-y-1"><Label className="text-[8px] md:text-[9px] uppercase font-black tracking-widest text-muted-foreground">{t.knowledge}</Label><Input type="number" min="0" max="10" step="0.5" className="h-8 md:h-10 text-[10px] md:text-xs font-black rounded-lg md:rounded-xl border-primary/10 bg-primary/[0.01]" value={d.grades.knowledge} onChange={(e) => handleUpdateGrade(d.id, 'knowledge', Number(e.target.value))} /></div>
                           </div>
                         </div>
                       ))}
@@ -810,20 +811,20 @@ export default function PresidentDashboard() {
                   </ScrollArea>
                 </CardContent>
               </Card>
-              <Card className="rounded-3xl border-primary/10 glass-card overflow-hidden">
-                <CardHeader className="flex flex-row items-center gap-3"><BarChart3 size={20} className="text-primary" /><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.participationStats}</CardTitle></CardHeader>
-                <CardContent className="h-[300px] md:h-[350px] pt-4">
+              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card overflow-hidden">
+                <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><BarChart3 className="size-4 md:size-5 text-primary" /><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.participationStats}</CardTitle></CardHeader>
+                <CardContent className="h-[250px] md:h-[350px] pt-2 md:pt-4">
                   {statsData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={statsData} layout="vertical">
                         <XAxis type="number" hide />
-                        <YAxis dataKey="name" type="category" width={80} fontSize={8} tick={{ fill: 'currentColor', fontWeight: 700 }} />
+                        <YAxis dataKey="name" type="category" width={70} fontSize={7} tick={{ fill: 'currentColor', fontWeight: 700 }} />
                         <RechartsTooltip 
                           cursor={{ fill: 'rgba(4, 89, 171, 0.05)' }}
                           content={({ active, payload }) => {
                             if (active && payload && payload.length) {
                               return (
-                                <div className="bg-white/95 backdrop-blur-md border border-primary/10 p-2 rounded-xl shadow-2xl text-[10px]">
+                                <div className="bg-white/95 backdrop-blur-md border border-primary/10 p-2 rounded-xl shadow-2xl text-[8px] md:text-[10px]">
                                   <p className="font-black text-primary uppercase mb-1">{payload[0].payload.name}</p>
                                   <p className="font-bold text-muted-foreground">{payload[0].value} intervention(s)</p>
                                 </div>
@@ -832,7 +833,7 @@ export default function PresidentDashboard() {
                             return null;
                           }}
                         />
-                        <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={20}>
+                        <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={15}>
                           {statsData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'rgba(4, 89, 171, 0.5)'} />
                           ))}
@@ -862,66 +863,69 @@ export default function PresidentDashboard() {
             </TabsList>
             
             <TabsContent value="resolutions" className="space-y-6 md:space-y-8 mt-4 md:mt-6 animate-in fade-in duration-300">
-              <Card className="rounded-3xl border-primary/10 glass-card overflow-hidden">
+              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card overflow-hidden">
                 <CardHeader className="bg-primary/[0.02] border-b border-primary/5 flex flex-row items-center justify-between py-4 md:py-6">
-                  <CardTitle className="flex items-center gap-2 md:gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><FileText className="text-primary h-5 w-5 md:h-6 md:w-6" /> {t.resolutionsSubmitted}</CardTitle>
-                  <Badge variant="outline" className="h-7 w-7 md:h-8 md:w-8 rounded-lg md:rounded-xl flex items-center justify-center p-0 font-black border-primary/20 text-primary">{resolutions.length}</Badge>
+                  <CardTitle className="flex items-center gap-2 md:gap-3 text-base md:text-2xl font-black uppercase tracking-tight text-gradient"><FileText className="text-primary size-5 md:size-6" /> {t.resolutionsSubmitted}</CardTitle>
+                  <Badge variant="outline" className="h-6 w-6 md:h-8 md:w-8 rounded-lg md:rounded-xl flex items-center justify-center p-0 font-black border-primary/20 text-primary">{resolutions.length}</Badge>
                 </CardHeader>
-                <CardContent className="p-4 md:p-8 space-y-6 md:space-y-8">
+                <CardContent className="p-3 md:p-8 space-y-6 md:space-y-8">
                   {resolutions.map(res => (
-                    <Card key={res.id} className={`overflow-hidden rounded-2xl md:rounded-3xl border-2 transition-all duration-500 ${res.is_displayed ? 'border-primary shadow-2xl scale-[1.01]' : 'border-primary/5 shadow-sm'}`}>
-                      <div className="bg-muted/30 p-4 md:p-5 flex justify-between items-center border-b border-primary/5">
+                    <Card key={res.id} className={`overflow-hidden rounded-xl md:rounded-3xl border-2 transition-all duration-500 ${res.is_displayed ? 'border-primary shadow-2xl scale-[1.01]' : 'border-primary/5 shadow-sm'}`}>
+                      <div className="bg-muted/30 p-3 md:p-5 flex justify-between items-center border-b border-primary/5">
                         <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 min-w-0">
                           <span className="font-black text-primary uppercase tracking-tight text-sm md:text-lg truncate">{res.title || "Projet Anonyme"}</span>
-                          {res.is_displayed && <Badge className="bg-primary animate-pulse rounded-lg text-[8px] font-black tracking-widest px-2 w-fit"><Monitor className="h-3 w-3 mr-1" /> {lang === 'fr' ? 'PROJECTÉ' : 'PROJECTED'}</Badge>}
+                          {res.is_displayed && <Badge className="bg-primary animate-pulse rounded-lg text-[7px] md:text-[9px] font-black tracking-widest px-2 w-fit"><Monitor className="size-2.5 md:size-3 mr-1" /> {lang === 'fr' ? 'PROJECTÉ' : 'PROJECTED'}</Badge>}
                         </div>
-                        <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase font-black text-[8px] md:text-[9px] tracking-widest px-2 md:px-3 shrink-0 ml-2">{res.status?.toUpperCase()}</Badge>
+                        <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase font-black text-[7px] md:text-[9px] tracking-widest px-2 md:px-3 shrink-0 ml-2">{res.status?.toUpperCase()}</Badge>
                       </div>
                       <CardContent className="p-4 md:p-8 space-y-4 md:space-y-6">
-                        <div className="flex flex-wrap gap-2 items-center mb-4 md:mb-6">
-                          <Badge className="bg-primary/5 text-primary border-primary/10 rounded-lg py-1 md:py-1.5 px-2 md:px-3 text-[8px] md:text-[10px] font-black uppercase tracking-widest">DE: {res.proposing_country}</Badge>
-                          {res.spokesperson && <Badge className="bg-secondary text-foreground/70 border-primary/5 rounded-lg py-1 md:py-1.5 px-2 md:px-3 text-[8px] md:text-[10px] font-black uppercase tracking-widest gap-1 md:gap-1.5"><User size={10} /> {t.spokesperson}: {res.spokesperson}</Badge>}
+                        <div className="flex flex-wrap gap-1.5 md:gap-2 items-center mb-3 md:mb-6">
+                          <Badge className="bg-primary/5 text-primary border-primary/10 rounded-lg py-1 md:py-1.5 px-2 md:px-3 text-[7px] md:text-[10px] font-black uppercase tracking-widest">DE: {res.proposing_country}</Badge>
+                          {res.spokesperson && <Badge className="bg-secondary text-foreground/70 border-primary/5 rounded-lg py-1 md:py-1.5 px-2 md:px-3 text-[7px] md:text-[10px] font-black uppercase tracking-widest gap-1 md:gap-1.5"><User size={9} /> {t.spokesperson}: {res.spokesperson}</Badge>}
                         </div>
-                        <div className="text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words prose prose-slate max-w-none text-left font-medium text-foreground/80 p-4 md:p-6 bg-primary/[0.01] rounded-2xl border border-primary/5" dangerouslySetInnerHTML={{ __html: res.content }} />
+                        <div className="text-xs md:text-base leading-relaxed whitespace-pre-wrap break-words prose prose-slate max-w-none text-left font-medium text-foreground/80 p-3 md:p-6 bg-primary/[0.01] rounded-xl md:rounded-2xl border border-primary/5" dangerouslySetInnerHTML={{ __html: res.content }} />
                         <div className="flex flex-wrap gap-2 justify-center md:justify-end pt-4 md:pt-6 border-t border-primary/5">
-                          <Button size="sm" variant={res.is_displayed ? "default" : "outline"} className={`rounded-xl font-bold uppercase text-[9px] md:text-[10px] px-4 md:px-6 h-9 md:h-10 ${res.is_displayed ? 'bg-primary' : 'border-primary/20 text-primary hover:bg-primary/5'}`} onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}>{res.is_displayed ? <><EyeOff size={14} className="mr-1 md:mr-2" /> {t.hide}</> : <><Eye size={14} className="mr-1 md:mr-2" /> {t.show}</>}</Button>
-                          <Button size="sm" variant="outline" className="border-green-500/30 text-green-600 hover:bg-green-50 rounded-xl font-bold uppercase text-[9px] md:text-[10px] px-4 md:px-6 h-9 md:h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}><CheckCircle size={14} className="mr-1 md:mr-2" /> {t.approve}</Button>
-                          <Button size="sm" variant="outline" className="border-red-500/30 text-red-600 hover:bg-red-50 rounded-xl font-bold uppercase text-[9px] md:text-[10px] px-4 md:px-6 h-9 md:h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}><XCircle size={14} className="mr-1 md:mr-2" /> {t.reject}</Button>
-                          <Button size="icon" variant="ghost" className="text-destructive hover:bg-destructive/5 rounded-xl h-9 w-9 md:h-10 md:w-10 p-0" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id))}><Trash2 size={14} /></Button>
+                          <Button size="sm" variant={res.is_displayed ? "default" : "outline"} className={`rounded-xl font-bold uppercase text-[8px] md:text-[10px] px-3 md:px-6 h-8 md:h-10 ${res.is_displayed ? 'bg-primary' : 'border-primary/20 text-primary hover:bg-primary/5'}`} onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { is_displayed: !res.is_displayed })}>{res.is_displayed ? <><EyeOff className="size-3 md:size-4 mr-1 md:mr-2" /> {t.hide}</> : <><Eye className="size-3 md:size-4 mr-1 md:mr-2" /> {t.show}</>}</Button>
+                          <Button size="sm" variant="outline" className="border-green-500/30 text-green-600 hover:bg-green-50 rounded-xl font-bold uppercase text-[8px] md:text-[10px] px-3 md:px-6 h-8 md:h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}><CheckCircle className="size-3 md:size-4 mr-1 md:mr-2" /> {t.approve}</Button>
+                          <Button size="sm" variant="outline" className="border-red-500/30 text-red-600 hover:bg-red-50 rounded-xl font-bold uppercase text-[8px] md:text-[10px] px-3 md:px-6 h-8 md:h-10" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}><XCircle className="size-3 md:size-4 mr-1 md:mr-2" /> {t.reject}</Button>
+                          <Button size="icon" variant="ghost" className="text-destructive hover:bg-destructive/5 rounded-xl h-8 w-8 md:h-10 md:w-10 p-0" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id))}><Trash2 className="size-3 md:size-4" /></Button>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
+                  {resolutions.length === 0 && (
+                    <div className="text-center py-16 md:py-24 text-muted-foreground italic text-xs md:text-sm">Aucune résolution soumise</div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="messages" className="space-y-6 md:space-y-8 mt-4 md:mt-6 animate-in fade-in duration-300">
-              <Card className="rounded-3xl border-primary/10 glass-card overflow-hidden">
-                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 py-4 md:py-6"><CardTitle className="flex items-center gap-2 md:gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><Bell size={20} className="text-primary" /> {t.privateInbox}</CardTitle></CardHeader>
+              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card overflow-hidden">
+                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 py-4 md:py-6"><CardTitle className="flex items-center gap-2 md:gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><Bell className="size-5 md:size-6 text-primary" /> {t.privateInbox}</CardTitle></CardHeader>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-[500px] md:h-[700px]">
+                  <ScrollArea className="h-[400px] md:h-[700px]">
                     <div className="p-4 md:p-8 space-y-4 md:space-y-6">
                       {messages.filter(m => m.type !== 'gossip').map(msg => (
-                        <div key={msg.id} className={`p-4 md:p-6 border-l-4 md:border-l-8 rounded-2xl md:rounded-3xl shadow-sm flex flex-col gap-3 md:gap-4 transition-all duration-300 hover:shadow-md ${msg.is_read ? 'bg-muted/20 border-muted-foreground/30 opacity-70' : 'bg-primary/[0.02] border-primary shadow-primary/5'}`}>
+                        <div key={msg.id} className={`p-4 md:p-6 border-l-4 md:border-l-8 rounded-xl md:rounded-3xl shadow-sm flex flex-col gap-3 md:gap-4 transition-all duration-300 hover:shadow-md ${msg.is_read ? 'bg-muted/20 border-muted-foreground/30 opacity-70' : 'bg-primary/[0.02] border-primary shadow-primary/5'}`}>
                           <div className="flex justify-between items-start">
                             <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 min-w-0">
-                              <Badge className={`uppercase text-[8px] md:text-[9px] font-black tracking-widest px-2 md:px-3 py-1 rounded-full border-none shadow-sm w-fit ${msg.type === 'privilege' ? 'bg-destructive text-white' : 'bg-secondary text-primary'}`}>{msg.type}</Badge>
-                              <span className="font-black uppercase tracking-tight text-xs md:text-sm text-foreground/80 truncate">{msg.sender_country}</span>
+                              <Badge className={`uppercase text-[7px] md:text-[9px] font-black tracking-widest px-2 md:px-3 py-1 rounded-full border-none shadow-sm w-fit ${msg.type === 'privilege' ? 'bg-destructive text-white' : 'bg-secondary text-primary'}`}>{msg.type}</Badge>
+                              <span className="font-black uppercase tracking-tight text-[10px] md:text-sm text-foreground/80 truncate">{msg.sender_country}</span>
                             </div>
                             <div className="flex items-center gap-1 shrink-0 ml-2">
-                              {!msg.is_read && <Button size="icon" variant="ghost" className="h-8 w-8 md:h-10 md:w-10 text-green-600 hover:bg-green-50 rounded-xl shadow-sm border border-green-100" onClick={() => markMessageAsRead(msg.id)}><Check size={16} /></Button>}
-                              <Button size="icon" variant="ghost" className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 size={16} /></Button>
+                              {!msg.is_read && <Button size="icon" variant="ghost" className="h-7 w-7 md:h-10 md:w-10 text-green-600 hover:bg-green-50 rounded-xl shadow-sm border border-green-100" onClick={() => markMessageAsRead(msg.id)}><Check className="size-3 md:size-4" /></Button>}
+                              <Button size="icon" variant="ghost" className="h-7 w-7 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 className="size-3 md:size-4" /></Button>
                             </div>
                           </div>
-                          <p className="text-sm md:text-base font-semibold text-foreground/80 leading-relaxed whitespace-pre-wrap pl-1 md:pl-2 italic">"{msg.content}"</p>
-                          <div className="flex justify-end opacity-40 text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em]">{msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "Maintenant"}</div>
+                          <p className="text-xs md:text-base font-semibold text-foreground/80 leading-relaxed whitespace-pre-wrap pl-1 md:pl-2 italic">"{msg.content}"</p>
+                          <div className="flex justify-end opacity-40 text-[7px] md:text-[9px] font-black uppercase tracking-[0.2em]">{msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "Maintenant"}</div>
                         </div>
                       ))}
                       {messages.filter(m => m.type !== 'gossip').length === 0 && (
-                        <div className="text-center py-24 md:py-40 opacity-30 flex flex-col items-center gap-4 md:gap-6">
-                          <MessageSquareOff size={48} md:size={64} />
-                          <p className="text-sm md:text-lg font-black uppercase tracking-widest">{t.noMessage}</p>
+                        <div className="text-center py-20 md:py-40 opacity-30 flex flex-col items-center gap-4 md:gap-6">
+                          <MessageSquareOff className="size-10 md:size-16" />
+                          <p className="text-xs md:text-lg font-black uppercase tracking-widest">{t.noMessage}</p>
                         </div>
                       )}
                     </div>
@@ -931,20 +935,20 @@ export default function PresidentDashboard() {
             </TabsContent>
 
             <TabsContent value="gossip" className="space-y-6 md:space-y-8 mt-4 md:mt-6 animate-in fade-in duration-300">
-              <Card className="rounded-3xl border-primary/10 glass-card overflow-hidden">
-                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 py-4 md:py-6"><CardTitle className="flex items-center gap-2 md:gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><Ghost size={20} className="text-primary" /> {t.gossipBoxTitle}</CardTitle></CardHeader>
+              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card overflow-hidden">
+                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 py-4 md:py-6"><CardTitle className="flex items-center gap-2 md:gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><Ghost className="size-5 md:size-6 text-primary" /> {t.gossipBoxTitle}</CardTitle></CardHeader>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-[500px] md:h-[700px]">
+                  <ScrollArea className="h-[400px] md:h-[700px]">
                     <div className="p-4 md:p-8 space-y-4 md:space-y-6">
                       {gossipMessages.map(msg => (
-                        <div key={msg.id} className="p-4 md:p-6 border-l-4 md:border-l-8 border-primary rounded-2xl md:rounded-3xl shadow-sm flex flex-col gap-3 md:gap-4 transition-all duration-300 hover:shadow-md bg-primary/[0.02]">
+                        <div key={msg.id} className="p-4 md:p-6 border-l-4 md:border-l-8 border-primary rounded-xl md:rounded-3xl shadow-sm flex flex-col gap-3 md:gap-4 transition-all duration-300 hover:shadow-md bg-primary/[0.02]">
                           <div className="flex justify-between items-start">
-                            <Badge className="bg-primary text-white uppercase text-[8px] md:text-[9px] font-black tracking-widest px-2 md:px-3 py-1 rounded-full border-none shadow-sm w-fit">GOSSIP ANONYME</Badge>
+                            <Badge className="bg-primary text-white uppercase text-[7px] md:text-[9px] font-black tracking-widest px-2 md:px-3 py-1 rounded-full border-none shadow-sm w-fit">GOSSIP ANONYME</Badge>
                             <div className="flex flex-wrap items-center gap-1 md:gap-2 shrink-0 ml-2">
                               <Button 
                                 variant={activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? "default" : "outline"} 
                                 size="sm" 
-                                className={`rounded-xl font-bold uppercase text-[8px] md:text-[10px] px-2 md:px-6 h-8 md:h-10 ${activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? 'bg-primary' : 'border-primary/20 text-primary hover:bg-primary/5'}`}
+                                className={`rounded-xl font-bold uppercase text-[7px] md:text-[10px] px-2 md:px-6 h-8 md:h-10 ${activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? 'bg-primary' : 'border-primary/20 text-primary hover:bg-primary/5'}`}
                                 onClick={() => {
                                   if (activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content) {
                                     stopOverlay();
@@ -955,19 +959,19 @@ export default function PresidentDashboard() {
                                   }
                                 }}
                               >
-                                {activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? <><EyeOff size={14} className="mr-1 md:mr-2" /> {t.hide}</> : <><Eye size={14} className="mr-1 md:mr-2" /> {t.show}</>}
+                                {activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? <><EyeOff className="size-3 md:size-4 mr-1 md:mr-2" /> {t.hide}</> : <><Eye className="size-3 md:size-4 mr-1 md:mr-2" /> {t.show}</>}
                               </Button>
                               <Button size="icon" variant="ghost" className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 size={16} /></Button>
                             </div>
                           </div>
-                          <p className="text-sm md:text-base font-semibold text-foreground/80 leading-relaxed whitespace-pre-wrap pl-1 md:pl-2 italic">"{msg.content}"</p>
-                          <div className="flex justify-end opacity-40 text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em]">{msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "Maintenant"}</div>
+                          <p className="text-xs md:text-base font-semibold text-foreground/80 leading-relaxed whitespace-pre-wrap pl-1 md:pl-2 italic">"{msg.content}"</p>
+                          <div className="flex justify-end opacity-40 text-[7px] md:text-[9px] font-black uppercase tracking-[0.2em]">{msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : "Maintenant"}</div>
                         </div>
                       ))}
                       {gossipMessages.length === 0 && (
-                        <div className="text-center py-24 md:py-40 opacity-30 flex flex-col items-center gap-4 md:gap-6">
-                          <Ghost size={48} md:size={64} />
-                          <p className="text-sm md:text-lg font-black uppercase tracking-widest">{t.noGossip}</p>
+                        <div className="text-center py-20 md:py-40 opacity-30 flex flex-col items-center gap-4 md:gap-6">
+                          <Ghost className="size-10 md:size-16" />
+                          <p className="text-xs md:text-lg font-black uppercase tracking-widest">{t.noGossip}</p>
                         </div>
                       )}
                     </div>
