@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle, Languages, Award, Calculator, Ghost, ChevronDown, ChevronUp, FileSignature } from 'lucide-react';
+import { Play, Pause, Square, LogOut, FileText, Eye, EyeOff, CheckCircle, XCircle, ListOrdered, Clock, Timer, MessageSquareOff, MessageSquare, Plus, Trash2, Bell, Check, Stars, X, ThumbsUp, ThumbsDown, CircleSlash, BarChart3, UserPlus, History, ShieldOff, ShieldAlert, User, Monitor, Users, AlertTriangle, Languages, Award, Calculator, Ghost, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,7 +34,7 @@ export default function PresidentDashboard() {
   const committeeId = params.committeeId as string;
   const { toast } = useToast();
   const { firestore: db, auth, user, isUserLoading } = useFirebase();
-  const { isSuspended, allowResolutions, allowGossip, allowPositionPapers, currentAction, activeOverlay } = useRealtime(committeeId);
+  const { isSuspended, allowResolutions, allowGossip, currentAction, activeOverlay } = useRealtime(committeeId);
   
   const committeeRef = useMemoFirebase(() => db ? doc(db, 'committees', committeeId) : null, [db, committeeId]);
   const { data: committee } = useDoc(committeeRef);
@@ -70,18 +70,14 @@ export default function PresidentDashboard() {
       password: "Code d'accès",
       addToList: "Enregistrer la Délégation",
       registeredDelegates: "Délégations Membres",
-      participationStats: "Analytique des Participations",
       actionsHistory: "Journal des Procédures",
       resolutionsSubmitted: "Projets de Résolution",
-      positionsSubmitted: "Textes de Positionnement",
       privateInbox: "Communications Privées",
       gossipBoxTitle: "Gossip Box (Anonyme)",
       approve: "Valider",
       reject: "Rejeter",
       hide: "Masquer",
       show: "Projeter",
-      spokesperson: "Porte-parole",
-      sponsors: "Sponsors",
       specialTitle: "Configuration de l'Alerte",
       overlayType: "Mode de Diffusion",
       overlaySubject: "Sujet / Titre",
@@ -92,7 +88,6 @@ export default function PresidentDashboard() {
       countries: "Membres",
       stats: "Notation & Stats",
       resolutionsTab: "Résolutions",
-      positionsTab: "Positionnement",
       messagesTab: "Messages",
       gossipTab: "Gossip",
       gradingTitle: "Barème d'Évaluation",
@@ -135,18 +130,14 @@ export default function PresidentDashboard() {
       password: "Access Code",
       addToList: "Register Delegation",
       registeredDelegates: "Member Delegations",
-      participationStats: "Participation Analytics",
       actionsHistory: "Procedure Log",
       resolutionsSubmitted: "Draft Resolutions",
-      positionsSubmitted: "Position Papers",
       privateInbox: "Private Communications",
       gossipBoxTitle: "Gossip Box (Anonymous)",
       approve: "Approve",
       reject: "Reject",
       hide: "Hide",
       show: "Project",
-      spokesperson: "Spokesperson",
-      sponsors: "Sponsors",
       specialTitle: "Alert Configuration",
       overlayType: "Broadcast Mode",
       overlaySubject: "Subject / Title",
@@ -157,7 +148,6 @@ export default function PresidentDashboard() {
       countries: "Members",
       stats: "Grading & Stats",
       resolutionsTab: "Resolutions",
-      positionsTab: "Positions",
       messagesTab: "Messages",
       gossipTab: "Gossip",
       gradingTitle: "Evaluation Rubric",
@@ -182,7 +172,6 @@ export default function PresidentDashboard() {
 
   const [delegates, setDelegates] = useState<any[]>([]);
   const [resolutions, setResolutions] = useState<any[]>([]);
-  const [positions, setPositions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
   const [allParticipations, setAllParticipations] = useState<any[]>([]);
   const [allActions, setAllActions] = useState<any[]>([]);
@@ -204,10 +193,6 @@ export default function PresidentDashboard() {
       setResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    const unsubPos = onSnapshot(query(collection(db, 'committees', committeeId, 'positionPapers'), orderBy('created_at', 'desc')), (snapshot) => {
-      setPositions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
     const unsubMessages = onSnapshot(query(collection(db, 'committees', committeeId, 'messages'), orderBy('timestamp', 'desc')), (snapshot) => {
       setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
@@ -220,7 +205,7 @@ export default function PresidentDashboard() {
       setAllActions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    return () => { unsubDel(); unsubRes(); unsubPos(); unsubMessages(); unsubPartAll(); unsubActionsAll(); };
+    return () => { unsubDel(); unsubRes(); unsubMessages(); unsubPartAll(); unsubActionsAll(); };
   }, [db, user, committeeId]);
 
   useEffect(() => {
@@ -350,6 +335,12 @@ export default function PresidentDashboard() {
   const privateMessages = messages.filter(m => m.type !== 'gossip');
   const unreadCount = privateMessages.filter(m => !m.is_read).length;
 
+  const parseTimePerDelegate = (timeStr: string) => {
+    if (!timeStr) return 60;
+    const [mins, secs] = timeStr.split(':').map(Number);
+    return (mins * 60) + (secs || 0);
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col font-body">
       <header className="bg-white/80 backdrop-blur-md border-b border-primary/10 p-4 shadow-sm z-50 sticky top-0 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -371,8 +362,7 @@ export default function PresidentDashboard() {
             <CollapsibleContent className="absolute top-full mt-2 right-0 bg-white border border-primary/10 rounded-2xl p-4 shadow-2xl space-y-4 min-w-[220px] z-[60]">
                {[
                  { label: "Gossip", field: "allowGossip", icon: Ghost, checked: allowGossip },
-                 { label: "Résol.", field: "allowResolutions", icon: FileText, checked: allowResolutions },
-                 { label: "Position", field: "allowPositionPapers", icon: FileSignature, checked: allowPositionPapers }
+                 { label: "Résolutions", field: "allowResolutions", icon: FileText, checked: allowResolutions }
                ].map(flux => (
                  <div key={flux.field} className="flex items-center justify-between gap-4">
                    <div className="flex items-center gap-2"><flux.icon className="size-3.5 text-primary" /><span className="text-[10px] font-black uppercase tracking-tight text-primary">{flux.label}</span></div>
@@ -538,7 +528,6 @@ export default function PresidentDashboard() {
           <Tabs defaultValue="resolutions" className="w-full">
             <TabsList className="w-full bg-secondary/50 p-1 rounded-2xl border border-primary/5 flex">
               <TabsTrigger value="resolutions" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-xs tracking-widest">{t.resolutionsTab}</TabsTrigger>
-              <TabsTrigger value="positions" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-xs tracking-widest">{t.positionsTab}</TabsTrigger>
               <TabsTrigger value="messages" className="flex-1 relative rounded-xl font-bold uppercase text-[9px] md:text-xs tracking-widest">Msgs {unreadCount > 0 && <Badge variant="destructive" className="ml-1 h-4 w-4 p-0 flex items-center justify-center rounded-full text-[8px] font-black border-none animate-pulse">{unreadCount}</Badge>}</TabsTrigger>
               <TabsTrigger value="gossip" className="flex-1 rounded-xl font-bold uppercase text-[9px] md:text-xs tracking-widest">Gossip</TabsTrigger>
             </TabsList>
@@ -561,25 +550,6 @@ export default function PresidentDashboard() {
                           <Button size="sm" variant="outline" className="border-green-500/30 text-green-600 h-8 md:h-10 rounded-xl" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'approved' })}><CheckCircle className="size-3 md:size-4" /></Button>
                           <Button size="sm" variant="outline" className="border-red-500/30 text-red-600 h-8 md:h-10 rounded-xl" onClick={() => updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id), { status: 'rejected' })}><XCircle className="size-3 md:size-4" /></Button>
                           <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'resolutions', res.id))}><Trash2 className="size-3 md:size-4" /></Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="positions" className="mt-4 md:mt-6 animate-in fade-in duration-300">
-              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card overflow-hidden">
-                <CardHeader className="bg-primary/[0.02] border-b border-primary/5 flex flex-row items-center justify-between py-4 md:py-6"><CardTitle className="flex items-center gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><FileSignature className="text-primary" /> {t.positionsSubmitted}</CardTitle><Badge variant="outline" className="h-8 w-8 rounded-xl flex items-center justify-center p-0 font-black border-primary/20 text-primary">{positions.length}</Badge></CardHeader>
-                <CardContent className="p-4 md:p-8 space-y-6">
-                  {positions.map(pos => (
-                    <Card key={pos.id} className="overflow-hidden rounded-2xl border border-primary/5 shadow-sm">
-                      <div className="bg-muted/30 p-4 flex justify-between items-center border-b border-primary/5"><span className="font-black text-primary uppercase text-sm md:text-lg">{pos.title || "Texte"}</span><Badge className="bg-secondary text-primary uppercase text-[7px] md:text-[9px] font-black">{pos.proposing_country}</Badge></div>
-                      <CardContent className="p-4 md:p-8 space-y-4">
-                        <div className="text-xs md:text-base leading-relaxed whitespace-pre-wrap font-medium text-foreground/80 p-4 bg-primary/[0.01] rounded-xl border border-primary/5" dangerouslySetInnerHTML={{ __html: pos.content }} />
-                        <div className="flex justify-end pt-4 border-t border-primary/5">
-                          <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'positionPapers', pos.id))}><Trash2 className="size-3 md:size-4" /></Button>
                         </div>
                       </CardContent>
                     </Card>

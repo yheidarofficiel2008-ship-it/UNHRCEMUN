@@ -10,7 +10,6 @@ export function useRealtime(committeeId?: string) {
   const [isSuspended, setIsSuspended] = useState(false);
   const [allowResolutions, setAllowResolutions] = useState(true);
   const [allowGossip, setAllowGossip] = useState(true);
-  const [allowPositionPapers, setAllowPositionPapers] = useState(true);
   const [currentAction, setCurrentAction] = useState<any>(null);
   const [activeOverlay, setActiveOverlay] = useState<any>(null);
 
@@ -24,13 +23,11 @@ export function useRealtime(committeeId?: string) {
         setIsSuspended(data.isSuspended === true);
         setAllowResolutions(data.allowResolutions !== false);
         setAllowGossip(data.allowGossip !== false);
-        setAllowPositionPapers(data.allowPositionPapers !== false);
         setActiveOverlay(data.activeOverlay || { type: 'none' });
       } else {
         setIsSuspended(false);
         setAllowResolutions(true);
         setAllowGossip(true);
-        setAllowPositionPapers(true);
         setActiveOverlay({ type: 'none' });
       }
     });
@@ -53,5 +50,5 @@ export function useRealtime(committeeId?: string) {
     };
   }, [db, committeeId]);
 
-  return { isSuspended, allowResolutions, allowGossip, allowPositionPapers, currentAction, activeOverlay };
+  return { isSuspended, allowResolutions, allowGossip, currentAction, activeOverlay };
 }
