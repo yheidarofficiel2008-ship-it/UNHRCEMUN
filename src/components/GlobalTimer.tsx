@@ -13,9 +13,11 @@ interface GlobalTimerProps {
 }
 
 export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, durationMinutes }: GlobalTimerProps) {
-  // Sécurisation de la durée initiale
-  const safeDuration = Number(durationMinutes) || 0;
-  const [timeLeft, setTimeLeft] = useState<number>(safeDuration * 60);
+  // Sécurisation de la durée initiale pour éviter NaN ou 0 immédiat
+  const safeDurationMinutes = Number(durationMinutes) || 0;
+  const safeTotalElapsed = Number(totalElapsedSeconds) || 0;
+  
+  const [timeLeft, setTimeLeft] = useState<number>(safeDurationMinutes * 60);
   const hasPlayedAlarm = useRef(false);
 
   const playAlarm = () => {
@@ -38,25 +40,13 @@ export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, 
       playBeep(context.currentTime + 0.5);
       playBeep(context.currentTime + 1.0);
     } catch (e) {
-      console.warn("Audio Context non supporté ou bloqué par le navigateur.");
+      console.warn("Audio Context non supporté ou bloqué.");
     }
   };
 
   useEffect(() => {
-    const currentSafeDuration = Number(durationMinutes) || 0;
-
-    if (status === 'launched') {
-      setTimeLeft(currentSafeDuration * 60);
-      hasPlayedAlarm.current = false;
-      return;
-    }
-
-    if (status === 'completed') {
-      setTimeLeft(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
+    // Fonction de mise à jour du temps restant
+    const updateTimer = () => {
       let elapsed = Number(totalElapsedSeconds) || 0;
       
       if (status === 'started' && startedAt) {
@@ -67,7 +57,8 @@ export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, 
         }
       }
 
-      const remaining = (currentSafeDuration * 60) - elapsed;
+      const totalDurationSeconds = (Number(durationMinutes) || 0) * 60;
+      const remaining = totalDurationSeconds - elapsed;
       const finalRemaining = remaining > 0 ? remaining : 0;
       
       setTimeLeft(finalRemaining);
@@ -76,19 +67,25 @@ export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, 
         playAlarm();
         hasPlayedAlarm.current = true;
       }
-    }, 1000);
+    };
 
-    return () => clearInterval(interval);
-  }, [status, startedAt, pausedAt, totalElapsedSeconds, durationMinutes]);
+    // Mise à jour immédiate lors du changement de props
+    updateTimer();
+
+    // Si la session est en cours, on lance l'intervalle
+    if (status === 'started') {
+      const interval = setInterval(updateTimer, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [status, startedAt, totalElapsedSeconds, durationMinutes]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
 
-  // Sécurisation de l'affichage pour éviter NaN
-  const displayMinutes = isNaN(minutes) ? "00" : String(minutes).padStart(2, '0');
-  const displaySeconds = isNaN(seconds) ? "00" : String(seconds).padStart(2, '0');
+  const displayMinutes = String(minutes).padStart(2, '0');
+  const displaySeconds = String(seconds).padStart(2, '0');
 
-  const isWarning = timeLeft < 60 && timeLeft > 0;
+  const isWarning = timeLeft < 60 && timeLeft > 0 && status !== 'launched';
   const isFinished = timeLeft === 0 && status !== 'launched';
 
   return (
