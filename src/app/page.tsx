@@ -22,16 +22,16 @@ export default function MUNOSHome() {
   const { data: committees, isLoading } = useCollection(committeesQuery);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start p-6 pt-8 md:pt-16">
-      <div className="max-w-6xl w-full space-y-10">
-        <div className="space-y-4 text-center">
-          <Badge variant="outline" className="px-6 py-1.5 border-primary/20 text-primary font-bold uppercase tracking-[0.4em] bg-white/50 backdrop-blur-sm shadow-sm">
+    <div className="min-h-screen flex flex-col items-center justify-start p-6 pt-4 md:pt-8">
+      <div className="max-w-6xl w-full space-y-6">
+        <div className="space-y-3 text-center">
+          <Badge variant="outline" className="px-6 py-1 border-primary/20 text-primary font-bold uppercase tracking-[0.4em] bg-white/50 backdrop-blur-sm shadow-sm">
             MUN Operating System
           </Badge>
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-gradient uppercase font-headline">
             MUN-OS
           </h1>
-          <p className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed">
+          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed">
             Plateforme centralisée de gestion pour vos simulations onusiennes.
           </p>
         </div>
@@ -75,15 +75,15 @@ export default function MUNOSHome() {
           )}
 
           {committees?.length === 0 && !isLoading && (
-            <Card className="col-span-full py-16 border-dashed border-2 bg-white/30 rounded-3xl flex flex-col items-center justify-center text-muted-foreground">
+            <Card className="col-span-full py-12 border-dashed border-2 bg-white/30 rounded-3xl flex flex-col items-center justify-center text-muted-foreground">
               <PlusCircle size={40} className="mb-3 opacity-10" />
-              <p className="italic text-base font-medium opacity-50">En attente de la création des comités par l'administration.</p>
+              <p className="italic text-base font-medium opacity-50 text-center px-6">En attente de la création des comités par l'administration.</p>
             </Card>
           )}
         </div>
 
-        <div className="flex justify-center pt-6">
-          <Button asChild variant="ghost" className="text-muted-foreground hover:text-primary gap-2 font-bold uppercase tracking-widest text-[10px] px-8 py-4 rounded-full border border-transparent hover:border-primary/10 h-auto">
+        <div className="flex justify-center pt-2">
+          <Button asChild variant="ghost" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 gap-2 font-bold uppercase tracking-widest text-[10px] px-8 py-3 rounded-full border border-transparent hover:border-destructive/10 h-auto transition-colors">
             <Link href="/admin">
               <Settings size={16} /> Console d'Administration
             </Link>
@@ -91,7 +91,7 @@ export default function MUNOSHome() {
         </div>
       </div>
       
-      <footer className="mt-auto py-8">
+      <footer className="mt-auto py-4">
         <a 
           href="https://www.instagram.com/youssef_heidar/" 
           target="_blank" 
