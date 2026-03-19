@@ -45,7 +45,7 @@ export default function MUNOSHome() {
                 <CardHeader className="bg-gradient-to-b from-primary/5 to-transparent pb-4 pt-5 md:pt-6">
                   <div className="flex justify-between items-start mb-2 md:mb-3">
                     <div className="p-2 md:p-2.5 bg-white rounded-xl md:rounded-2xl shadow-sm border border-primary/10">
-                      <Globe className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                      <Globe className="size-4 md:size-5 text-primary" />
                     </div>
                     <Badge className="bg-primary/10 text-primary border-primary/20 uppercase text-[8px] md:text-[9px] font-bold px-2 py-0.5">
                       {committee.language === 'en' ? 'Active' : 'Actif'}
@@ -57,13 +57,13 @@ export default function MUNOSHome() {
                   <div className="grid grid-cols-1 gap-2 md:gap-2.5">
                     <Button asChild className="w-full bg-primary hover:bg-primary/90 rounded-xl h-10 md:h-11 text-[10px] md:text-xs font-bold shadow-lg shadow-primary/20 group">
                       <Link href={`/committees/${committee.id}/delegate/login`} className="flex items-center justify-center">
-                        <Users className="mr-2 h-4 w-4" /> {committee.language === 'en' ? 'Delegate Portal' : 'Portail Délégué'}
-                        <ArrowRight className="ml-2 h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                        <Users className="mr-2 size-4" /> {committee.language === 'en' ? 'Delegate Portal' : 'Portail Délégué'}
+                        <ArrowRight className="ml-2 size-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                       </Link>
                     </Button>
                     <Button asChild variant="outline" className="w-full border-primary/20 text-primary font-bold rounded-xl h-10 md:h-11 text-[10px] md:text-xs hover:bg-primary/5">
                       <Link href={`/committees/${committee.id}/president/login`}>
-                        <Shield className="mr-2 h-4 w-4" /> {committee.language === 'en' ? 'Presidential Office' : 'Bureau Présidence'}
+                        <Shield className="mr-2 size-4" /> {committee.language === 'en' ? 'Presidential Office' : 'Bureau Présidence'}
                       </Link>
                     </Button>
                   </div>
@@ -74,7 +74,7 @@ export default function MUNOSHome() {
 
           {committees?.length === 0 && !isLoading && (
             <Card className="col-span-full py-12 md:py-20 border-dashed border-2 bg-white/30 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center text-muted-foreground">
-              <PlusCircle size={32} className="md:size-10 mb-3 opacity-10" />
+              <PlusCircle className="size-8 md:size-10 mb-3 opacity-10" />
               <p className="italic text-sm md:text-base font-medium opacity-50 text-center px-6">En attente de la création des comités par l'administration.</p>
             </Card>
           )}

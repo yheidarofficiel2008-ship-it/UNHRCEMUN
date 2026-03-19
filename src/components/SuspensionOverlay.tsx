@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react';
@@ -29,7 +30,7 @@ export function SuspensionOverlay() {
   return (
     <div className="fixed inset-0 z-[10000] bg-[#0459ab] flex flex-col items-center justify-center p-8 text-white animate-in fade-in duration-500">
       <div className="flex flex-col items-center gap-12 max-w-4xl text-center">
-        <ShieldAlert size={150} className="text-white animate-pulse" />
+        <ShieldAlert className="size-20 md:size-40 text-white animate-pulse" />
         <div className="space-y-6">
           <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none">{t.title}</h1>
           <p className="text-2xl md:text-3xl font-medium opacity-80 leading-relaxed max-w-2xl mx-auto">{t.desc}</p>

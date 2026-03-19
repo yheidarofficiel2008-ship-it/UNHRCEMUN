@@ -345,7 +345,7 @@ export default function DelegateDashboard() {
         is_read: false
       });
       setMessageForm({ ...messageForm, content: '' });
-      toast({ title: lang === 'fr' ? "Message transmis" : "Message transmitted" });
+      toast({ title: lang === 'fr' ? "Message transmise" : "Message transmitted" });
     } catch (e) {
       toast({ title: "Error", variant: "destructive" });
     } finally {
@@ -378,7 +378,7 @@ export default function DelegateDashboard() {
       {isGlobalSuspended && <SuspensionOverlay />}
       {isCountrySuspended && (
         <div className="fixed inset-0 z-[10000] bg-destructive flex flex-col items-center justify-center p-6 text-white animate-in fade-in duration-500">
-          <ShieldAlert size={80} className="md:size-[150px] mb-8 animate-pulse" />
+          <ShieldAlert className="size-20 md:size-40 mb-8 animate-pulse" />
           <h1 className="text-3xl md:text-7xl font-black uppercase text-center mb-6 tracking-tight">{t.suspended}</h1>
           <p className="text-lg md:text-2xl text-center opacity-80 max-w-2xl font-medium leading-relaxed">{t.suspendedDesc}</p>
         </div>
@@ -389,7 +389,7 @@ export default function DelegateDashboard() {
           <div className="max-w-5xl w-full text-center space-y-8 md:space-y-12">
             {activeOverlay.type === 'crisis' ? (
               <div className="flex flex-col items-center gap-6 mb-4">
-                <AlertTriangle size={60} className="md:size-[80px] text-white animate-bounce" />
+                <AlertTriangle className="size-16 md:size-20 text-white animate-bounce" />
                 <h2 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-tight border-2 border-white px-6 md:px-8 py-3 md:py-4 shadow-2xl">{t.urgency}</h2>
                 <h1 className="text-xl md:text-4xl font-black uppercase tracking-tighter drop-shadow-2xl">{activeOverlay.title}</h1>
               </div>
@@ -462,14 +462,14 @@ export default function DelegateDashboard() {
             {activeOverlay?.type === 'crisis' && <Badge variant="destructive" className="animate-pulse bg-red-600 text-white font-black px-2 text-[8px] md:text-base">{t.crisis}</Badge>}
           </div>
         </div>
-        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-full" onClick={handleLogout}><LogOut size={16} md:size={20} /></Button>
+        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-full" onClick={handleLogout}><LogOut className="size-4 md:size-5" /></Button>
       </header>
 
       <main className="flex-1 p-4 md:p-6 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 max-w-[1500px] mx-auto w-full">
         <div className="lg:col-span-4 space-y-6 md:space-y-8">
           <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
             <CardHeader className="py-3 px-4 md:py-4 md:px-6 flex flex-row items-center gap-2 md:gap-3">
-              <MessageSquarePlus size={18} className="text-[#0459ab]" />
+              <MessageSquarePlus className="size-4 md:size-5 text-[#0459ab]" />
               <CardTitle className="text-xs md:text-sm font-black uppercase tracking-widest text-[#0459ab]/80">{t.msgToPresidency}</CardTitle>
             </CardHeader>
             <form onSubmit={submitMessage}>
@@ -498,7 +498,7 @@ export default function DelegateDashboard() {
           <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
             <CardHeader className="py-3 px-4 md:py-4 md:px-6 flex flex-row items-center justify-between">
               <div className="flex items-center gap-2 md:gap-3">
-                <ListOrdered size={18} className="text-[#0459ab]" />
+                <ListOrdered className="size-4 md:size-5 text-[#0459ab]" />
                 <CardTitle className="text-xs md:text-sm font-black uppercase tracking-widest text-[#0459ab]/80">{t.speakersList}</CardTitle>
               </div>
               <Badge className="bg-[#0459ab] rounded-lg font-black text-[10px] md:text-xs">{activeSpeakers.length}</Badge>
@@ -524,7 +524,7 @@ export default function DelegateDashboard() {
           </Card>
 
           <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
-            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6"><CardTitle className="flex items-center gap-2 md:gap-3 text-base md:text-lg font-black uppercase tracking-tight text-[#0459ab]"><Send size={16} /> {t.myEnvois}</CardTitle></CardHeader>
+            <CardHeader className="pb-3 md:pb-4 px-4 md:px-6"><CardTitle className="flex items-center gap-2 md:gap-3 text-base md:text-lg font-black uppercase tracking-tight text-[#0459ab]"><Send className="size-4 md:size-5" /> {t.myEnvois}</CardTitle></CardHeader>
             <CardContent className="px-4 md:px-6 pb-4 md:pb-6">
               <ScrollArea className="h-[250px] md:h-[350px]">
                 <div className="space-y-3 md:space-y-4">
@@ -532,7 +532,7 @@ export default function DelegateDashboard() {
                     <div key={item.id} className="p-3 md:p-4 border border-primary/5 rounded-xl md:rounded-2xl bg-white shadow-sm transition-all hover:shadow-md">
                       <div className="flex justify-between items-center mb-2 md:mb-3">
                         <Badge variant="outline" className="text-[8px] md:text-[9px] font-black uppercase tracking-widest border-primary/10 text-[#0459ab]/70">{item._type === 'resolution' ? t.resolution : t.message}</Badge>
-                        {item._type === 'resolution' ? <Badge variant={item.status === 'approved' ? 'default' : item.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase text-[8px] md:text-[9px] font-black">{item.status.toUpperCase()}</Badge> : <Badge variant="ghost" className="opacity-60">{item.is_read ? <Check size={12} className="text-green-500" /> : <Clock size={12} />}</Badge>}
+                        {item._type === 'resolution' ? <Badge variant={item.status === 'approved' ? 'default' : item.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase text-[8px] md:text-[9px] font-black">{item.status.toUpperCase()}</Badge> : <Badge variant="ghost" className="opacity-60">{item.is_read ? <Check className="size-3 md:size-4 text-green-500" /> : <Clock className="size-3 md:size-4" />}</Badge>}
                       </div>
                       {item._type === 'resolution' && <div className="mb-2 font-black uppercase text-[#0459ab] tracking-tight text-xs md:text-sm break-words">{item.title}</div>}
                       <div className="text-[10px] md:text-xs font-medium text-foreground/70 whitespace-pre-wrap break-words prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: item.content }} />
@@ -562,7 +562,7 @@ export default function DelegateDashboard() {
                     
                     <div className="flex flex-col items-center gap-3 md:gap-4">
                       <div className="flex items-center gap-2 px-3 md:px-4 py-1 md:py-1.5 bg-primary/5 border border-primary/10 rounded-full">
-                        <Timer size={12} md:size={14} className="text-primary/60" />
+                        <Timer className="size-3 md:size-4 text-primary/60" />
                         <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary/60">{t.speakerChrono}</span>
                       </div>
                       <SpeakingTimer status={currentAction.speaking_timer_status} startedAt={currentAction.speaking_timer_started_at} totalElapsedSeconds={currentAction.speaking_timer_total_elapsed || 0} limitSeconds={parseTimePerDelegate(currentAction.time_per_delegate)} size="md" />
@@ -571,13 +571,13 @@ export default function DelegateDashboard() {
                   {currentAction.allow_participation && currentAction.status === 'launched' && (
                     <div className="pt-6 md:pt-10 border-t border-primary/5 text-center">
                       <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-md mx-auto">
-                        <Button size="sm" className={`h-10 md:h-11 rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] gap-1.5 md:gap-2 shadow-lg transition-all hover:scale-[1.03] ${participationStatus === 'participating' ? 'bg-green-600 shadow-green-600/20' : 'bg-[#0459ab] shadow-[#0459ab]/20'}`} onClick={() => handleParticipation('participating')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><CheckCircle2 size={14} /> {t.participate}</Button>
-                        <Button size="sm" variant="outline" className={`h-10 md:h-11 rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] gap-1.5 md:gap-2 border-2 transition-all hover:scale-[1.03] ${participationStatus === 'passing' ? 'border-destructive text-destructive bg-destructive/5' : 'border-primary/20 text-[#0459ab]/60 hover:bg-primary/5'}`} onClick={() => handleParticipation('passing')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><XCircle size={14} /> {t.pass}</Button>
+                        <Button size="sm" className={`h-10 md:h-11 rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] gap-1.5 md:gap-2 shadow-lg transition-all hover:scale-[1.03] ${participationStatus === 'participating' ? 'bg-green-600 shadow-green-600/20' : 'bg-[#0459ab] shadow-[#0459ab]/20'}`} onClick={() => handleParticipation('participating')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><CheckCircle2 className="size-4 md:size-5" /> {t.participate}</Button>
+                        <Button size="sm" variant="outline" className={`h-10 md:h-11 rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] gap-1.5 md:gap-2 border-2 transition-all hover:scale-[1.03] ${participationStatus === 'passing' ? 'border-destructive text-destructive bg-destructive/5' : 'border-primary/20 text-[#0459ab]/60 hover:bg-primary/5'}`} onClick={() => handleParticipation('passing')} disabled={isCountrySuspended || activeOverlay?.type === 'crisis'}><XCircle className="size-4 md:size-5" /> {t.pass}</Button>
                       </div>
                     </div>
                   )}
                 </>
-              ) : <div className="py-16 md:py-24 text-center opacity-20"><Monitor size={60} md:size={80} className="mx-auto mb-4 md:mb-6" /></div>}
+              ) : <div className="py-16 md:py-24 text-center opacity-20"><Monitor className="size-16 md:size-20 mx-auto mb-4 md:mb-6" /></div>}
             </CardContent>
           </Card>
 
@@ -585,7 +585,7 @@ export default function DelegateDashboard() {
             <Card className="rounded-[1.5rem] md:rounded-[2.5rem] border-primary border-2 md:border-4 bg-primary/[0.02] shadow-2xl animate-in fade-in zoom-in duration-500 overflow-hidden relative">
               <CardHeader className="border-b border-primary/10 p-6 md:p-10 bg-white/60 backdrop-blur-sm">
                 <div className="space-y-2 md:space-y-3">
-                  <Badge className="bg-[#0459ab] rounded-lg md:rounded-xl px-3 md:px-4 py-0.5 md:py-1 font-black text-[8px] md:text-[10px] tracking-widest"><Monitor size={12} className="mr-1 md:mr-2" /> {t.projected}</Badge>
+                  <Badge className="bg-[#0459ab] rounded-lg md:rounded-xl px-3 md:px-4 py-0.5 md:py-1 font-black text-[8px] md:text-[10px] tracking-widest"><Monitor className="size-3 md:size-4 mr-1 md:mr-2" /> {t.projected}</Badge>
                   <CardTitle className="text-xl md:text-4xl font-black text-[#0459ab] uppercase tracking-tight break-words">{t.gossipTitle}</CardTitle>
                 </div>
               </CardHeader>
@@ -612,7 +612,7 @@ export default function DelegateDashboard() {
               </div>
               <CardHeader className="border-b border-primary/10 p-6 md:p-10 bg-white/60 backdrop-blur-sm">
                 <div className="space-y-2 md:space-y-3">
-                  <Badge className="bg-[#0459ab] rounded-lg md:rounded-xl px-3 md:px-4 py-0.5 md:py-1 font-black text-[8px] md:text-[10px] tracking-widest"><Monitor size={12} className="mr-1 md:mr-2" /> {t.projected}</Badge>
+                  <Badge className="bg-[#0459ab] rounded-lg md:rounded-xl px-3 md:px-4 py-0.5 md:py-1 font-black text-[8px] md:text-[10px] tracking-widest"><Monitor className="size-3 md:size-4 mr-1 md:mr-2" /> {t.projected}</Badge>
                   <CardTitle className="text-xl md:text-4xl font-black text-[#0459ab] uppercase tracking-tight break-words pr-16 md:pr-32">{res.title}</CardTitle>
                 </div>
               </CardHeader>
@@ -630,7 +630,7 @@ export default function DelegateDashboard() {
           <Card className={`rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl overflow-hidden glass-card transition-all duration-500 ${(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
             <CardHeader className="bg-secondary/5 border-b border-primary/5 p-6 md:p-8 flex flex-row items-center justify-between">
               <CardTitle className="text-xl md:text-4xl font-black uppercase tracking-tight text-[#0459ab]">{t.submitResolution}</CardTitle>
-              {(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') && <Badge variant="destructive" className="font-black h-7 md:h-8 px-2 md:px-4 text-[8px] md:text-xs"><Lock size={12} className="mr-1.5 md:mr-2" /> {t.submissionsSuspended}</Badge>}
+              {(!allowResolutions || isCountrySuspended || activeOverlay?.type === 'crisis') && <Badge variant="destructive" className="font-black h-7 md:h-8 px-2 md:px-4 text-[8px] md:text-xs"><Lock className="size-3 md:size-4 mr-1.5 md:mr-2" /> {t.submissionsSuspended}</Badge>}
             </CardHeader>
             <form onSubmit={submitResolution}>
               <CardContent className="p-6 md:p-8 space-y-6 md:space-y-8">
@@ -652,9 +652,9 @@ export default function DelegateDashboard() {
                   <div className="flex justify-between items-center">
                     <Label className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#0459ab]/60">{t.content}</Label>
                     <div className="flex gap-1.5 bg-secondary p-1 rounded-lg md:rounded-xl border border-primary/5">
-                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-lg hover:bg-white" onClick={() => wrapText('b')}><Bold size={14} /></Button>
-                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-lg hover:bg-white" onClick={() => wrapText('i')}><Italic size={14} /></Button>
-                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-lg hover:bg-white" onClick={() => wrapText('u')}><Underline size={14} /></Button>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-lg hover:bg-white" onClick={() => wrapText('b')}><Bold className="size-4" /></Button>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-lg hover:bg-white" onClick={() => wrapText('i')}><Italic className="size-4" /></Button>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 md:h-8 md:w-8 p-0 rounded-lg hover:bg-white" onClick={() => wrapText('u')}><Underline className="size-4" /></Button>
                     </div>
                   </div>
                   <Textarea ref={textAreaRef} className="min-h-[250px] md:min-h-[350px] text-lg md:text-xl leading-relaxed font-serif rounded-2xl md:rounded-[2rem] border-primary/10 bg-white/50 p-6 md:p-8 shadow-inner" value={resolutionForm.content} onChange={e => setResolutionForm({...resolutionForm, content: e.target.value})} required disabled={!allowResolutions} />
@@ -662,7 +662,7 @@ export default function DelegateDashboard() {
                   {resolutionForm.content && (
                     <div className="mt-4 md:mt-6 p-6 md:p-8 rounded-2xl md:rounded-[2rem] bg-primary/[0.01] border border-primary/5 shadow-inner">
                       <div className="flex items-center gap-2 text-[8px] md:text-[10px] font-black text-[#0459ab]/40 uppercase tracking-widest md:tracking-[0.3em] mb-4 md:mb-6">
-                        <Eye size={14} /> {t.preview}
+                        <Eye className="size-4" /> {t.preview}
                       </div>
                       <div 
                         className="text-base md:text-xl font-serif leading-relaxed text-left text-foreground/60 whitespace-pre-wrap break-words prose prose-lg max-w-none"
@@ -674,7 +674,7 @@ export default function DelegateDashboard() {
               </CardContent>
               <CardFooter className="p-6 md:p-8 pt-0">
                 <Button type="submit" disabled={!allowResolutions} className="w-full bg-[#0459ab] hover:bg-[#0459ab]/90 h-10 md:h-11 rounded-xl font-black uppercase tracking-widest text-[9px] md:text-[10px] shadow-lg shadow-[#0459ab]/20 transition-all">
-                  <Send size={14} className="mr-2" /> {t.transmit}
+                  <Send className="size-4 mr-2" /> {t.transmit}
                 </Button>
               </CardFooter>
             </form>

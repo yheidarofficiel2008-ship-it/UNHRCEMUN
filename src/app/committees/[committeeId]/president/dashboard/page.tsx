@@ -564,20 +564,20 @@ export default function PresidentDashboard() {
           <Collapsible open={isFluxMenuOpen} onOpenChange={setIsFluxMenuOpen} className="relative">
             <CollapsibleTrigger asChild>
               <Button variant="outline" size="sm" className="rounded-full border-primary/20 text-primary font-bold gap-2 text-[10px] md:text-xs">
-                Controle des Flux {isFluxMenuOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                Controle des Flux {isFluxMenuOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="absolute top-full mt-2 right-0 bg-white border border-primary/10 rounded-2xl p-4 shadow-2xl space-y-4 min-w-[200px] z-[60]">
                <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <Ghost size={14} className="text-primary" />
+                  <Ghost className="size-3.5 text-primary" />
                   <span className="text-[10px] font-black uppercase tracking-tight text-primary">Gossip</span>
                 </div>
                 <Switch checked={allowGossip} onCheckedChange={toggleGossip} />
               </div>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <FileText size={14} className="text-primary" />
+                  <FileText className="size-3.5 text-primary" />
                   <span className="text-[10px] font-black uppercase tracking-tight text-primary">Résol.</span>
                 </div>
                 <Switch checked={allowResolutions} onCheckedChange={toggleResolutions} />
@@ -604,14 +604,14 @@ export default function PresidentDashboard() {
                   <span className="text-xs md:text-sm font-black tabular-nums text-amber-600">{activeOverlay.results?.abstention || 0}</span>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10 rounded-full" onClick={stopOverlay}><X size={12} /></Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10 rounded-full" onClick={stopOverlay}><X className="size-3" /></Button>
             </div>
           )}
 
           <Dialog open={isOverlayDialogOpen} onOpenChange={setIsOverlayDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-full font-bold gap-2 px-4 text-[10px] md:text-xs">
-                <Stars size={14} /> <span className="hidden sm:inline">{t.specialAction}</span>
+                <Stars className="size-3.5" /> <span className="hidden sm:inline">{t.specialAction}</span>
                 <span className="sm:hidden">Spécial</span>
               </Button>
             </DialogTrigger>
@@ -642,7 +642,7 @@ export default function PresidentDashboard() {
             </DialogContent>
           </Dialog>
 
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-full h-8 w-8 md:h-10 md:w-10" onClick={handleLogout}><LogOut size={18} /></Button>
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-full h-8 w-8 md:h-10 md:w-10" onClick={handleLogout}><LogOut className="size-4 md:size-5" /></Button>
         </div>
       </header>
 
@@ -698,7 +698,7 @@ export default function PresidentDashboard() {
 
                     <div className="pt-4 md:pt-6 border-t border-primary/5 space-y-4 md:space-y-6">
                       <div className="flex justify-between items-center">
-                        <h3 className="font-black text-[8px] md:text-[10px] text-primary uppercase tracking-[0.2em] flex items-center gap-2"><Timer size={12} className="md:size-14" /> {t.speakerChrono}</h3>
+                        <h3 className="font-black text-[8px] md:text-[10px] text-primary uppercase tracking-[0.2em] flex items-center gap-2"><Timer className="size-3 md:size-4" /> {t.speakerChrono}</h3>
                         <Badge variant="outline" className="text-[8px] md:text-[10px] font-bold border-primary/10 bg-primary/5">{currentAction.time_per_delegate}</Badge>
                       </div>
                       <div className="flex justify-center">
@@ -765,7 +765,7 @@ export default function PresidentDashboard() {
                           <div className="flex flex-col min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-[10px] md:text-sm text-foreground/80 truncate">{d.country_name}</span>
-                              {d.is_suspended && <Badge variant="destructive" className="h-3 md:h-4 text-[6px] md:text-[8px] px-1 uppercase font-black shrink-0"><ShieldAlert size={8} className="md:size-10 mr-0.5" /> Suspendu</Badge>}
+                              {d.is_suspended && <Badge variant="destructive" className="h-3 md:h-4 text-[6px] md:text-[8px] px-1 uppercase font-black shrink-0"><ShieldAlert className="size-2 md:size-2.5 mr-0.5" /> Suspendu</Badge>}
                             </div>
                             <span className="text-[7px] md:text-[9px] text-muted-foreground font-mono uppercase tracking-widest mt-0.5 md:mt-1 opacity-60">Pass: {d.password}</span>
                           </div>
@@ -881,7 +881,7 @@ export default function PresidentDashboard() {
                       <CardContent className="p-4 md:p-8 space-y-4 md:space-y-6">
                         <div className="flex flex-wrap gap-1.5 md:gap-2 items-center mb-3 md:mb-6">
                           <Badge className="bg-primary/5 text-primary border-primary/10 rounded-lg py-1 md:py-1.5 px-2 md:px-3 text-[7px] md:text-[10px] font-black uppercase tracking-widest">DE: {res.proposing_country}</Badge>
-                          {res.spokesperson && <Badge className="bg-secondary text-foreground/70 border-primary/5 rounded-lg py-1 md:py-1.5 px-2 md:px-3 text-[7px] md:text-[10px] font-black uppercase tracking-widest gap-1 md:gap-1.5"><User size={9} /> {t.spokesperson}: {res.spokesperson}</Badge>}
+                          {res.spokesperson && <Badge className="bg-secondary text-foreground/70 border-primary/5 rounded-lg py-1 md:py-1.5 px-2 md:px-3 text-[7px] md:text-[10px] font-black uppercase tracking-widest gap-1 md:gap-1.5"><User className="size-2 md:size-2.5" /> {t.spokesperson}: {res.spokesperson}</Badge>}
                         </div>
                         <div className="text-xs md:text-base leading-relaxed whitespace-pre-wrap break-words prose prose-slate max-w-none text-left font-medium text-foreground/80 p-3 md:p-6 bg-primary/[0.01] rounded-xl md:rounded-2xl border border-primary/5" dangerouslySetInnerHTML={{ __html: res.content }} />
                         <div className="flex flex-wrap gap-2 justify-center md:justify-end pt-4 md:pt-6 border-t border-primary/5">
@@ -961,7 +961,7 @@ export default function PresidentDashboard() {
                               >
                                 {activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? <><EyeOff className="size-3 md:size-4 mr-1 md:mr-2" /> {t.hide}</> : <><Eye className="size-3 md:size-4 mr-1 md:mr-2" /> {t.show}</>}
                               </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 size={16} /></Button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:bg-destructive/5 rounded-xl border border-destructive/5" onClick={() => deleteMessage(msg.id)}><Trash2 className="size-4" /></Button>
                             </div>
                           </div>
                           <p className="text-xs md:text-base font-semibold text-foreground/80 leading-relaxed whitespace-pre-wrap pl-1 md:pl-2 italic">"{msg.content}"</p>

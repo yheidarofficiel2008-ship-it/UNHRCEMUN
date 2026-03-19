@@ -90,7 +90,7 @@ export default function AdminPage() {
         <Card className="w-full max-w-md border-none glass-card rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8">
           <CardHeader className="text-center space-y-4 md:space-y-6">
             <div className="p-3 md:p-4 bg-destructive/10 rounded-[1.5rem] md:rounded-3xl w-fit mx-auto border border-destructive/20">
-              <ShieldAlert size={32} className="text-destructive md:size-10" />
+              <ShieldAlert className="size-8 md:size-10 text-destructive" />
             </div>
             <div className="space-y-2">
               <CardTitle className="text-2xl md:text-4xl font-black uppercase tracking-tight text-gradient leading-none">Accès Restreint</CardTitle>
@@ -139,7 +139,7 @@ export default function AdminPage() {
             <h1 className="text-3xl md:text-8xl font-black uppercase tracking-tighter text-gradient leading-none">Management</h1>
           </div>
           <Button asChild variant="outline" size="lg" className="font-black uppercase tracking-widest text-[9px] md:text-[10px] h-10 md:h-14 rounded-xl md:rounded-2xl px-6 md:px-8 border-primary/10 hover:bg-primary/5">
-            <Link href="/"><Home className="mr-3 h-4 md:h-5 w-4 md:w-5" /> Hub Principal</Link>
+            <Link href="/"><Home className="mr-3 size-4 md:size-5" /> Hub Principal</Link>
           </Button>
         </header>
 
@@ -147,7 +147,7 @@ export default function AdminPage() {
           <div className="lg:col-span-4">
             <Card className="glass-card rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border-primary/10 shadow-2xl">
               <CardHeader className="bg-primary/[0.03] border-b border-primary/5 p-6 md:p-8">
-                <CardTitle className="flex items-center gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><Plus className="text-primary h-5 w-5 md:h-6 md:w-6" /> Nouveau Comité</CardTitle>
+                <CardTitle className="flex items-center gap-3 text-lg md:text-2xl font-black uppercase tracking-tight text-gradient"><Plus className="text-primary size-5 md:size-6" /> Nouveau Comité</CardTitle>
                 <CardDescription className="text-[10px] md:text-sm font-medium text-muted-foreground/80">Configurez un nouvel espace de travail.</CardDescription>
               </CardHeader>
               <form onSubmit={handleCreate}>
@@ -160,7 +160,7 @@ export default function AdminPage() {
                     <Label className="text-[9px] md:text-[10px] uppercase font-black tracking-widest text-primary/60">Langue de Séance</Label>
                     <Select value={newCommittee.language} onValueChange={(val) => setNewCommittee({...newCommittee, language: val})}>
                       <SelectTrigger className="rounded-xl h-10 md:h-12 border-primary/10 text-[10px] md:text-xs">
-                        <div className="flex items-center gap-2"><Languages className="h-4 w-4 text-primary/60" /><SelectValue /></div>
+                        <div className="flex items-center gap-2"><Languages className="size-4 text-primary/60" /><SelectValue /></div>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl">
                         <SelectItem value="fr">Français</SelectItem>
@@ -186,7 +186,7 @@ export default function AdminPage() {
 
           <div className="lg:col-span-8 space-y-6 md:space-y-8">
             <h2 className="text-[9px] md:text-xs font-black uppercase tracking-[0.4em] text-primary/40 flex items-center gap-4 before:h-px before:flex-1 before:bg-primary/10 after:h-px after:flex-1 after:bg-primary/10 whitespace-nowrap">
-              <Globe className="h-4 w-4" /> Comités ({committees?.length || 0})
+              <Globe className="size-4" /> Comités ({committees?.length || 0})
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {committees?.map(c => (
@@ -194,11 +194,11 @@ export default function AdminPage() {
                   <CardContent className="p-4 md:p-8 flex justify-between items-start gap-4">
                     <div className="space-y-3 md:space-y-4 min-w-0 flex-1">
                       <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-                        <h3 className="text-lg md:text-2xl font-black uppercase tracking-tight text-foreground/90 group-hover:text-primary transition-colors truncate">{c.name}</h3>
+                        <h3 className="text-lg md:text-2xl font-black uppercase tracking-tight text-gradient group-hover:text-primary transition-colors truncate">{c.name}</h3>
                         <Badge variant="outline" className="uppercase text-[7px] md:text-[8px] font-black tracking-widest border-primary/10 text-primary/60 bg-primary/5 px-2">{c.language || 'fr'}</Badge>
                       </div>
                       <div className="space-y-1 md:space-y-1.5 opacity-60">
-                        <p className="text-[7px] md:text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2 truncate"><User size={10} className="md:size-3" /> {c.president_email}</p>
+                        <p className="text-[7px] md:text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2 truncate"><User className="size-2.5 md:size-3" /> {c.president_email}</p>
                         <p className="text-[7px] md:text-[9px] font-mono uppercase tracking-tighter bg-muted px-2 py-0.5 rounded-lg w-fit">ID: {c.id}</p>
                       </div>
                     </div>
@@ -206,7 +206,7 @@ export default function AdminPage() {
                     <AlertDialog onOpenChange={(open) => !open && setDeleteVerificationKey('')}>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/5 rounded-xl md:rounded-2xl h-8 w-8 md:h-12 md:w-12 border border-transparent hover:border-destructive/10 shrink-0">
-                          <Trash2 size={18} className="md:size-6" />
+                          <Trash2 className="size-4.5 md:size-6" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="rounded-[1.5rem] md:rounded-[2.5rem] border-destructive/10 p-6 md:p-10 w-[95vw] max-w-lg">

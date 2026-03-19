@@ -88,7 +88,7 @@ export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, 
       status === 'paused' ? 'border-amber-400 bg-amber-50' : 'border-primary bg-primary/5'
     }`}>
       <div className="flex items-center gap-2 md:gap-3 text-muted-foreground mb-1 md:mb-2">
-        {status === 'paused' ? <Pause size={16} md:size={20} className="text-amber-500" /> : <Clock size={16} md:size={20} />}
+        {status === 'paused' ? <Pause className="size-4 md:size-5 text-amber-500" /> : <Clock className="size-4 md:size-5" />}
         <span className="font-semibold uppercase tracking-wider text-[8px] md:text-xs">
           {status === 'paused' ? 'Minuteur en Pause' : 'Temps Restant'}
         </span>
