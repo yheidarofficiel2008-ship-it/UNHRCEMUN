@@ -177,7 +177,6 @@ export default function PresidentDashboard() {
   const [allActions, setAllActions] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [displayGradedDelegates, setDisplayGradedDelegates] = useState<any[]>([]);
-  const [sortOrder, setSortOrder] = useState<'alpha' | 'rank'>('alpha');
 
   useEffect(() => {
     if (!isUserLoading && !user) router.push(`/committees/${committeeId}/president/login`);
@@ -215,6 +214,20 @@ export default function PresidentDashboard() {
     return () => { unsubDel(); unsubRes(); unsubMessages(); unsubPartAll(); unsubActionsAll(); };
   }, [db, user, committeeId]);
 
+  // Initialisation et mise à jour de displayGradedDelegates (sans tri automatique par moyenne)
+  useEffect(() => {
+    setDisplayGradedDelegates(prev => {
+      if (prev.length === 0) return delegates;
+      
+      // On met à jour les données (notes, moyenne) tout en gardant l'ordre actuel
+      return prev.map(p => {
+        const fresh = delegates.find(d => d.id === p.id);
+        return fresh ? fresh : p;
+      }).filter(p => delegates.some(d => d.id === p.id)) // Enlever ceux supprimés
+      .concat(delegates.filter(d => !prev.some(p => p.id === d.id))); // Ajouter les nouveaux
+    });
+  }, [delegates]);
+
   useEffect(() => {
     if (!db || !currentAction?.id) { setParticipants([]); return; }
     const unsubPart = onSnapshot(query(collection(db, 'committees', committeeId, 'participations'), where('action_id', '==', currentAction.id)), (snapshot) => {
@@ -226,16 +239,6 @@ export default function PresidentDashboard() {
     });
     return () => unsubPart();
   }, [db, currentAction?.id, committeeId]);
-
-  useEffect(() => {
-    let sorted = [...delegates];
-    if (sortOrder === 'rank') {
-      sorted.sort((a, b) => b.average - a.average);
-    } else {
-      sorted.sort((a, b) => a.country_name.localeCompare(b.country_name));
-    }
-    setDisplayGradedDelegates(sorted);
-  }, [delegates, sortOrder]);
 
   const toggleSuspension = () => {
     if (!db) return;
@@ -263,7 +266,7 @@ export default function PresidentDashboard() {
 
   const stopOverlay = () => {
     if (!db) return;
-    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: { type: 'none' } });
+    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: { type: 'none', title: '', status: 'inactive' } });
   };
 
   const createAction = async () => {
@@ -287,6 +290,17 @@ export default function PresidentDashboard() {
   const handleMarkAsSpoken = (participationId: string) => {
     if (!db) return;
     updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'participations', participationId), { status: 'spoken' });
+  };
+
+  const handleGenerateRanking = () => {
+    const sorted = [...displayGradedDelegates].sort((a, b) => b.average - a.average);
+    setDisplayGradedDelegates(sorted);
+    toast({ title: "Classement mis à jour" });
+  };
+
+  const handleSortAlpha = () => {
+    const sorted = [...displayGradedDelegates].sort((a, b) => a.country_name.localeCompare(b.country_name));
+    setDisplayGradedDelegates(sorted);
   };
 
   const extendTime = (mins: number) => {
@@ -384,7 +398,7 @@ export default function PresidentDashboard() {
             </CollapsibleContent>
           </Collapsible>
 
-          {activeOverlay && activeOverlay.type !== 'none' && (
+          {activeOverlay && activeOverlay.type !== 'none' && activeOverlay.status !== 'inactive' && (
             <div className="flex items-center gap-4 bg-primary/5 px-4 py-1.5 rounded-2xl border border-primary/10">
               {activeOverlay.type === 'vote' && ['pour', 'contre', 'abstention'].map(c => (
                 <div key={c} className="flex flex-col items-center">
@@ -504,15 +518,13 @@ export default function PresidentDashboard() {
               <Card className="rounded-2xl border-primary/10 glass-card">
                 <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><Award className="size-4 md:size-5 text-primary" /><CardTitle className="text-base font-black uppercase tracking-tight text-gradient">{t.gradingTitle}</CardTitle></CardHeader>
                 <CardContent className="px-2 md:px-4 pb-4">
-                  <div className="mb-4">
-                    <Button size="sm" onClick={() => setSortOrder('rank')} className="w-full bg-primary h-11 rounded-xl font-black uppercase tracking-widest text-[9px] gap-2 shadow-lg shadow-primary/20">
+                  <div className="mb-4 flex flex-col gap-2">
+                    <Button size="sm" onClick={handleGenerateRanking} className="w-full bg-primary h-11 rounded-xl font-black uppercase tracking-widest text-[9px] gap-2 shadow-lg shadow-primary/20">
                       <Calculator className="size-4" /> {t.calculate}
                     </Button>
-                    {sortOrder === 'rank' && (
-                      <Button variant="ghost" size="sm" onClick={() => setSortOrder('alpha')} className="w-full mt-2 text-[8px] uppercase font-bold opacity-60">
-                        Retour à l'ordre alphabétique
-                      </Button>
-                    )}
+                    <Button variant="ghost" size="sm" onClick={handleSortAlpha} className="w-full text-[8px] uppercase font-bold opacity-60">
+                      Trier par Ordre Alphabétique
+                    </Button>
                   </div>
                   <ScrollArea className="h-[400px] md:h-[600px]"><div className="space-y-4 p-1">
                     {displayGradedDelegates.map((d, index) => (

@@ -363,7 +363,7 @@ export default function DelegateDashboard() {
         </div>
       )}
       
-      {activeOverlay && activeOverlay.type !== 'none' && (
+      {activeOverlay && activeOverlay.type !== 'none' && activeOverlay.status !== 'inactive' && (
         <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4 md:p-6 transition-colors duration-700 ${activeOverlay.type === 'crisis' ? 'bg-red-700 text-white' : 'bg-white/95 backdrop-blur-3xl text-primary'}`}>
           <div className="max-w-5xl w-full text-center space-y-8 md:space-y-12">
             {activeOverlay.type === 'crisis' ? (
