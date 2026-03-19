@@ -811,6 +811,7 @@ export default function PresidentDashboard() {
                   </ScrollArea>
                 </CardContent>
               </Card>
+
               <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card overflow-hidden">
                 <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6"><BarChart3 className="size-4 md:size-5 text-primary" /><CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.participationStats}</CardTitle></CardHeader>
                 <CardContent className="h-[250px] md:h-[350px] pt-2 md:pt-4">
@@ -841,6 +842,43 @@ export default function PresidentDashboard() {
                       </BarChart>
                     </ResponsiveContainer>
                   ) : <div className="h-full flex flex-col items-center justify-center text-muted-foreground italic opacity-50 text-[10px] md:text-xs">{lang === 'fr' ? 'Données d\'activité insuffisantes' : 'Insufficient activity data'}</div>}
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl md:rounded-3xl border-primary/10 glass-card">
+                <CardHeader className="flex flex-row items-center gap-3 p-4 md:p-6">
+                  <History className="size-4 md:size-5 text-primary" />
+                  <CardTitle className="text-base md:text-lg font-black uppercase tracking-tight text-gradient">{t.actionsHistory}</CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-6">
+                  <ScrollArea className="h-[250px] md:h-[350px]">
+                    <div className="space-y-3">
+                      {allActions.map(action => (
+                        <div key={action.id} className="flex justify-between items-center p-3 md:p-4 bg-muted/30 rounded-xl md:rounded-2xl border border-primary/5 text-[9px] md:text-xs">
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <span className="font-black uppercase tracking-tight text-primary truncate">{action.title}</span>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-[7px] md:text-[8px] font-bold uppercase">{action.status}</Badge>
+                              <span className="text-muted-foreground opacity-60">
+                                {action.created_at?.toDate ? action.created_at.toDate().toLocaleDateString() : '...'}
+                              </span>
+                            </div>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:bg-destructive/5 h-7 w-7 md:h-10 md:w-10 shrink-0"
+                            onClick={() => handleDeleteAction(action.id)}
+                          >
+                            <Trash2 className="size-3 md:size-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      {allActions.length === 0 && (
+                        <p className="text-center py-10 text-muted-foreground italic text-xs opacity-50">{lang === 'fr' ? 'Aucun historique' : 'No history'}</p>
+                      )}
+                    </div>
+                  </ScrollArea>
                 </CardContent>
               </Card>
             </TabsContent>
