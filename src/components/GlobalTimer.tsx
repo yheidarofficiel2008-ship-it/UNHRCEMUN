@@ -82,18 +82,18 @@ export function GlobalTimer({ status, startedAt, pausedAt, totalElapsedSeconds, 
   const isFinished = timeLeft === 0 && status !== 'launched';
 
   return (
-    <div className={`flex flex-col items-center p-4 md:p-6 rounded-2xl border-2 md:border-4 transition-all duration-500 ${
+    <div className={`flex flex-col items-center p-3 md:p-6 rounded-2xl border-2 md:border-4 transition-all duration-500 ${
       isFinished ? 'border-destructive bg-destructive/10' : 
       isWarning ? 'border-orange-500 bg-orange-50 animate-pulse' :
       status === 'paused' ? 'border-amber-400 bg-amber-50' : 'border-primary bg-primary/5'
     }`}>
-      <div className="flex items-center gap-2 md:gap-3 text-muted-foreground mb-1 md:mb-2">
-        {status === 'paused' ? <Pause className="size-4 md:size-5 text-amber-500" /> : <Clock className="size-4 md:size-5" />}
-        <span className="font-semibold uppercase tracking-wider text-[8px] md:text-xs">
+      <div className="flex items-center gap-1.5 md:gap-3 text-muted-foreground mb-1 md:mb-2">
+        {status === 'paused' ? <Pause className="size-3.5 md:size-5 text-amber-500" /> : <Clock className="size-3.5 md:size-5" />}
+        <span className="font-semibold uppercase tracking-wider text-[7px] md:text-xs">
           {status === 'paused' ? 'Minuteur en Pause' : 'Temps Restant'}
         </span>
       </div>
-      <div className={`text-4xl md:text-6xl font-black font-code tabular-nums transition-colors ${
+      <div className={`text-3xl md:text-5xl lg:text-6xl font-black font-code tabular-nums transition-colors leading-none ${
         isFinished ? 'text-destructive' : 
         status === 'paused' ? 'text-amber-600' : 'text-primary'
       }`}>
