@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirebase, useDoc } from '@/firebase';
 import { useMemoFirebase } from '@/firebase';
-import { collection, query, where, onSnapshot, addDoc, serverTimestamp, setDoc, doc, increment, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp, setDoc, doc, increment, updateDoc, arrayUnion } from 'firebase/firestore';
 import { SuspensionOverlay } from '@/components/SuspensionOverlay';
 import { GlobalTimer } from '@/components/GlobalTimer';
 import { SpeakingTimer } from '@/components/SpeakingTimer';
@@ -115,7 +115,7 @@ export default function DelegateDashboard() {
       suspended: "DELEGATION SUSPENDED",
       suspendedDesc: "Your right to speak and interact has been temporarily suspended.",
       urgency: "ABSOLUTE URGENCY: CRISIS",
-      for: "FOR",
+      pour: "FOR",
       against: "AGAINST",
       abstention: "ABSTAIN",
       voteRecorded: "Vote recorded successfully",
@@ -160,7 +160,6 @@ export default function DelegateDashboard() {
       setMyResolutions(data);
     });
 
-    // Écouteur pour les résolutions projetées par la présidence
     const qProjected = query(resRef, where('is_displayed', '==', true));
     const unsubProjected = onSnapshot(qProjected, (snapshot) => {
       setProjectedResolutions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -216,10 +215,15 @@ export default function DelegateDashboard() {
     lastOverlayType.current = activeOverlay?.type || null;
   }, [activeOverlay]);
 
-  // Réinitialiser le droit de vote à chaque nouveau scrutin
+  // Réinitialiser le droit de vote à chaque nouveau scrutin (synchronisation cross-tab)
   useEffect(() => {
-    setHasVoted(false);
-  }, [activeOverlay?.voteId]);
+    if (activeOverlay?.type === 'vote' && delegate) {
+      const hasAlreadyVoted = activeOverlay.voters?.includes(delegate.id);
+      setHasVoted(hasAlreadyVoted || false);
+    } else {
+      setHasVoted(false);
+    }
+  }, [activeOverlay?.voteId, activeOverlay?.voters, delegate]);
 
   const playCrisisAlarm = () => {
     try {
@@ -261,10 +265,20 @@ export default function DelegateDashboard() {
   };
 
   const handleVote = async (choice: 'pour' | 'contre' | 'abstention') => {
-    if (!activeOverlay || activeOverlay.type !== 'vote' || hasVoted || isCountrySuspended || !db) return;
+    if (!activeOverlay || activeOverlay.type !== 'vote' || hasVoted || isCountrySuspended || !db || !delegate) return;
+    
+    // Double check to prevent multi-tab voting before state updates
+    if (activeOverlay.voters?.includes(delegate.id)) {
+      setHasVoted(true);
+      return;
+    }
+
     try {
       const sessionRef = doc(db, 'committees', committeeId, 'sessionState', 'current');
-      await updateDoc(sessionRef, { [`activeOverlay.results.${choice}`]: increment(1) });
+      await updateDoc(sessionRef, { 
+        [`activeOverlay.results.${choice}`]: increment(1),
+        'activeOverlay.voters': arrayUnion(delegate.id)
+      });
       setHasVoted(true);
       toast({ title: t.voteRecorded });
     } catch (e) { toast({ title: "Error", variant: "destructive" }); }
@@ -395,7 +409,7 @@ export default function DelegateDashboard() {
                           size="lg" 
                           className={`w-full h-12 md:h-14 ${choice === 'pour' ? 'bg-green-600 hover:bg-green-700' : choice === 'contre' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-500 hover:bg-amber-600'} text-white text-xs font-black rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-30`} 
                           onClick={() => handleVote(choice as any)} 
-                          disabled={hasVoted || isCountrySuspended}
+                          disabled={hasVoted || isCountrySuspended || activeOverlay.voters?.includes(delegate.id)}
                         >
                           {t[choice as keyof typeof t] || choice.toUpperCase()}
                         </Button>
@@ -403,6 +417,9 @@ export default function DelegateDashboard() {
                       </div>
                     ))}
                   </div>
+                )}
+                {hasVoted && activeOverlay.type === 'vote' && (
+                  <div className="text-sm md:text-xl font-black uppercase tracking-widest text-primary/40 animate-pulse">{t.voteRecorded}</div>
                 )}
               </div>
             )}

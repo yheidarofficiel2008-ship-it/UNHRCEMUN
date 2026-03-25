@@ -270,7 +270,8 @@ export default function PresidentDashboard() {
       title: overlayForm.title,
       status: 'active',
       voteId: overlayForm.type === 'vote' ? Date.now().toString() : null,
-      results: overlayForm.type === 'vote' ? { pour: 0, contre: 0, abstention: 0 } : null
+      results: overlayForm.type === 'vote' ? { pour: 0, contre: 0, abstention: 0 } : null,
+      voters: overlayForm.type === 'vote' ? [] : null
     };
     updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: overlayData });
     setIsOverlayDialogOpen(false);
