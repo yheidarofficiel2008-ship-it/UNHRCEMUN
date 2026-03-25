@@ -516,8 +516,15 @@ export default function DelegateDashboard() {
           {projectedResolutions.map(res => (
             <Card key={res.id} className="rounded-[1.5rem] md:rounded-[2.5rem] border-primary border-4 bg-primary/5 shadow-2xl animate-in fade-in zoom-in duration-500 overflow-hidden">
               <CardHeader className="bg-white/80 border-b border-primary/20 p-6 md:p-8">
-                <Badge className="bg-[#0459ab] text-white animate-pulse mb-3">{t.projectedRes}</Badge>
-                <CardTitle className="text-xl md:text-3xl font-black uppercase text-[#0459ab]">{res.title}</CardTitle>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <Badge className="bg-[#0459ab] text-white animate-pulse mb-3">{t.projectedRes}</Badge>
+                    <CardTitle className="text-xl md:text-3xl font-black uppercase text-[#0459ab]">{res.title}</CardTitle>
+                  </div>
+                  <Badge variant={res.status === 'approved' ? 'default' : res.status === 'rejected' ? 'destructive' : 'secondary'} className="uppercase font-black text-[8px] md:text-xs py-1.5 px-3">
+                    {res.status?.toUpperCase()}
+                  </Badge>
+                </div>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <Badge variant="outline" className="text-[10px] border-primary/20 text-[#0459ab]">DE: {res.proposing_country}</Badge>
                   {res.spokesperson && <Badge variant="outline" className="text-[10px] border-primary/20 text-[#0459ab]">Porte-parole: {res.spokesperson}</Badge>}
