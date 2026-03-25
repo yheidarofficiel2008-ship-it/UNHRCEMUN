@@ -243,7 +243,6 @@ export default function PresidentDashboard() {
       counts[d.country_name] = 0;
     });
     allParticipations.forEach((p: any) => {
-      // On compte les participations tant qu'elles ne sont pas explicitement supprimées via l'action
       if ((p.status === 'participating' || p.status === 'spoken') && counts[p.country_name] !== undefined) {
         counts[p.country_name]++;
       }
@@ -585,11 +584,7 @@ export default function PresidentDashboard() {
                             return null;
                           }}
                         />
-                        <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                          {statsData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'hsl(var(--secondary))'} />
-                          ))}
-                        </Bar>
+                        <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
