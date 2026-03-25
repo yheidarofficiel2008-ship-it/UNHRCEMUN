@@ -254,12 +254,12 @@ export default function PresidentDashboard() {
 
   const toggleSuspension = () => {
     if (!db) return;
-    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { isSuspended: !isSuspended });
+    setDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { isSuspended: !isSuspended }, { merge: true });
   };
 
   const updateFlux = (field: string, val: boolean) => {
     if (!db) return;
-    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { [field]: val });
+    setDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { [field]: val }, { merge: true });
     toast({ title: val ? "Flux activé" : "Flux suspendu" });
   };
 
@@ -273,13 +273,13 @@ export default function PresidentDashboard() {
       results: overlayForm.type === 'vote' ? { pour: 0, contre: 0, abstention: 0 } : null,
       voters: overlayForm.type === 'vote' ? [] : null
     };
-    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: overlayData });
+    setDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: overlayData }, { merge: true });
     setIsOverlayDialogOpen(false);
   };
 
   const stopOverlay = () => {
     if (!db) return;
-    updateDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: { type: 'none', title: '', status: 'inactive' } });
+    setDocumentNonBlocking(doc(db, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: { type: 'none', title: '', status: 'inactive' } }, { merge: true });
   };
 
   const createAction = async () => {
@@ -666,7 +666,7 @@ export default function PresidentDashboard() {
                   {gossipMessages.map(msg => (
                     <div key={msg.id} className="p-4 md:p-6 border-l-4 md:border-l-8 border-primary rounded-xl md:rounded-3xl shadow-sm flex flex-col gap-3 transition-all duration-300 hover:shadow-md bg-primary/[0.02]">
                       <div className="flex justify-between items-start"><Badge className="bg-primary text-white uppercase text-[7px] md:text-[9px] font-black px-2 py-1 rounded-full shadow-sm">GOSSIP ANONYME</Badge><div className="flex items-center gap-2">
-                        <Button variant={activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? "default" : "outline"} size="sm" className="rounded-xl font-bold uppercase text-[7px] md:text-[10px] px-3 h-8 md:h-10" onClick={() => { if (activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content) stopOverlay(); else updateDocumentNonBlocking(doc(db!, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: { type: 'gossip', title: msg.content, status: 'active' } }); }}>{activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? t.hide : t.show}</Button>
+                        <Button variant={activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? "default" : "outline"} size="sm" className="rounded-xl font-bold uppercase text-[7px] md:text-[10px] px-3 h-8 md:h-10" onClick={() => { if (activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content) stopOverlay(); else setDocumentNonBlocking(doc(db!, 'committees', committeeId, 'sessionState', 'current'), { activeOverlay: { type: 'gossip', title: msg.content, status: 'active' } }, { merge: true }); }}>{activeOverlay?.type === 'gossip' && activeOverlay?.title === msg.content ? t.hide : t.show}</Button>
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteDocumentNonBlocking(doc(db!, 'committees', committeeId, 'messages', msg.id))}><Trash2 className="size-4" /></Button></div></div>
                       <p className="text-xs md:text-base font-semibold text-foreground/80 leading-relaxed italic">"{msg.content}"</p>
                     </div>
