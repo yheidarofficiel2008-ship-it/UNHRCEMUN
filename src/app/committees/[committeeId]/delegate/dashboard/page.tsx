@@ -72,8 +72,8 @@ export default function DelegateDashboard() {
       suspended: "DÉLÉGATION SUSPENDUE",
       suspendedDesc: "Votre droit de parole et d'interaction a été temporairement suspendu.",
       urgency: "URGENCE ABSOLUE : CRISE",
-      for: "POUR",
-      against: "CONTRE",
+      pour: "POUR",
+      contre: "CONTRE",
       abstention: "ABSTENTION",
       voteRecorded: "Vote enregistré avec succès",
       submissionsSuspended: "ENVOIS BLOQUÉS",
@@ -215,6 +215,11 @@ export default function DelegateDashboard() {
     }
     lastOverlayType.current = activeOverlay?.type || null;
   }, [activeOverlay]);
+
+  // Réinitialiser le droit de vote à chaque nouveau scrutin
+  useEffect(() => {
+    setHasVoted(false);
+  }, [activeOverlay?.voteId]);
 
   const playCrisisAlarm = () => {
     try {
